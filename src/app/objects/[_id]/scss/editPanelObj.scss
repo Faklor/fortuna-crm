@@ -1,0 +1,56 @@
+.editPanelObj{
+    justify-self: center;
+
+    display: grid;
+    margin-top: 1em;
+    //width: 100%;
+
+    .editImg{
+        margin:1em;
+        height: 20em;
+        img{
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            
+        }
+    }
+    .editDefaultState{
+        margin-top:1em;
+        display: grid;
+        width: 90%;
+        input, select, textarea, p{
+            margin:0.3em 1em;
+            outline: 0;
+            padding: 0.3em;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.5s;
+
+            &:focus{
+                background-color: #354759;
+                color: #fff;
+            }
+        }
+    }
+
+    button{
+        margin: 1em 0;
+        justify-self: center;
+        padding:0.5em 1em;
+        box-shadow: 0px 4px 4px 0px rgba(0,0,0,0.25);
+        border:none;
+        border-radius: 5px;
+        font-size: 16px;
+
+        cursor: pointer;
+        transition: 0.5s;
+
+        &:hover{
+            background-color: #354759;
+            color:#fff;
+            transform: scale(0.9);
+        }
+    }
+
+}

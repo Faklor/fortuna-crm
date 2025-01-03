@@ -1,0 +1,100 @@
+.addReq{
+    z-index: 99;
+
+
+    .message{
+        display: grid;
+        top:18%;
+        left:0%;
+        width: 100%;
+        
+        text-align: center;
+        
+        position: fixed;
+        background-color: #fff;
+        padding: 1em;
+        border-radius: 5px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+
+
+        button, input, select{
+            justify-self: center;
+            outline: 0;
+            border:none;
+            border-radius: 5px;
+            box-shadow: 0px 4px 4px 0px rgba(0,0,0,0.25);
+            padding: 0.5em 1em;
+            margin:0.5em;
+            font-size: 16px;
+
+        }
+        .part{
+            background-color: #fff;
+            box-shadow: none;
+        }
+        .title{
+            margin:0.3em 0;
+            background-color: #373737;
+            color:#fff;
+            padding: 0.5em 1em;
+            border-radius: 5px;
+        }
+
+        .bindingParts{
+
+            justify-self: center;
+            overflow: hidden;
+            overflow-y: auto;
+            max-height: 15em;
+
+            .part{
+                display: flex;
+                p{
+                    align-content: center;
+                    
+                }
+                input[type=checkbox]{
+                    //align-content: center;
+                    align-self: center;
+                    //height: 1em;
+                }
+            }
+        }
+
+        .otherParts{
+            justify-self: center;
+
+            max-height: 15em;
+            overflow: hidden;
+            overflow-y: auto;
+
+            .part{
+                display: flex;
+               p{
+                align-content: center;
+
+               }
+               input[type=checkbox]{
+                //align-content: center;
+                align-self: center;
+                //height: 1em;
+            }
+            }
+            
+        }
+    }
+
+    &::before{
+        position: fixed;
+        content: '';
+        //background-color: red;
+        backdrop-filter: blur(5px);
+        top:0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        overflow: hidden;
+    }
+
+
+}

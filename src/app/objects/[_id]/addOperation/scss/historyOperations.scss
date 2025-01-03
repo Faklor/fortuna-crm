@@ -1,0 +1,45 @@
+.historyOperations{
+    margin-top:2em;
+    //height: 10em;
+    overflow-y: auto;
+    max-height: 30em;
+    height: auto;
+    text-align: justify;
+    overflow: hidden;
+    overflow-y: auto;
+
+    .operations{
+        .titleOperation{
+            
+            background-color: #354759;
+            text-align: center;
+            color: #fff;
+            border-radius: 5px;
+            box-shadow: 1px 1px 4px 0 #000;
+            
+            
+
+            
+        }
+        .item_historyOperations{
+            //background-color: #4F8DE3;
+            border-radius: 5px;
+            padding: 0.5em;
+            margin:0.5em;
+            
+            h3{
+                color:#fff;
+                background-color: #4F8DE3;
+                border-radius: 5px 5px 0 0;
+                padding: 0.3em;
+            }
+
+            p{
+                padding: 0.3em;
+                text-align: justify;
+            }
+        }
+    }
+
+    
+}

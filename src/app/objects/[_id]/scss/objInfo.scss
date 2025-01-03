@@ -1,0 +1,99 @@
+.objInfo{
+    width: 95%;
+    //height: 100%;
+    display: block;
+    color: #354759;
+    align-self: center;
+    justify-self: center;
+    text-align: center;
+    img{
+        object-fit: cover;
+        margin:1em auto;
+        margin-top: 2em;
+        padding: 0.3em;
+        width: 100%;
+        height: 100%;
+        align-self: center;
+        //justify-self:  center;
+    }
+    h3{
+       color:#FA5C62; 
+        
+    }
+    .title{
+        display: grid;
+        grid-template-columns: 70% 30%;
+
+        h2{
+            margin:1em 0;
+            box-shadow: 0px 4px 4px 0px rgba(0,0,0,0.25);
+            border-radius: 5px;
+            padding: 1em 0;
+            align-self: center;
+            //justify-self: center;
+        }
+        div,a{
+            box-shadow: 0px 4px 4px 0px rgba(0,0,0,0.25);
+            align-self: center;
+            //justify-self: ;
+            margin:0 0 0 1em;
+            background-color: #354759;
+            text-align: center;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.5s;
+
+            &:hover{
+                transform: scale(0.9);
+            }
+
+            img{
+                //background-color: red;
+                padding: 0.1em 0 0.1em 0;
+                margin:0.8em 0.1em 0.1em 0.1em;
+                width: 3em;
+                height: 3em;
+                align-self: center;
+
+            }
+        }
+
+
+    }
+    .orderTtile{
+        grid-template-columns: 1fr;
+    }
+
+    
+    .controllersObj{
+        display: flex;
+        justify-self: center;
+        //width: 20%;
+        //margin: 0 auto;
+        button{
+            
+            box-shadow: 0px 4px 4px 0px rgba(0,0,0,0.25);
+            border-radius: 5px;
+            padding: 0.5em;
+            cursor:pointer;
+            transition: 0.5s;
+            margin:0.5em;
+            border:2px solid #354759;
+            
+            
+            img{
+                margin:0;
+            }
+            &:nth-child(1){
+                background-color: #4F8DE3;
+            }
+            &:nth-child(2){
+                background-color: #FA5C62;
+            }
+            &:hover{
+                transform: scale(0.9);
+            }
+        }
+
+    }
+}

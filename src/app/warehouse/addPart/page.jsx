@@ -1,0 +1,109 @@
+'use client'
+import './scss/blockAddPart.scss'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import axios from 'axios'
+
+//-------components--------
+
+
+export default function BlockAddPart({}){
+
+    //navigation
+    const router = useRouter()
+    
+    //react
+    const [nowCatagory, setNowCatagory] = useState('')
+    const [nowName, setNowName] = useState('')
+    const [nowSerialNumber, setNowSerialNumber] = useState('')
+    const [nowSellNumber, setNowSellNumber] = useState('')
+    const [nowCount, setNowCount] = useState('')
+    const [nowSell, setNowSell] = useState('')
+    const [nowManufacturer, setNowManufacturer] = useState('')
+    const [nowContact_Name, setNowContact_Name] = useState('')
+    const [nowContact_Link, setNowContact_Link] = useState('')
+    //------
+    const [status, setStatus] = useState('')
+    const [categoryes, setCategoryes] = useState([])
+
+    //default
+    const partObj = {
+        category:nowCatagory,
+        name:nowName,
+        serialNumber:nowSerialNumber,
+        sellNumber:nowSellNumber,
+        count:Number(nowCount),
+        sum:Number(nowSell),
+        manufacturer:nowManufacturer,
+        contact:{
+            name:nowContact_Name,
+            link:nowContact_Link
+        }
+    }
+    
+    //functions
+    async function getParts(){
+        return await axios.get('/api/parts')
+    }
+
+    useEffect(()=>{
+
+        getParts()
+        .then(res=>{
+            let array_categoryes = []
+            res.data.forEach((item)=>{
+                array_categoryes.push(item.catagory)
+            })
+
+            let filteredArray = [...new Set(array_categoryes)]
+
+
+            setCategoryes(filteredArray)
+            setNowCatagory(filteredArray[0])
+        })
+        .catch(e=>{})
+    },[])
+
+    
+    //functions
+    async function getParts() {
+        return await axios.get('/api/parts')
+    }
+    async function addPart(partObj) {
+        return await axios.post('/api/parts/addPart',partObj)
+    }
+
+    return <div className='blockAddPart'>
+        <button onClick={()=>router.push('/warehouse')}>Вернуться на склад</button>   
+        <h2>Добавление запчасти</h2>
+        
+        <select onChange={(e)=>{setNowCatagory(e.target.value)}}>
+            {categoryes.map((item,index)=>{
+                return <option key={index}>{item}</option>
+            })}
+        </select>
+
+        <input type='text' value={nowName} onChange={(e)=>{setNowName(e.target.value)}} placeholder='Название*'/>
+        <input type='text' value={nowManufacturer} onChange={(e)=>{setNowManufacturer(e.target.value)}} placeholder='Производитель'/>
+        <input type='text' value={nowSerialNumber} onChange={(e)=>{setNowSerialNumber(e.target.value)}} placeholder='Серийный номер'/>
+        <input type='text' value={nowSellNumber} onChange={(e)=>{setNowSellNumber(e.target.value)}} placeholder='Товарный номер'/>
+        
+        <input type='number' value={nowCount} onChange={(e)=>{setNowCount(e.target.value)}} placeholder='Кол-во'/>
+        <input type='number' value={nowSell} onChange={(e)=>{setNowSell(e.target.value)}} placeholder='Сумма'/>
+
+        <h2>Контакты</h2>
+        <input type='text' value={nowContact_Name} onChange={(e)=>{setNowContact_Name(e.target.value)}} placeholder='Имя'/>
+        <input type='text' value={nowContact_Link} onChange={(e)=>{setNowContact_Link(e.target.value)}} placeholder='Ссылка'/>
+
+        <button onClick={()=>{
+            addPart(partObj)
+            .then((res)=>{
+                setStatus(res.data)
+                
+            })
+            .catch(e=>setStatus('Что-то не так'))
+            //console.log(partObj)
+        }}>ДОБАВИТЬ</button>
+
+    </div>
+}

@@ -1,0 +1,47 @@
+
+
+.addObject{
+
+    margin:1em;
+    width: 90%;
+    display: grid;
+
+    img{
+        justify-self: center;
+    }
+
+    button, select, textarea,input{
+        width: 100%;
+        font-size: 16px;
+        outline: 0;
+        box-shadow: 0px 4px 4px 0px rgba(0,0,0,0.25);
+        border:none;
+        margin:0.5em;
+        border-radius: 5px;
+        justify-self: center;
+        padding: 0.5em 1em;
+
+        transition: 0.5s;
+        cursor: pointer;
+
+    }
+    select, textarea,input{
+        
+
+        &:focus{
+            background-color: #354759;
+            color:#fff;
+        }
+    }
+
+    button{
+        background-color: #4F8DE3;
+        justify-self: center;
+        color: #fff;
+
+        margin: 1em;
+        &:hover{
+            transform: scale(0.9);
+        }
+    }
+}

@@ -1,0 +1,48 @@
+
+.auth{
+    z-index: 100;
+    background-color: #fff;
+    
+    width: 460px;
+    height: 100%;
+    position: fixed;
+    display: grid;
+
+    .message{
+        align-self: center;
+        justify-self: center;
+
+        display: grid;
+        img{
+            padding: 1em;
+
+        }
+        input, button{
+            border:1px solid #354759; 
+            border-radius: 5px;
+            padding: 1em;
+            outline: 0;
+            transition: 0.3s;
+
+            
+        }
+
+        input{
+            &:focus{
+                background-color: #354759;
+                color:#fff;
+            }
+        }
+        button{
+            margin:1em;
+            background-color: #354759;
+            color: #fff;
+            justify-self: center;
+            padding: 1em 5em;
+            &:active{
+                transform: scale(0.9);
+            }
+        }
+
+    }
+}
