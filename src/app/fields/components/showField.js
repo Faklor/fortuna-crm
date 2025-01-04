@@ -47,6 +47,8 @@ export default function ShowField({
     const [currentSeason, setCurrentSeason] = useState({
         year: new Date().getFullYear(),
         crop: '',
+        variety: '',
+        yield: '',
         sowingDate: '',
         harvestDate: ''
     });
@@ -127,6 +129,8 @@ export default function ShowField({
                 const currentSeasonData = res.data.properties.seasons?.find(s => s.year === currentYear) || {
                     year: currentYear,
                     crop: '',
+                    variety: '',
+                    yield: '',
                     sowingDate: '',
                     harvestDate: ''
                 };
@@ -135,6 +139,8 @@ export default function ShowField({
                 setCurrentSeason({
                     year: currentYear,
                     crop: currentSeasonData.crop || '',
+                    variety: currentSeasonData.variety || '',
+                    yield: currentSeasonData.yield || '',
                     sowingDate: currentSeasonData.sowingDate ? new Date(currentSeasonData.sowingDate).toISOString().split('T')[0] : '',
                     harvestDate: currentSeasonData.harvestDate ? new Date(currentSeasonData.harvestDate).toISOString().split('T')[0] : ''
                 });
@@ -263,22 +269,65 @@ export default function ShowField({
     const handleEditSubField = (subField) => {
         setEditingSubField(subField);
         setEditingSubFieldName(subField.properties.Name || '');
+        
+        const currentYear = new Date().getFullYear();
+        const currentSeasonData = subField.properties.seasons?.find(s => s.year === currentYear) || {
+            year: currentYear,
+            crop: '',
+            variety: '',
+            yield: '',
+            sowingDate: '',
+            harvestDate: ''
+        };
+
+        setCurrentSeason({
+            year: currentYear,
+            crop: currentSeasonData.crop || '',
+            variety: currentSeasonData.variety || '',
+            yield: currentSeasonData.yield || '',
+            sowingDate: currentSeasonData.sowingDate ? new Date(currentSeasonData.sowingDate).toISOString().split('T')[0] : '',
+            harvestDate: currentSeasonData.harvestDate ? new Date(currentSeasonData.harvestDate).toISOString().split('T')[0] : ''
+        });
     };
 
     const handleSaveSubField = async () => {
         try {
+            const currentYear = new Date().getFullYear();
+            const updatedSeasons = editingSubField.properties.seasons || [];
+            const seasonIndex = updatedSeasons.findIndex(s => s.year === currentYear);
+            
+            if (seasonIndex !== -1) {
+                updatedSeasons[seasonIndex] = {
+                    ...updatedSeasons[seasonIndex],
+                    ...currentSeason
+                };
+            } else {
+                updatedSeasons.push({
+                    ...currentSeason,
+                    year: currentYear
+                });
+            }
+
             const response = await axios.post('/api/fields/subFields/update', {
                 _id: editingSubField._id,
                 properties: {
                     ...editingSubField.properties,
-                    Name: editingSubFieldName
+                    Name: editingSubFieldName,
+                    seasons: updatedSeasons
                 }
             });
 
             if (response.data.success) {
                 setSubFields(prev => prev.map(field => 
                     field._id === editingSubField._id 
-                        ? { ...field, properties: { ...field.properties, Name: editingSubFieldName } }
+                        ? { 
+                            ...field, 
+                            properties: { 
+                                ...field.properties, 
+                                Name: editingSubFieldName,
+                                seasons: updatedSeasons
+                            } 
+                        }
                         : field
                 ));
                 setEditingSubField(null);
@@ -359,11 +408,29 @@ export default function ShowField({
                         {field.descriptio && <p>Описание: {field.descriptio}</p>}
                         
                         {field.seasons && field.seasons[0] && (
+                            field.seasons[0].crop || 
+                            field.seasons[0].variety ||
+                            field.seasons[0].yield ||
+                            field.seasons[0].sowingDate || 
+                            field.seasons[0].harvestDate
+                        ) && (
                             <div className="season-info">
                                 <h4>Текущий сезон</h4>
-                                <p>Культура: {field.seasons[0].crop || 'Не указана'}</p>
-                                <p>Дата сева: {field.seasons[0].sowingDate ? new Date(field.seasons[0].sowingDate).toLocaleDateString() : 'Не указана'}</p>
-                                <p>Дата сбора: {field.seasons[0].harvestDate ? new Date(field.seasons[0].harvestDate).toLocaleDateString() : 'Не указана'}</p>
+                                {field.seasons[0].crop && (
+                                    <p>Культура: {field.seasons[0].crop}</p>
+                                )}
+                                {field.seasons[0].variety && (
+                                    <p>Сорт: {field.seasons[0].variety}</p>
+                                )}
+                                {field.seasons[0].yield && (
+                                    <p>Средняя урожайность: {field.seasons[0].yield} ц/га</p>
+                                )}
+                                {field.seasons[0].sowingDate && (
+                                    <p>Дата сева: {new Date(field.seasons[0].sowingDate).toLocaleDateString()}</p>
+                                )}
+                                {field.seasons[0].harvestDate && (
+                                    <p>Дата сбора: {new Date(field.seasons[0].harvestDate).toLocaleDateString()}</p>
+                                )}
                             </div>
                         )}
 
@@ -431,6 +498,30 @@ export default function ShowField({
                                 </div>
                             </div>
                             <div className="form-group">
+                                <label>Сорт:</label>
+                                <input
+                                    type="text"
+                                    value={currentSeason.variety}
+                                    onChange={(e) => setCurrentSeason(prev => ({
+                                        ...prev,
+                                        variety: e.target.value
+                                    }))}
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Средняя урожайность (ц/га):</label>
+                                <input
+                                    type="number"
+                                    value={currentSeason.yield}
+                                    onChange={(e) => setCurrentSeason(prev => ({
+                                        ...prev,
+                                        yield: e.target.value
+                                    }))}
+                                    min="0"
+                                    step="0.1"
+                                />
+                            </div>
+                            <div className="form-group">
                                 <label>Дата сева:</label>
                                 <input
                                     type="date"
@@ -485,6 +576,92 @@ export default function ShowField({
                                                 onChange={(e) => setEditingSubFieldName(e.target.value)}
                                                 placeholder="Название подполя"
                                             />
+                                            <div className="season-form">
+                                                <h4>Информация о сезоне</h4>
+                                                <div className="form-group">
+                                                    <label>Культура:</label>
+                                                    <div className="crop-input-container">
+                                                        <input
+                                                            type="text"
+                                                            value={currentSeason.crop}
+                                                            onChange={(e) => {
+                                                                setCurrentSeason(prev => ({
+                                                                    ...prev,
+                                                                    crop: e.target.value
+                                                                }));
+                                                                setShowCropSuggestions(true);
+                                                            }}
+                                                            onFocus={() => setShowCropSuggestions(true)}
+                                                        />
+                                                        {showCropSuggestions && currentSeason.crop && filteredCrops.length > 0 && (
+                                                            <div className="crop-suggestions">
+                                                                {filteredCrops.map((crop, index) => (
+                                                                    <div
+                                                                        key={index}
+                                                                        className="crop-suggestion"
+                                                                        placeholder="Укажите культуру"
+                                                                        onClick={() => {
+                                                                            setCurrentSeason(prev => ({
+                                                                                ...prev,
+                                                                                crop: crop
+                                                                            }));
+                                                                            setShowCropSuggestions(false);
+                                                                        }}
+                                                                    >
+                                                                        {crop}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <div className="form-group">
+                                                    <label>Сорт:</label>
+                                                    <input
+                                                        type="text"
+                                                        value={currentSeason.variety}
+                                                        onChange={(e) => setCurrentSeason(prev => ({
+                                                            ...prev,
+                                                            variety: e.target.value
+                                                        }))}
+                                                    />
+                                                </div>
+                                                <div className="form-group">
+                                                    <label>Средняя урожайность (ц/га):</label>
+                                                    <input
+                                                        type="number"
+                                                        value={currentSeason.yield}
+                                                        onChange={(e) => setCurrentSeason(prev => ({
+                                                            ...prev,
+                                                            yield: e.target.value
+                                                        }))}
+                                                        min="0"
+                                                        step="0.1"
+                                                    />
+                                                </div>
+                                                <div className="form-group">
+                                                    <label>Дата сева:</label>
+                                                    <input
+                                                        type="date"
+                                                        value={currentSeason.sowingDate}
+                                                        onChange={(e) => setCurrentSeason(prev => ({
+                                                            ...prev,
+                                                            sowingDate: e.target.value
+                                                        }))}
+                                                    />
+                                                </div>
+                                                <div className="form-group">
+                                                    <label>Дата сбора:</label>
+                                                    <input
+                                                        type="date"
+                                                        value={currentSeason.harvestDate}
+                                                        onChange={(e) => setCurrentSeason(prev => ({
+                                                            ...prev,
+                                                            harvestDate: e.target.value
+                                                        }))}
+                                                    />
+                                                </div>
+                                            </div>
                                             <div className="edit-actions">
                                                 <button onClick={handleSaveSubField}>
                                                     Сохранить
@@ -496,12 +673,39 @@ export default function ShowField({
                                         </div>
                                     ) : (
                                         <>
-                                            <p onClick={(e) => {
+                                            <div className="subfield-info" onClick={(e) => {
                                                 e.stopPropagation();
                                                 onSubFieldSelect(subField._id);
                                             }}>
-                                                {subField.properties.Name || `Подполе ${index + 1}`}: {subFieldArea.toFixed(2)} га
-                                            </p>
+                                                <p className="subfield-name">
+                                                    {subField.properties.Name || `Подполе ${index + 1}`}: {subFieldArea.toFixed(2)} га
+                                                </p>
+                                                {subField.properties.seasons && subField.properties.seasons[0] && (
+                                                    subField.properties.seasons[0].crop || 
+                                                    subField.properties.seasons[0].variety ||
+                                                    subField.properties.seasons[0].yield ||
+                                                    subField.properties.seasons[0].sowingDate || 
+                                                    subField.properties.seasons[0].harvestDate
+                                                ) && (
+                                                    <div className="subfield-season-info">
+                                                        {subField.properties.seasons[0].crop && (
+                                                            <p>Культура: {subField.properties.seasons[0].crop}</p>
+                                                        )}
+                                                        {subField.properties.seasons[0].variety && (
+                                                            <p>Сорт: {subField.properties.seasons[0].variety}</p>
+                                                        )}
+                                                        {subField.properties.seasons[0].yield && (
+                                                            <p>Средняя урожайность: {subField.properties.seasons[0].yield} ц/га</p>
+                                                        )}
+                                                        {subField.properties.seasons[0].sowingDate && (
+                                                            <p>Дата сева: {new Date(subField.properties.seasons[0].sowingDate).toLocaleDateString()}</p>
+                                                        )}
+                                                        {subField.properties.seasons[0].harvestDate && (
+                                                            <p>Дата сбора: {new Date(subField.properties.seasons[0].harvestDate).toLocaleDateString()}</p>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
                                             <div className="subfield-actions">
                                                 <button 
                                                     onClick={(e) => {

@@ -273,7 +273,11 @@ function DrawingControl({ selectedFieldData, onSubFieldCreate, subFields }) {
             },
             shapeOptions: {
               color: 'green'
-            }
+            },
+            icon: new L.DivIcon({
+              className: 'custom-draw-marker',
+              iconSize: new L.Point(8, 8)
+            })
           }
         }}
         edit={{
@@ -364,45 +368,51 @@ function Map({ fields }) {
 
   const handleSubFieldCreate = async (coordinates) => {
     try {
-      // Убедимся, что полигон замкнут
-      if (coordinates[0][0] !== coordinates[coordinates.length - 1][0] || 
-          coordinates[0][1] !== coordinates[coordinates.length - 1][1]) {
-        coordinates.push(coordinates[0]);
-      }
-
-      const response = await axios.post('/api/fields/subFields/create', {
-        parentId: selectedField,
-        coordinates: coordinates,
-        properties: {
-          Name: `Подполе ${subFields.length + 1}`,
-          parentId: selectedField
+        // Убедимся, что полигон замкнут
+        if (coordinates[0][0] !== coordinates[coordinates.length - 1][0] || 
+            coordinates[0][1] !== coordinates[coordinates.length - 1][1]) {
+            coordinates.push(coordinates[0]);
         }
-      });
 
-      if (response.data.success) {
-        const subFieldsResponse = await axios.get('/api/fields/subFields/get');
+        // Запрашиваем название подполя через prompt
+        const subFieldName = window.prompt('Введите название подполя:', `Подполе ${subFields.length + 1}`);
         
-        if (subFieldsResponse.data.success) {
-          await new Promise(resolve => {
-            setSubFields(subFieldsResponse.data.subFields);
-            setSubFieldsVersion(prev => prev + 1);
-            resolve();
-          });
-          
-          setIsDrawingMode(false);
-          
-          setTimeout(() => {
-            setKey(prevKey => prevKey + 1);
-            setIsDrawingMode(true);
-          }, 100);
-          setSubFields(prev => [...prev, response.data.data]);
-        setSubFieldsVersion(prev => prev + 1);
-        setIsDrawingMode(false);
+        // Если пользователь нажал "Отмена", используем дефолтное название
+        const finalName = subFieldName === null ? `Подполе ${subFields.length + 1}` : subFieldName.trim();
+
+        const response = await axios.post('/api/fields/subFields/create', {
+            parentId: selectedField,
+            coordinates: coordinates,
+            properties: {
+                Name: finalName,
+                parentId: selectedField
+            }
+        });
+
+        if (response.data.success) {
+            const subFieldsResponse = await axios.get('/api/fields/subFields/get');
+            
+            if (subFieldsResponse.data.success) {
+                await new Promise(resolve => {
+                    setSubFields(subFieldsResponse.data.subFields);
+                    setSubFieldsVersion(prev => prev + 1);
+                    resolve();
+                });
+                
+                setIsDrawingMode(false);
+                
+                setTimeout(() => {
+                    setKey(prevKey => prevKey + 1);
+                    setIsDrawingMode(true);
+                }, 100);
+                setSubFields(prev => [...prev, response.data.data]);
+                setSubFieldsVersion(prev => prev + 1);
+                setIsDrawingMode(false);
+            }
         }
-      }
     } catch (error) {
-      console.error('Error creating subfield:', error);
-      alert('Ошибка при создании подполя');
+        console.error('Error creating subfield:', error);
+        alert('Ошибка при создании подполя');
     }
   };
 
