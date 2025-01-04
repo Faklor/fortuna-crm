@@ -39,10 +39,19 @@ export default function ShowField({
         extrude: 0,
         visibility: -1,
         drawOrder: null,
-        icon: ''
+        icon: '',
+        seasons: []
     })
     const [editingSubField, setEditingSubField] = useState(null);
     const [editingSubFieldName, setEditingSubFieldName] = useState('');
+    const [currentSeason, setCurrentSeason] = useState({
+        year: new Date().getFullYear(),
+        crop: '',
+        sowingDate: '',
+        harvestDate: ''
+    });
+    const [existingCrops, setExistingCrops] = useState([]);
+    const [showCropSuggestions, setShowCropSuggestions] = useState(false);
 
     const calculateAreaInHectares = (coordinates) => {
         try {
@@ -112,6 +121,25 @@ export default function ShowField({
             .then(res => {
                 setField(res.data.properties);
                 setEditedProperties(res.data.properties);
+                
+                // Загружаем данные текущего сезона
+                const currentYear = new Date().getFullYear();
+                const currentSeasonData = res.data.properties.seasons?.find(s => s.year === currentYear) || {
+                    year: currentYear,
+                    crop: '',
+                    sowingDate: '',
+                    harvestDate: ''
+                };
+                
+                // Устанавливаем данные текущего сезона
+                setCurrentSeason({
+                    year: currentYear,
+                    crop: currentSeasonData.crop || '',
+                    sowingDate: currentSeasonData.sowingDate ? new Date(currentSeasonData.sowingDate).toISOString().split('T')[0] : '',
+                    harvestDate: currentSeasonData.harvestDate ? new Date(currentSeasonData.harvestDate).toISOString().split('T')[0] : ''
+                });
+
+                // Расчет площади
                 const coords = res.data.coordinates[0];
                 const needsSwap = Math.abs(coords[0][0]) < 90;
                 const normalizedCoords = needsSwap 
@@ -148,7 +176,7 @@ export default function ShowField({
         }
     }, [subFields, selectedField, fieldArea]);
 
-    const handleTouchStart = (e) => {
+    const handleTouchStart = (e) => {   
         setStartY(e.touches[0].clientY);
     };
 
@@ -197,9 +225,29 @@ export default function ShowField({
 
     const handleSaveProperties = async () => {
         try {
+            // Создаем новый сезон или обновляем существующий
+            const updatedSeasons = editedProperties.seasons || [];
+            const currentYear = new Date().getFullYear();
+            
+            const seasonIndex = updatedSeasons.findIndex(s => s.year === currentYear);
+            if (seasonIndex !== -1) {
+                updatedSeasons[seasonIndex] = {
+                    ...updatedSeasons[seasonIndex],
+                    ...currentSeason
+                };
+            } else {
+                updatedSeasons.push({
+                    ...currentSeason,
+                    year: currentYear
+                });
+            }
+
             const response = await axios.post('/api/fields/update', {
                 _id: selectedField,
-                properties: editedProperties
+                properties: {
+                    ...editedProperties,
+                    seasons: updatedSeasons
+                }
             });
 
             if (response.data.success) {
@@ -246,6 +294,45 @@ export default function ShowField({
         setEditingSubFieldId(subFieldId);
     };
 
+    useEffect(() => {
+        const loadExistingCrops = async () => {
+            try {
+                const response = await axios.get('/api/fields/get');
+                if (response.data.success) {
+                    // Собираем все уникальные культуры из всех полей и сезонов
+                    const crops = new Set();
+                    response.data.fields.forEach(field => {
+                        field.properties.seasons?.forEach(season => {
+                            if (season.crop) crops.add(season.crop);
+                        });
+                    });
+                    setExistingCrops(Array.from(crops));
+                }
+            } catch (error) {
+                console.error('Error loading existing crops:', error);
+            }
+        };
+
+        loadExistingCrops();
+    }, []);
+
+    const filteredCrops = existingCrops.filter(crop => 
+        crop.toLowerCase().includes(currentSeason.crop.toLowerCase())
+    );
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (!event.target.closest('.crop-input-container')) {
+                setShowCropSuggestions(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
     return field ? (
         <div 
             className={`show-field ${isExpanded ? 'expanded' : ''}`}
@@ -270,6 +357,16 @@ export default function ShowField({
                         <h3>{field.Name || 'Без названия'}</h3>
                         <p>Общая площадь поля: {fieldArea} га</p>
                         {field.descriptio && <p>Описание: {field.descriptio}</p>}
+                        
+                        {field.seasons && field.seasons[0] && (
+                            <div className="season-info">
+                                <h4>Текущий сезон</h4>
+                                <p>Культура: {field.seasons[0].crop || 'Не указана'}</p>
+                                <p>Дата сева: {field.seasons[0].sowingDate ? new Date(field.seasons[0].sowingDate).toLocaleDateString() : 'Не указана'}</p>
+                                <p>Дата сбора: {field.seasons[0].harvestDate ? new Date(field.seasons[0].harvestDate).toLocaleDateString() : 'Не указана'}</p>
+                            </div>
+                        )}
+
                         <button 
                             className="edit-properties-button"
                             onClick={() => setIsEditingProperties(true)}
@@ -294,6 +391,69 @@ export default function ShowField({
                                 onChange={(e) => handlePropertyChange('descriptio', e.target.value)}
                             />
                         </div>
+
+                        <div className="season-form">
+                            <h4>Информация о сезоне</h4>
+                            <div className="form-group">
+                                <label>Культура:</label>
+                                <div className="crop-input-container">
+                                    <input
+                                        type="text"
+                                        value={currentSeason.crop}
+                                        onChange={(e) => {
+                                            setCurrentSeason(prev => ({
+                                                ...prev,
+                                                crop: e.target.value
+                                            }));
+                                            setShowCropSuggestions(true);
+                                        }}
+                                        onFocus={() => setShowCropSuggestions(true)}
+                                    />
+                                    {showCropSuggestions && currentSeason.crop && filteredCrops.length > 0 && (
+                                        <div className="crop-suggestions">
+                                            {filteredCrops.map((crop, index) => (
+                                                <div
+                                                    key={index}
+                                                    className="crop-suggestion"
+                                                    onClick={() => {
+                                                        setCurrentSeason(prev => ({
+                                                            ...prev,
+                                                            crop: crop
+                                                        }));
+                                                        setShowCropSuggestions(false);
+                                                    }}
+                                                >
+                                                    {crop}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="form-group">
+                                <label>Дата сева:</label>
+                                <input
+                                    type="date"
+                                    value={currentSeason.sowingDate}
+                                    onChange={(e) => setCurrentSeason(prev => ({
+                                        ...prev,
+                                        sowingDate: e.target.value
+                                    }))}
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Дата сбора:</label>
+                                <input
+                                    type="date"
+                                    value={currentSeason.harvestDate}
+                                    onChange={(e) => setCurrentSeason(prev => ({
+                                        ...prev,
+                                        harvestDate: e.target.value
+                                    }))}
+                                />
+                            </div>
+                        </div>
+
                         <div className="form-actions">
                             <button onClick={handleSaveProperties}>Сохранить</button>
                             <button onClick={() => {
