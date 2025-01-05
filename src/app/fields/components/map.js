@@ -13,7 +13,7 @@ import L from 'leaflet'
 import AddNotes from './addNotes'
 import NoteModal from './noteModal'
 
-function DrawingControl({ selectedFieldData, onSubFieldCreate, subFields }) {
+function DrawingControl({ selectedFieldData, onSubFieldCreate, subFields, isProcessingArea, onProcessingAreaCreate }) {
   const map = useMap();
   let snappedPoint = null;
   let drawingLayer = null;
@@ -213,11 +213,7 @@ function DrawingControl({ selectedFieldData, onSubFieldCreate, subFields }) {
               checkPointInPolygon([point[1], point[0]], selectedFieldData.coordinates[0])
             );
 
-            const hasIntersection = subFields.some(subField => 
-              subField?.coordinates && checkPolygonsIntersect(coordinates, subField)
-            );
-
-            if (!allPointsInside || hasIntersection) {
+            if (!allPointsInside) {
               e.layer.setStyle({
                 color: 'red',
                 fillColor: 'red',
@@ -226,16 +222,38 @@ function DrawingControl({ selectedFieldData, onSubFieldCreate, subFields }) {
               });
               
               setTimeout(() => {
-                alert(hasIntersection 
-                  ? 'Подполя не должны пересекаться между собой'
-                  : 'Полигон должен находиться внутри границ родительского поля'
-                );
+                alert('Полигон должен находиться внутри границ родительского поля');
                 e.layer.remove();
               }, 100);
               return;
             }
 
-            onSubFieldCreate(coordinates);
+            // Если это территория обработки
+            if (isProcessingArea) {
+              onProcessingAreaCreate(coordinates);
+            } else {
+              // Существующая логика для подполей
+              const hasIntersection = subFields.some(subField => 
+                subField?.coordinates && checkPolygonsIntersect(coordinates, subField)
+              );
+
+              if (hasIntersection) {
+                e.layer.setStyle({
+                  color: 'red',
+                  fillColor: 'red',
+                  fillOpacity: 0.2,
+                  weight: 2
+                });
+                
+                setTimeout(() => {
+                  alert('Подполя не должны пересекаться между собой');
+                  e.layer.remove();
+                }, 100);
+                return;
+              }
+
+              onSubFieldCreate(coordinates);
+            }
           } catch (error) {
             console.error('Error:', error);
             e.layer.remove();
@@ -315,6 +333,8 @@ function Map({ fields }) {
   const [isAddingNote, setIsAddingNote] = useState(false);
   const [selectedPoint, setSelectedPoint] = useState(null);
   const [notes, setNotes] = useState([]);
+  const [processingArea, setProcessingArea] = useState(null);
+  const [isDrawingProcessingArea, setIsDrawingProcessingArea] = useState(false);
 
   useEffect(() => {
     // Здесь можно добавить логику загрузки полей с учетом сезона
@@ -640,6 +660,11 @@ function Map({ fields }) {
     }
   };
 
+  const handleProcessingAreaCreate = (coordinates) => {
+    setProcessingArea(coordinates);
+    setIsDrawingProcessingArea(false);
+  };
+
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       <style jsx global>{`
@@ -697,12 +722,27 @@ function Map({ fields }) {
           />
         ))}
 
-        {/* Компонент DrawingControl для создания подполей */}
-        {isDrawingMode && selectedField && (
+        {/* Отображение территории обработки */}
+        {processingArea && (
+          <Polygon 
+            positions={processingArea}
+            pathOptions={{ 
+              color: '#FFB800',
+              fillColor: '#FFB800',
+              fillOpacity: 0.3,
+              weight: 2
+            }}
+          />
+        )}
+
+        {/* Компонент DrawingControl с новыми пропсами */}
+        {(isDrawingMode || isDrawingProcessingArea) && selectedField && (
           <DrawingControl 
             selectedFieldData={fields.find(f => f._id === selectedField)}
             onSubFieldCreate={handleSubFieldCreate}
             subFields={subFields}
+            isProcessingArea={isDrawingProcessingArea}
+            onProcessingAreaCreate={handleProcessingAreaCreate}
           />
         )}
 
@@ -776,6 +816,8 @@ function Map({ fields }) {
           setIsEditingSubField={setIsEditingSubField}
           editingSubFieldId={editingSubFieldId}
           setEditingSubFieldId={setEditingSubFieldId}
+          isDrawingProcessingArea={isDrawingProcessingArea}
+          setIsDrawingProcessingArea={setIsDrawingProcessingArea}
         />
       )}
 

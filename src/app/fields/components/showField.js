@@ -4,6 +4,7 @@ import axios from 'axios'
 import { useState, useEffect } from 'react'
 import { area, polygon } from '@turf/turf'
 import * as turf from '@turf/turf'
+import CreateWork from './createWork'
 
 export default function ShowField({
     setShowFieldVisible, 
@@ -20,7 +21,9 @@ export default function ShowField({
     isEditingSubField,
     setIsEditingSubField,
     editingSubFieldId,
-    setEditingSubFieldId
+    setEditingSubFieldId,
+    isDrawingProcessingArea,
+    setIsDrawingProcessingArea
 }) {
     const [field, setField] = useState(null)
     const [fieldArea, setFieldArea] = useState(0)
@@ -54,6 +57,7 @@ export default function ShowField({
     });
     const [existingCrops, setExistingCrops] = useState([]);
     const [showCropSuggestions, setShowCropSuggestions] = useState(false);
+    const [isCreateWorkModalOpen, setIsCreateWorkModalOpen] = useState(false);
 
     const calculateAreaInHectares = (coordinates) => {
         try {
@@ -381,6 +385,11 @@ export default function ShowField({
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, []);
+
+    const handleSaveWork = (workData) => {
+        console.log('Сохраняем работу:', workData);
+        setIsCreateWorkModalOpen(false);
+    };
 
     return field ? (
         <div 
@@ -764,6 +773,40 @@ export default function ShowField({
                     {isDrawingMode ? 'Завершить создание подполя' : 'Создать подполе'}
                 </button>
             </div>
+
+            <button 
+                className="create-work-btn"
+                onClick={() => setIsCreateWorkModalOpen(true)}
+            >
+                Создать работу
+            </button>
+
+            {isCreateWorkModalOpen && field && (
+                <CreateWork
+                    selectedField={field}
+                    onClose={() => setIsCreateWorkModalOpen(false)}
+                    onSave={handleSaveWork}
+                    isDrawingProcessingArea={isDrawingProcessingArea}
+                    setIsDrawingProcessingArea={setIsDrawingProcessingArea}
+                    onDrawingModeChange={onDrawingModeChange}
+                />
+            )}
+
+            <style jsx>{`
+                .create-work-btn {
+                    background-color: #4CAF50;
+                    color: white;
+                    padding: 8px 16px;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    margin: 5px;
+                }
+
+                .create-work-btn:hover {
+                    background-color: #45a049;
+                }
+            `}</style>
         </div>
     ) : <div>Loading...</div>
 }
