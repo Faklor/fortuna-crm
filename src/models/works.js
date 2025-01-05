@@ -39,7 +39,16 @@ const worksSchema = new mongoose.Schema({
     status: {
         type: String,
         enum: ['planned', 'in_progress', 'completed', 'cancelled'],
-        default: 'planned'
+        default: 'planned',
+        get: function(status) {
+            const statusMap = {
+                'planned': 'Запланировано',
+                'in_progress': 'В процессе',
+                'completed': 'Завершено',
+                'cancelled': 'Отменено'
+            };
+            return statusMap[status] || status;
+        }
     },
     createdAt: {
         type: Date,

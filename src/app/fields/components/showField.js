@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import { area, polygon } from '@turf/turf'
 import * as turf from '@turf/turf'
 import CreateWork from './createWork'
+import '../scss/fieldWorks.scss'
 
 export default function ShowField({
     setShowFieldVisible, 
@@ -23,8 +24,11 @@ export default function ShowField({
     editingSubFieldId,
     setEditingSubFieldId,
     isDrawingProcessingArea,
-    setIsDrawingProcessingArea
+    setIsDrawingProcessingArea,
+    processingArea,
+    setProcessingArea
 }) {
+    console.log(selectedField)
     const [field, setField] = useState(null)
     const [fieldArea, setFieldArea] = useState(0)
     const [totalArea, setTotalArea] = useState(0)
@@ -58,6 +62,7 @@ export default function ShowField({
     const [existingCrops, setExistingCrops] = useState([]);
     const [showCropSuggestions, setShowCropSuggestions] = useState(false);
     const [isCreateWorkModalOpen, setIsCreateWorkModalOpen] = useState(false);
+    const [fieldWorks, setFieldWorks] = useState([]);
 
     const calculateAreaInHectares = (coordinates) => {
         try {
@@ -394,17 +399,49 @@ export default function ShowField({
 
     const handleSaveWork = async (workData) => {
         try {
-           
-            const response = await axios.post('/api/fields/works/add', workData);
-            
-            if (response.data.work) {
+            console.log(selectedField)
+            const dataToSave = {
+                ...workData,
+                fieldId: selectedField
+            };
+
+            console.log('Saving work with data:', dataToSave);
+
+            const response = await axios.post('/api/fields/works/add', dataToSave);
+
+            if (response.data.success) {
                 setIsCreateWorkModalOpen(false);
-                alert('Работа успешно создана');
+                if (onWorkCreate) {
+                    onWorkCreate(response.data.work);
+                }
             }
         } catch (error) {
             console.error('Error saving work:', error);
-            console.log('Work data that caused error:', workData);
-            alert('Ошибка при сохранении работы: ' + (error.response?.data?.error || error.message));
+            alert('Ошибка при сохранении работы');
+        }
+    };
+
+    const loadFieldWorks = async () => {
+        try {
+            const response = await axios.get(`/api/fields/works/getByField/${selectedField}`);
+            setFieldWorks(response.data);
+        } catch (error) {
+            console.error('Ошибка при загрузке работ:', error);
+        }
+    };
+
+    useEffect(() => {
+        if (selectedField) {
+            loadFieldWorks();
+        }
+    }, [selectedField]);
+
+    const handleStatusChange = async (workId, newStatus) => {
+        try {
+            await axios.patch(`/api/fields/works/updateStatus/${workId}`, { status: newStatus });
+            loadFieldWorks(); // Перезагружаем список работ
+        } catch (error) {
+            alert('Ошибка при обновлении статуса');
         }
     };
 
@@ -798,14 +835,13 @@ export default function ShowField({
                 Создать работу
             </button>
 
-            {isCreateWorkModalOpen && field && (
+            {isCreateWorkModalOpen && (
                 <CreateWork
-                    selectedField={selectedField}
                     onClose={() => setIsCreateWorkModalOpen(false)}
                     onSave={handleSaveWork}
+                    processingArea={processingArea}
                     isDrawingProcessingArea={isDrawingProcessingArea}
                     setIsDrawingProcessingArea={setIsDrawingProcessingArea}
-                    onDrawingModeChange={onDrawingModeChange}
                 />
             )}
 
@@ -824,6 +860,34 @@ export default function ShowField({
                     background-color: #45a049;
                 }
             `}</style>
+
+            <div className="field-works">
+                <h3>Работы на поле</h3>
+                <div className="works-list">
+                    {fieldWorks.map(work => (
+                        <div key={work._id} className="work-item">
+                            <div className="work-header">
+                                <h4>{work.name}</h4>
+                                <select 
+                                    value={work.status}
+                                    onChange={(e) => handleStatusChange(work._id, e.target.value)}
+                                    className={`work-status ${work.status}`}
+                                >
+                                    <option value="planned">Запланировано</option>
+                                    <option value="in_progress">В процессе</option>
+                                    <option value="completed">Завершено</option>
+                                    <option value="cancelled">Отменено</option>
+                                </select>
+                            </div>
+                            <div className="work-details">
+                                <p>Тип: {work.type}</p>
+                                <p>Дата: {new Date(work.plannedDate).toLocaleDateString()}</p>
+                                {work.description && <p>Описание: {work.description}</p>}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
         </div>
     ) : <div>Loading...</div>
 }

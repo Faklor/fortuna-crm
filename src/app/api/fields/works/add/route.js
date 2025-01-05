@@ -8,6 +8,7 @@ export async function POST(req) {
 
     try {
         const workData = await req.json();
+        console.log('Received work data:', workData);
 
         if (!workData.fieldId) {
             return NextResponse.json(
@@ -30,22 +31,23 @@ export async function POST(req) {
                 );
             }
 
-            // Создаем новую работу
+            // Создаем новую работу, сохраняя processingArea как есть
             const work = new Work({
                 fieldId: fieldId,
                 name: workData.name,
                 type: workData.type,
                 plannedDate: workData.plannedDate,
                 description: workData.description,
-                processingArea: workData.processingArea ? {
-                    type: 'Polygon',
-                    coordinates: [workData.processingArea]
-                } : undefined
+                processingArea: workData.processingArea,
+                status: workData.status || 'planned'
             });
+
+            console.log('Work to save:', work);
 
             await work.save();
 
             return NextResponse.json({
+                success: true,
                 message: 'Work created successfully',
                 work: work
             });

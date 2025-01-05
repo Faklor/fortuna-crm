@@ -818,6 +818,8 @@ function Map({ fields }) {
           setEditingSubFieldId={setEditingSubFieldId}
           isDrawingProcessingArea={isDrawingProcessingArea}
           setIsDrawingProcessingArea={setIsDrawingProcessingArea}
+          processingArea={processingArea}
+          setProcessingArea={setProcessingArea}
         />
       )}
 

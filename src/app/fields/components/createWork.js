@@ -1,104 +1,125 @@
 'use client'
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import '../scss/createWork.scss';
 
+// Определяем функцию вне компонента
+const handleProcessingAreaUpdate = (setWorkData, coordinates) => {
+    console.log('CreateWork: Updating processing area with coordinates:', coordinates);
+    setWorkData(prev => ({
+        ...prev,
+        processingArea: {
+            type: 'Polygon',
+            coordinates: [coordinates]
+        }
+    }));
+};
+
 function CreateWork({ 
-  selectedField, 
-  onClose, 
-  onSave,
-  isDrawingProcessingArea,
-  setIsDrawingProcessingArea,
-  onDrawingModeChange 
+    onClose, 
+    onSave, 
+    processingArea,
+    isDrawingProcessingArea, 
+    setIsDrawingProcessingArea 
 }) {
-  const [workData, setWorkData] = useState({
-    name: '',
-    type: '',
-    plannedDate: '',
-    description: ''
-  });
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log('Selected Field ID:', selectedField);
-    
-    onSave({
-      ...workData,
-      fieldId: selectedField,
-      processingArea: isDrawingProcessingArea ? processingArea : undefined
+    const [workData, setWorkData] = useState({
+        name: '',
+        type: '',
+        fieldId: '',
+        plannedDate: '',
+        description: '',
+        processingArea: processingArea
     });
-  };
 
-  return (
-    <div className="create-work-modal">
-      <div className="create-work-content">
-        <h2>Создание работы</h2>
+    useEffect(() => {
+        if (processingArea) {
+            console.log('Updating workData with new processingArea:', processingArea);
+            setWorkData(prev => ({
+                ...prev,
+                processingArea: processingArea
+            }));
+        }
+    }, [processingArea]);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
         
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Название работы:</label>
-            <input
-              type="text"
-              value={workData.name}
-              onChange={(e) => setWorkData({ ...workData, name: e.target.value })}
-              required
-            />
-          </div>
+        if (!workData.processingArea) {
+            alert('Необходимо выделить область обработки');
+            return;
+        }
 
-          <div className="form-group">
-            <label>Тип работы:</label>
-            <select
-              value={workData.type}
-              onChange={(e) => setWorkData({ ...workData, type: e.target.value })}
-              required
-            >
-              <option value="">Выберите тип работы</option>
-              <option value="plowing">Вспашка</option>
-              <option value="seeding">Посев</option>
-              <option value="fertilizing">Внесение удобрений</option>
-              <option value="spraying">Опрыскивание</option>
-              <option value="harvesting">Уборка</option>
-            </select>
-          </div>
+        console.log('Submitting work data:', workData);
+        onSave(workData);
+    };
 
-          <div className="form-group">
-            <label>Планируемая дата:</label>
-            <input
-              type="date"
-              value={workData.plannedDate}
-              onChange={(e) => setWorkData({ ...workData, plannedDate: e.target.value })}
-              required
-            />
-          </div>
+    return (
+        <div className="create-work-modal">
+            <div className="create-work-content">
+                <h2>Создание работы</h2>
+                
+                <form onSubmit={handleSubmit}>
+                    <div className="form-group">
+                        <label>Название работы:</label>
+                        <input
+                            type="text"
+                            value={workData.name}
+                            onChange={(e) => setWorkData({ ...workData, name: e.target.value })}
+                            required
+                        />
+                    </div>
 
-          <div className="form-group">
-            <label>Описание:</label>
-            <textarea
-              value={workData.description}
-              onChange={(e) => setWorkData({ ...workData, description: e.target.value })}
-            />
-          </div>
+                    <div className="form-group">
+                        <label>Тип работы:</label>
+                        <select
+                            value={workData.type}
+                            onChange={(e) => setWorkData({ ...workData, type: e.target.value })}
+                            required
+                        >
+                            <option value="">Выберите тип работы</option>
+                            <option value="plowing">Вспашка</option>
+                            <option value="seeding">Посев</option>
+                            <option value="fertilizing">Внесение удобрений</option>
+                            <option value="spraying">Опрыскивание</option>
+                            <option value="harvesting">Уборка</option>
+                        </select>
+                    </div>
 
-          <button 
-            type="button"
-            className="processing-area-btn"
-            onClick={() => {
-              setIsDrawingProcessingArea(!isDrawingProcessingArea);
-              onDrawingModeChange(false);
-            }}
-          >
-            {isDrawingProcessingArea ? 'Отменить выделение' : 'Выделить территорию обработки'}
-          </button>
+                    <div className="form-group">
+                        <label>Планируемая дата:</label>
+                        <input
+                            type="date"
+                            value={workData.plannedDate}
+                            onChange={(e) => setWorkData({ ...workData, plannedDate: e.target.value })}
+                            required
+                        />
+                    </div>
 
-          <div className="button-group">
-            <button type="submit" className="save-btn">Сохранить</button>
-            <button type="button" className="cancel-btn" onClick={onClose}>
-              Отмена
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
+                    <div className="form-group">
+                        <label>Описание:</label>
+                        <textarea
+                            value={workData.description}
+                            onChange={(e) => setWorkData({ ...workData, description: e.target.value })}
+                        />
+                    </div>
+
+                    <button 
+                        type="button"
+                        onClick={() => setIsDrawingProcessingArea(true)}
+                        className={workData.processingArea ? 'area-selected' : ''}
+                    >
+                        {workData.processingArea ? 'Область выделена ✓' : 'Выделить территорию обработки'}
+                    </button>
+
+                    <div className="button-group">
+                        <button type="submit">Сохранить</button>
+                        <button type="button" onClick={onClose}>Отмена</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
 }
 
+// Экспортируем функцию и компонент
+export { handleProcessingAreaUpdate };
 export default CreateWork; 

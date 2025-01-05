@@ -1,0 +1,64 @@
+.field-works {
+    margin-top: 20px;
+    padding: 15px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+    .works-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 10px;
+    }
+
+    .work-item {
+        padding: 12px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        background: #f9f9f9;
+
+        .work-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .work-status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+
+            &.planned {
+                background: #FFB800;
+                color: white;
+            }
+
+            &.in_progress {
+                background: #4a90e2;
+                color: white;
+            }
+
+            &.completed {
+                background: #4CAF50;
+                color: white;
+            }
+
+            &.cancelled {
+                background: #f44336;
+                color: white;
+            }
+        }
+
+        .work-details {
+            font-size: 14px;
+            color: #666;
+
+            p {
+                margin: 4px 0;
+            }
+        }
+    }
+}
