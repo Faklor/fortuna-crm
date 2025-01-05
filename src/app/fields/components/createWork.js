@@ -19,9 +19,12 @@ function CreateWork({
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    console.log('Selected Field ID:', selectedField);
+    
     onSave({
       ...workData,
-      fieldId: selectedField._id
+      fieldId: selectedField,
+      processingArea: isDrawingProcessingArea ? processingArea : undefined
     });
   };
 

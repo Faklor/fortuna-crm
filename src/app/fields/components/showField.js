@@ -148,6 +148,11 @@ export default function ShowField({
                     sowingDate: currentSeasonData.sowingDate ? new Date(currentSeasonData.sowingDate).toISOString().split('T')[0] : '',
                     harvestDate: currentSeasonData.harvestDate ? new Date(currentSeasonData.harvestDate).toISOString().split('T')[0] : ''
                 });
+                
+                setField({
+                    ...res.data,
+                    _id: res.data._id
+                });
 
                 // Расчет площади
                 const coords = res.data.coordinates[0];
@@ -157,6 +162,7 @@ export default function ShowField({
                     : coords;
                 const mainFieldArea = calculateAreaInHectares(normalizedCoords);
                 setFieldArea(mainFieldArea);
+                setField(res.data);
             })
         }
     }, [selectedField]);
@@ -386,9 +392,20 @@ export default function ShowField({
         };
     }, []);
 
-    const handleSaveWork = (workData) => {
-        console.log('Сохраняем работу:', workData);
-        setIsCreateWorkModalOpen(false);
+    const handleSaveWork = async (workData) => {
+        try {
+           
+            const response = await axios.post('/api/fields/works/add', workData);
+            
+            if (response.data.work) {
+                setIsCreateWorkModalOpen(false);
+                alert('Работа успешно создана');
+            }
+        } catch (error) {
+            console.error('Error saving work:', error);
+            console.log('Work data that caused error:', workData);
+            alert('Ошибка при сохранении работы: ' + (error.response?.data?.error || error.message));
+        }
     };
 
     return field ? (
@@ -783,7 +800,7 @@ export default function ShowField({
 
             {isCreateWorkModalOpen && field && (
                 <CreateWork
-                    selectedField={field}
+                    selectedField={selectedField}
                     onClose={() => setIsCreateWorkModalOpen(false)}
                     onSave={handleSaveWork}
                     isDrawingProcessingArea={isDrawingProcessingArea}
