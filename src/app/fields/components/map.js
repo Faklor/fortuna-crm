@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { MapContainer, TileLayer, Polygon, FeatureGroup, useMap, WMSTileLayer } from 'react-leaflet'
+import { MapContainer, TileLayer, Polygon, FeatureGroup, useMap, WMSTileLayer, Marker, Popup } from 'react-leaflet'
 import { EditControl } from 'react-leaflet-draw'
 import ShowField from './showField'
 import axios from 'axios'
@@ -10,6 +10,8 @@ import * as turf from '@turf/turf'
 import { useSearchParams } from 'next/navigation'
 import { LineUtil } from 'leaflet'
 import L from 'leaflet'
+import AddNotes from './addNotes'
+import NoteModal from './noteModal'
 
 function DrawingControl({ selectedFieldData, onSubFieldCreate, subFields }) {
   const map = useMap();
@@ -310,6 +312,9 @@ function Map({ fields }) {
   const [isEditingMainField, setIsEditingMainField] = useState(false);
   const [isEditingSubField, setIsEditingSubField] = useState(false);
   const [editingSubFieldId, setEditingSubFieldId] = useState(null);
+  const [isAddingNote, setIsAddingNote] = useState(false);
+  const [selectedPoint, setSelectedPoint] = useState(null);
+  const [notes, setNotes] = useState([]);
 
   useEffect(() => {
     // Здесь можно добавить логику загрузки полей с учетом сезона
@@ -536,6 +541,105 @@ function Map({ fields }) {
     }
   }, []);
 
+  // Обработчик клика по карте
+  const handleMapClick = (e) => {
+    if (isAddingNote) {
+      // Получаем координаты клика
+      const coordinates = {
+        lat: e.latlng.lat,
+        lng: e.latlng.lng
+      };
+      setSelectedPoint(coordinates);
+    }
+  };
+
+  // Обработчик сохранения заметки
+  const handleSaveNote = async (noteData) => {
+    try {
+        console.log('Saving note with data:', noteData);
+
+        const formData = new FormData();
+        formData.append('title', noteData.title);
+        formData.append('description', noteData.description);
+        formData.append('coordinates', JSON.stringify(noteData.coordinates));
+        
+        if (noteData.image) {
+            formData.append('image', noteData.image);
+        }
+
+        const response = await fetch('/api/notes/add', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+        console.log('Response data:', data);
+
+        if (data.success) {
+            setIsAddingNote(false);
+            setSelectedPoint(null);
+            alert('Заметка успешно добавлена');
+        } else {
+            throw new Error(data.error || 'Ошибка при сохранении заметки');
+        }
+    } catch (error) {
+        console.error('Detailed error:', error);
+        alert(`Ошибка при сохранении заметки: ${error.message}`);
+    }
+  };
+
+  // Загрузка заметок
+  useEffect(() => {
+    const fetchNotes = async () => {
+      try {
+        const response = await fetch('/api/notes');
+        const data = await response.json();
+        if (data.success) {
+          setNotes(data.notes);
+        }
+      } catch (error) {
+        console.error('Error fetching notes:', error);
+      }
+    };
+
+    fetchNotes();
+  }, []);
+
+  // Создаем кастомную иконку для заметок
+  const noteIcon = L.divIcon({
+    className: 'note-marker',
+    html: '<div class="marker-inner"></div>',
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
+    popupAnchor: [0, -10]
+  });
+
+  const handleDeleteNote = async (noteId) => {
+    if (window.confirm('Вы уверены, что хотите удалить эту заметку?')) {
+        try {
+            const response = await fetch('/api/notes/delete', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ noteId })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Удаляем заметку из локального состояния
+                setNotes(prevNotes => prevNotes.filter(note => note._id !== noteId));
+            } else {
+                throw new Error(data.error || 'Ошибка при удалении заметки');
+            }
+        } catch (error) {
+            console.error('Error deleting note:', error);
+            alert('Ошибка при удалении заметки');
+        }
+    }
+  };
+
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       <style jsx global>{`
@@ -550,6 +654,7 @@ function Map({ fields }) {
         center={defaultCenter} 
         zoom={13} 
         className='map'
+        onClick={handleMapClick}
       >
         {getMapLayer()}
 
@@ -600,6 +705,57 @@ function Map({ fields }) {
             subFields={subFields}
           />
         )}
+
+        {/* Добавляем обработчик клика на карту */}
+        <MapEvents onClick={handleMapClick} />
+
+        {/* Если есть выбранная точка, показываем маркер */}
+        {selectedPoint && (
+          <Marker 
+            position={[selectedPoint.lat, selectedPoint.lng]}
+            icon={new L.Icon({
+              iconUrl: '/marker-icon.png',
+              iconSize: [25, 41],
+              iconAnchor: [12, 41]
+            })}
+          />
+        )}
+
+        {/* Отображаем заметки на карте */}
+        {notes.map((note) => (
+          <Marker
+            key={note._id}
+            position={[note.coordinates.lat, note.coordinates.lng]}
+            icon={noteIcon}
+          >
+            <Popup>
+              <div className="note-popup">
+                <h3>{note.title}</h3>
+                <p>{note.description}</p>
+                {note.image && (
+                  <img 
+                    src={note.image} 
+                    alt={note.title}
+                    style={{ 
+                      maxWidth: '200px', 
+                      maxHeight: '150px',
+                      marginTop: '10px'
+                    }} 
+                  />
+                )}
+                <div className="note-date">
+                  {new Date(note.createdAt).toLocaleDateString()}
+                </div>
+                <button 
+                  className="delete-note-btn"
+                  onClick={() => handleDeleteNote(note._id)}
+                >
+                  Удалить заметку
+                </button>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
       </MapContainer>
 
       {/* Компонент ShowField */}
@@ -622,8 +778,42 @@ function Map({ fields }) {
           setEditingSubFieldId={setEditingSubFieldId}
         />
       )}
+
+      {/* Компонент добавления заметок */}
+      <AddNotes 
+        onAddNote={(status) => setIsAddingNote(status)} 
+      />
+
+      {/* Модальное окно для добавления информации о заметке */}
+      {selectedPoint && (
+        <NoteModal 
+          coordinates={selectedPoint}
+          onSave={handleSaveNote}
+          onClose={() => {
+            setSelectedPoint(null);
+            setIsAddingNote(false);
+          }}
+        />
+      )}
     </div>
   );
+}
+
+// Вспомогательный компонент для обработки событий карты
+function MapEvents({ onClick }) {
+  const map = useMap();
+  
+  useEffect(() => {
+    if (!map) return;
+    
+    map.on('click', onClick);
+    
+    return () => {
+      map.off('click', onClick);
+    };
+  }, [map, onClick]);
+  
+  return null;
 }
 
 export default Map;

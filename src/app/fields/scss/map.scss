@@ -235,3 +235,81 @@
     }
   }
 }
+
+.note-popup {
+    padding: 10px;
+    max-width: 250px;
+
+    h3 {
+        margin: 0 0 10px 0;
+        font-size: 16px;
+        color: #333;
+    }
+
+    p {
+        margin: 0 0 10px 0;
+        font-size: 14px;
+        color: #666;
+        line-height: 1.4;
+    }
+
+    img {
+        display: block;
+        width: 100%;
+        height: auto;
+        border-radius: 4px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .note-date {
+        margin-top: 10px;
+        font-size: 12px;
+        color: #999;
+        text-align: right;
+    }
+
+    .delete-note-btn {
+        margin-top: 10px;
+        padding: 8px 16px;
+        background-color: #ff4444;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        width: 100%;
+        font-size: 14px;
+        transition: background-color 0.2s;
+
+        &:hover {
+            background-color: #cc0000;
+        }
+    }
+}
+
+// Стили для маркера заметки при наведении
+.leaflet-marker-icon {
+    transition: transform 0.2s;
+
+    &:hover {
+        transform: scale(1.1);
+    }
+}
+
+.note-marker {
+    background: transparent;
+    border: none;
+
+    .marker-inner {
+        width: 20px;
+        height: 20px;
+        background: #2196f3; // или любой другой цвет
+        border: 2px solid white;
+        border-radius: 50%;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    &:hover .marker-inner {
+        transform: scale(1.1);
+        transition: transform 0.2s;
+    }
+}
