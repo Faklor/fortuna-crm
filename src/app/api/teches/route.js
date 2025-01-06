@@ -11,15 +11,7 @@ export async function GET(req){
 
     try{
         const tech = await Tech.find({})
-        // const tag = req.nextUrl.searchParams.get('objects')
-        // revalidateTag(tag)
-        // const path = req.nextUrl.searchParams.get('path')
-        // if (path) {
-        //     revalidatePath(path)
-        //     return NextResponse.json({ revalidated: true, tech: tech })
-        //   }
-        //await res.unstable_revalidate(path)
-        //console.log(req.query)
+    
         return NextResponse.json({ revalidated: true, tech: tech })
     }
     catch(e){

@@ -925,8 +925,34 @@ export default function ShowField({
                                 <div className="work-details">
                                     <p>Тип: {getWorkTypeName(work.type)}</p>
                                     <p>Дата: {new Date(work.plannedDate).toLocaleDateString()}</p>
-                                    {work.area && <p>Площадь обработки: {work.area} га</p>}
+                                    <p>Площадь обработки: {work.area} га</p>
                                     {work.description && <p>Описание: {work.description}</p>}
+                                    
+                                    <p>Работники:</p>
+                                    {work.workers && work.workers.length > 0 ? (
+                                        <ul>
+                                            {work.workers.map((worker, index) => (
+                                                <li key={`${work._id}-worker-${worker._id || index}`}>{worker.name}</li>
+                                            ))}
+                                        </ul>
+                                    ) : (
+                                        <ul>
+                                            <li key={`${work._id}-no-workers`}>•</li>
+                                        </ul>
+                                    )}
+                                    
+                                    <p>Техника:</p>
+                                    {work.equipment && work.equipment.length > 0 ? (
+                                        <ul>
+                                            {work.equipment.map((tech, index) => (
+                                                <li key={`${work._id}-tech-${tech._id || index}`}>{tech.name}</li>
+                                            ))}
+                                        </ul>
+                                    ) : (
+                                        <ul>
+                                            <li key={`${work._id}-no-tech`}>•</li>
+                                        </ul>
+                                    )}
                                 </div>
                             </div>
                         ))}

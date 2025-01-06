@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import '../scss/createWork.scss';
 import * as turf from '@turf/turf';
+import axios from 'axios';
 
 // Определяем функцию вне компонента
 const handleProcessingAreaUpdate = (setWorkData, coordinates) => {
@@ -31,6 +32,31 @@ function CreateWork({
         processingArea: processingArea,
         area: 0
     });
+
+    // Добавляем новые состояния для работников и техники
+    const [workers, setWorkers] = useState([]);
+    const [equipment, setEquipment] = useState([]);
+
+    // Добавляем загрузку работников и техники при монтировании компонента
+    useEffect(() => {
+        const loadData = async () => {
+            try {
+                const [workersRes, equipmentRes] = await Promise.all([
+                    axios.get('/api/workers'),
+                    axios.get('/api/teches')
+                ]);
+                
+                // Проверяем, что получили массивы
+                setWorkers(Array.isArray(workersRes.data) ? workersRes.data : []);
+                setEquipment(Array.isArray(equipmentRes.data.tech) ? equipmentRes.data.tech : []);
+            } catch (error) {
+                console.error('Error loading workers and equipment:', error);
+                setWorkers([]);
+                setEquipment([]);
+            }
+        };
+        loadData();
+    }, []);
 
     // Функция расчета площади
     const calculateArea = (processingArea) => {
@@ -146,6 +172,42 @@ function CreateWork({
                             <span>{workData.area} га</span>
                         </div>
                     )}
+
+                    <div className="form-group">
+                        <label>Работники:</label>
+                        <select
+                            multiple
+                            value={workData.workers || []}
+                            onChange={(e) => setWorkData({
+                                ...workData,
+                                workers: Array.from(e.target.selectedOptions, option => option.value)
+                            })}
+                        >
+                            {Array.isArray(workers) && workers.map(worker => (
+                                <option key={worker._id} value={worker._id}>
+                                    {worker.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="form-group">
+                        <label>Техника:</label>
+                        <select
+                            multiple
+                            value={workData.equipment || []}
+                            onChange={(e) => setWorkData({
+                                ...workData,
+                                equipment: Array.from(e.target.selectedOptions, option => option.value)
+                            })}
+                        >
+                            {Array.isArray(equipment) && equipment.map(tech => (
+                                <option key={tech._id} value={tech._id}>
+                                    {tech.catagory ? `${tech.catagory}` : ''} {tech.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
 
                     <div className="button-group">
                         <button type="submit">Сохранить</button>

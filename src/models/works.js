@@ -58,7 +58,15 @@ const worksSchema = new mongoose.Schema({
     updatedAt: {
         type: Date,
         default: Date.now
-    }
+    },
+    workers: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Worker'
+    }],
+    equipment: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Tech'
+    }]
     
 })
 

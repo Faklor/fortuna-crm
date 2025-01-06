@@ -53,7 +53,9 @@ export async function POST(req) {
                     coordinates: [workData.processingArea.coordinates[0].map(coord => [coord[0], coord[1]])]
                 },
                 status: workData.status || 'planned',
-                area: areaInHectares
+                area: areaInHectares,
+                workers: workData.workers || [],
+                equipment: workData.equipment || []
             });
 
             await work.save();
