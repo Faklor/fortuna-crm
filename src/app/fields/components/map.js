@@ -8,7 +8,6 @@ import 'leaflet-draw/dist/leaflet.draw.css'
 import '../scss/map.scss'
 import * as turf from '@turf/turf'
 import { useSearchParams } from 'next/navigation'
-import { LineUtil } from 'leaflet'
 import L from 'leaflet'
 import AddNotes from './addNotes'
 import NoteModal from './noteModal'
@@ -16,7 +15,6 @@ import NoteModal from './noteModal'
 function DrawingControl({ selectedFieldData, onSubFieldCreate, subFields, isProcessingArea, onProcessingAreaCreate }) {
   const map = useMap();
   let snappedPoint = null;
-  let drawingLayer = null;
   // Функция очистки индикатора магнита
   const clearSnapIndicator = () => {
     const indicator = document.querySelector('.snap-indicator');
@@ -118,7 +116,6 @@ function DrawingControl({ selectedFieldData, onSubFieldCreate, subFields, isProc
           e.layer._snappedPoint.lng = snappedPoint[0];
         }
 
-        console.log('Snapped to point:', snappedPoint, 'Distance:', closestSegment.distance);
       } else {
         // Убираем индикатор если нет привязки
         const indicator = document.querySelector('.snap-indicator');
@@ -276,7 +273,6 @@ function DrawingControl({ selectedFieldData, onSubFieldCreate, subFields, isProc
             map.off('click');
             clearSnapIndicator();
             snappedPoint = null;
-            drawingLayer = null;
           });
         }}
         draw={{
@@ -448,88 +444,6 @@ function Map({ fields }) {
     setIsDrawingMode(false);
   };
 
-  const handleSubFieldsUpdate = () => {
-    setSubFieldsVersion(prev => prev + 1);
-  };
-
-  // Функция для получения доступных дат
-  const fetchAvailableDates = async (mapType) => {
-    if (mapType === 'satellite') return;
-
-    try {
-      setIsLoading(true);
-      const response = await fetch(config.capabilities);
-      const text = await response.text();
-      const parser = new DOMParser();
-      const xmlDoc = parser.parseFromString(text, "text/xml");
-      
-      // Получаем временной диапазон из Capabilities
-      const dimension = xmlDoc.querySelector('Dimension[name="time"]');
-      if (dimension) {
-        const timeRange = dimension.textContent.trim();
-        const dates = timeRange.split(',').map(date => {
-          // Преобразуем формат даты если необходимо
-          return date.split('T')[0];
-        }).filter(Boolean);
-        
-        setAvailableDates(dates);
-      }
-    } catch (error) {
-      console.error('Error fetching available dates:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleFieldUpdate = async (updatedCoordinates, fieldId, isSubField = false) => {
-    try {
-      const endpoint = isSubField ? '/api/fields/subFields/update' : '/api/fields/update';
-      const response = await axios.post(endpoint, {
-        _id: fieldId,
-        coordinates: [updatedCoordinates.map(coord => [coord[0], coord[1]])],
-        geometryType: "Polygon"
-      });
-      
-      if (response.data.success) {
-        if (isSubField) {
-          // Обновляем состояние подполей
-          setSubFields(prev => prev.map(field => 
-            field._id === fieldId 
-              ? { ...field, coordinates: [updatedCoordinates] }
-              : field
-          ));
-        }
-        setIsEditingMainField(false);
-      }
-    } catch (error) {
-      console.error('Error updating field:', error);
-      alert('Ошибка при обновлении поля');
-    }
-  };
-
-  // Функция для обновления границ подполя
-  const handleSubFieldUpdate = async (updatedCoordinates, subFieldId) => {
-    try {
-        const response = await axios.post('/api/fields/subFields/update', {
-            _id: subFieldId,
-            coordinates: updatedCoordinates
-        });
-        
-        if (response.data.success) {
-            setSubFields(prev => prev.map(field => 
-                field._id === subFieldId 
-                    ? { ...field, coordinates: updatedCoordinates }
-                    : field
-            ));
-            setIsEditingSubField(false);
-            setEditingSubFieldId(null);
-        }
-    } catch (error) {
-        console.error('Error updating subfield:', error);
-        alert('Ошибка при обновлении границ подполя');
-    }
-  };
-
   useEffect(() => {
     if (L.drawLocal) {
       // Переопределяем тексты для всех действий редактирования
@@ -576,7 +490,7 @@ function Map({ fields }) {
   // Обработчик сохранения заметки
   const handleSaveNote = async (noteData) => {
     try {
-        console.log('Saving note with data:', noteData);
+        
 
         const formData = new FormData();
         formData.append('title', noteData.title);
@@ -593,7 +507,6 @@ function Map({ fields }) {
         });
 
         const data = await response.json();
-        console.log('Response data:', data);
 
         if (data.success) {
             setIsAddingNote(false);

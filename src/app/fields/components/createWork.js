@@ -4,7 +4,7 @@ import '../scss/createWork.scss';
 
 // Определяем функцию вне компонента
 const handleProcessingAreaUpdate = (setWorkData, coordinates) => {
-    console.log('CreateWork: Updating processing area with coordinates:', coordinates);
+    
     setWorkData(prev => ({
         ...prev,
         processingArea: {
@@ -32,7 +32,7 @@ function CreateWork({
 
     useEffect(() => {
         if (processingArea) {
-            console.log('Updating workData with new processingArea:', processingArea);
+           
             setWorkData(prev => ({
                 ...prev,
                 processingArea: processingArea
@@ -48,7 +48,7 @@ function CreateWork({
             return;
         }
 
-        console.log('Submitting work data:', workData);
+       
         onSave(workData);
     };
 

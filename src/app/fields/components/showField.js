@@ -28,7 +28,7 @@ export default function ShowField({
     processingArea,
     setProcessingArea
 }) {
-    console.log(selectedField)
+    
     const [field, setField] = useState(null)
     const [fieldArea, setFieldArea] = useState(0)
     const [totalArea, setTotalArea] = useState(0)
@@ -67,7 +67,7 @@ export default function ShowField({
     const calculateAreaInHectares = (coordinates) => {
         try {
             if (!coordinates || coordinates.length < 3) {
-                console.error('Invalid coordinates array:', coordinates);
+                
                 return 0;
             }
 
@@ -399,10 +399,10 @@ export default function ShowField({
 
     const handleSaveWork = async (workData) => {
         try {
-            console.log(selectedField)
             const dataToSave = {
                 ...workData,
-                fieldId: selectedField
+                fieldId: selectedField,
+                status: 'planned'  // Добавляем статус по умолчанию
             };
 
             console.log('Saving work with data:', dataToSave);
@@ -410,14 +410,24 @@ export default function ShowField({
             const response = await axios.post('/api/fields/works/add', dataToSave);
 
             if (response.data.success) {
+                // Обновляем список работ локально
+                setFieldWorks(prev => [...prev, response.data.work]);
+                // Очищаем область обработки
+                setProcessingArea(null);
+                // Закрываем модальное окно
                 setIsCreateWorkModalOpen(false);
-                if (onWorkCreate) {
-                    onWorkCreate(response.data.work);
-                }
+                // Сбрасываем режим рисования
+                setIsDrawingProcessingArea(false);
+                return; // Добавляем return чтобы прервать выполнение функции
             }
+            
+            // Если нет success в ответе, выбрасываем ошибку
+            throw new Error(response.data.error || 'Ошибка при сохранении работы');
+
         } catch (error) {
             console.error('Error saving work:', error);
             alert('Ошибка при сохранении работы');
+            // НЕ закрываем модальное окно при ошибке
         }
     };
 
@@ -837,6 +847,7 @@ export default function ShowField({
 
             {isCreateWorkModalOpen && (
                 <CreateWork
+                    fieldId={selectedField._id}
                     onClose={() => setIsCreateWorkModalOpen(false)}
                     onSave={handleSaveWork}
                     processingArea={processingArea}

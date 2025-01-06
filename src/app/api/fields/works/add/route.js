@@ -8,7 +8,6 @@ export async function POST(req) {
 
     try {
         const workData = await req.json();
-        console.log('Received work data:', workData);
 
         if (!workData.fieldId) {
             return NextResponse.json(
@@ -42,7 +41,7 @@ export async function POST(req) {
                 status: workData.status || 'planned'
             });
 
-            console.log('Work to save:', work);
+           
 
             await work.save();
 
