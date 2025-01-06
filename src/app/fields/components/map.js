@@ -331,6 +331,7 @@ function Map({ fields }) {
   const [notes, setNotes] = useState([]);
   const [processingArea, setProcessingArea] = useState(null);
   const [isDrawingProcessingArea, setIsDrawingProcessingArea] = useState(false);
+  const [fieldWorks, setFieldWorks] = useState([]);
 
   useEffect(() => {
     // Здесь можно добавить логику загрузки полей с учетом сезона
@@ -574,8 +575,43 @@ function Map({ fields }) {
   };
 
   const handleProcessingAreaCreate = (coordinates) => {
-    setProcessingArea(coordinates);
+    // Преобразуем координаты в правильный формат GeoJSON
+    const formattedCoordinates = {
+        type: 'Polygon',
+        coordinates: [coordinates.map(coord => [coord[1], coord[0]])] // Меняем местами lat и lng
+    };
+    
+    setProcessingArea(formattedCoordinates);
     setIsDrawingProcessingArea(false);
+  };
+
+  // Загрузка работ при выборе поля
+  useEffect(() => {
+    const loadFieldWorks = async () => {
+        if (selectedField) {
+            try {
+                const response = await axios.get(`/api/fields/works/getByField/${selectedField}`);
+                if (response.data) {
+                    setFieldWorks(response.data);
+                }
+            } catch (error) {
+                console.error('Error loading field works:', error);
+            }
+        }
+    };
+
+    loadFieldWorks();
+  }, [selectedField]);
+
+  const handleWorkStatusUpdate = (workId, newStatus) => {
+    // Обновляем отображение работ на карте
+    setFieldWorks(prevWorks => 
+        prevWorks.map(work => 
+            work._id === workId 
+                ? { ...work, status: newStatus }
+                : work
+        )
+    );
   };
 
   return (
@@ -709,6 +745,33 @@ function Map({ fields }) {
             </Popup>
           </Marker>
         ))}
+
+        {/* Отображение зон обработки для всех работ */}
+        {fieldWorks && fieldWorks.length > 0 && fieldWorks.map((work, index) => (
+            work.processingArea && (
+                <Polygon 
+                    key={`work-area-${work._id}`}
+                    positions={work.processingArea.coordinates[0].map(coord => [coord[1], coord[0]])}
+                    pathOptions={{ 
+                        color: getWorkTypeColor(work.type),
+                        fillColor: getWorkTypeColor(work.type),
+                        fillOpacity: 0.3,
+                        weight: 2
+                    }}
+                >
+                    <Popup>
+                        <div>
+                            <h4>{work.name}</h4>
+                            <p>Тип: {getWorkTypeName(work.type)}</p>
+                            <p>Дата: {new Date(work.plannedDate).toLocaleDateString()}</p>
+                            <p>Статус: {getWorkStatusName(work.status)}</p>
+                            <p>Площадь: {work.area} га</p>
+                            {work.description && <p>Описание: {work.description}</p>}
+                        </div>
+                    </Popup>
+                </Polygon>
+            )
+        ))}
       </MapContainer>
 
       {/* Компонент ShowField */}
@@ -733,6 +796,7 @@ function Map({ fields }) {
           setIsDrawingProcessingArea={setIsDrawingProcessingArea}
           processingArea={processingArea}
           setProcessingArea={setProcessingArea}
+          onWorkStatusUpdate={handleWorkStatusUpdate}
         />
       )}
 
@@ -772,6 +836,38 @@ function MapEvents({ onClick }) {
   
   return null;
 }
+
+// Вспомогательные функции
+const getWorkTypeColor = (type) => {
+  const colors = {
+    plowing: '#8B4513',     // Коричневый для вспашки
+    seeding: '#32CD32',     // Зеленый для посева
+    fertilizing: '#FFD700',  // Желтый для удобрений
+    spraying: '#00BFFF',    // Голубой для опрыскивания
+    harvesting: '#FFA500'    // Оранжевый для уборки
+  };
+  return colors[type] || '#808080';
+};
+
+const getWorkTypeName = (type) => {
+  const names = {
+    plowing: 'Вспашка',
+    seeding: 'Посев',
+    fertilizing: 'Внесение удобрений',
+    spraying: 'Опрыскивание',
+    harvesting: 'Уборка'
+  };
+  return names[type] || type;
+};
+
+const getWorkStatusName = (status) => {
+  const names = {
+    planned: 'Запланировано',
+    inProgress: 'В процессе',
+    completed: 'Завершено'
+  };
+  return names[status] || status;
+};
 
 export default Map;
 

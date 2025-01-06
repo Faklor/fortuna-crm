@@ -29,11 +29,11 @@ const worksSchema = new mongoose.Schema({
         type: {
             type: String,
             enum: ['Polygon'],
-            default: 'Polygon'
+            required: true
         },
         coordinates: {
-            type: [[[Number]]], // массив массивов координат для полигона
-            required: false
+            type: [[[Number]]],
+            required: true
         }
     },
     status: {
@@ -50,6 +50,7 @@ const worksSchema = new mongoose.Schema({
             return statusMap[status] || status;
         }
     },
+    area: { type: Number, required: true },
     createdAt: {
         type: Date,
         default: Date.now

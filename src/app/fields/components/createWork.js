@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react';
 import '../scss/createWork.scss';
+import * as turf from '@turf/turf';
 
 // Определяем функцию вне компонента
 const handleProcessingAreaUpdate = (setWorkData, coordinates) => {
@@ -27,15 +28,36 @@ function CreateWork({
         fieldId: '',
         plannedDate: '',
         description: '',
-        processingArea: processingArea
+        processingArea: processingArea,
+        area: 0
     });
+
+    // Функция расчета площади
+    const calculateArea = (processingArea) => {
+        if (!processingArea || !processingArea.coordinates) return 0;
+        
+        try {
+            const geojsonPolygon = {
+                type: "Feature",
+                properties: {},
+                geometry: processingArea
+            };
+            
+            const areaInSquareMeters = turf.area(geojsonPolygon);
+            return Math.round((areaInSquareMeters / 10000) * 100) / 100; // Конвертируем в гектары
+        } catch (error) {
+            console.error('Error calculating area:', error);
+            return 0;
+        }
+    };
 
     useEffect(() => {
         if (processingArea) {
-           
+            const area = calculateArea(processingArea);
             setWorkData(prev => ({
                 ...prev,
-                processingArea: processingArea
+                processingArea: processingArea,
+                area: area
             }));
         }
     }, [processingArea]);
@@ -48,8 +70,16 @@ function CreateWork({
             return;
         }
 
+        // Убедимся, что processingArea в правильном формате
+        const workDataToSave = {
+            ...workData,
+            processingArea: {
+                type: 'Polygon',
+                coordinates: Array.isArray(workData.processingArea) ? [workData.processingArea] : workData.processingArea.coordinates
+            }
+        };
        
-        onSave(workData);
+        onSave(workDataToSave);
     };
 
     return (
@@ -109,6 +139,13 @@ function CreateWork({
                     >
                         {workData.processingArea ? 'Область выделена ✓' : 'Выделить территорию обработки'}
                     </button>
+
+                    {workData.processingArea && (
+                        <div className="form-group">
+                            <label>Площадь обработки:</label>
+                            <span>{workData.area} га</span>
+                        </div>
+                    )}
 
                     <div className="button-group">
                         <button type="submit">Сохранить</button>

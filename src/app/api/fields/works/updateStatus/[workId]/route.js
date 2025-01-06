@@ -6,7 +6,7 @@ export async function PATCH(request, { params }) {
     await dbConnect();
 
     try {
-        const { workId } = params;
+        const workId = params.workId;
         const { status } = await request.json();
 
         const work = await Work.findByIdAndUpdate(
@@ -15,11 +15,13 @@ export async function PATCH(request, { params }) {
             { new: true }
         );
 
-        return NextResponse.json(work);
+        if (!work) {
+            return NextResponse.json({ success: false, error: 'Работа не найдена' }, { status: 404 });
+        }
+
+        return NextResponse.json({ success: true, work });
     } catch (error) {
-        return NextResponse.json(
-            { error: error.message },
-            { status: 500 }
-        );
+        console.error('Error updating work status:', error);
+        return NextResponse.json({ success: false, error: 'Ошибка при обновлении статуса работы' }, { status: 500 });
     }
 } 
