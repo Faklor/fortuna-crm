@@ -438,4 +438,24 @@
     padding: 4px 8px;
 }
 
-
+.work-details {
+    ul {
+      list-style: none;
+      padding-left: 15px;
+      margin: 5px 0;
+  
+      li {
+        position: relative;
+        padding: 3px 0;
+        color: #666;
+        font-size: 0.9em;
+  
+        &:before {
+          content: "•";
+          position: absolute;
+          left: -12px;
+          color: #888;
+        }
+      }
+    }
+  }

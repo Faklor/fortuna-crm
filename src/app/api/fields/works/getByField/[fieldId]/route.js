@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Work from '@/models/works';
+import '@/models/workers';
+import '@/models/tech';
 import mongoose from 'mongoose';
 
 export async function GET(request, { params: paramsPromise }) {
