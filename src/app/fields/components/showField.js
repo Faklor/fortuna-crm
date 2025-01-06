@@ -273,8 +273,15 @@ export default function ShowField({
             });
 
             if (response.data.success) {
-                setField(response.data.data.properties);
+                // Обновляем состояние, сохраняя структуру объекта field
+                setField(prev => ({
+                    ...prev,
+                    properties: response.data.data.properties
+                }));
+                setEditedProperties(response.data.data.properties);
                 setIsEditingProperties(false);
+                // НЕ закрываем окно просмотра поля
+                // setShowFieldVisible(false); - убираем эту строку если она есть
             }
         } catch (error) {
             console.error('Error updating field properties:', error);
@@ -486,7 +493,7 @@ export default function ShowField({
         return names[type] || type;
     };
 
-    return field ? (
+    return field && field.properties ? (
         <div 
             className={`show-field ${isExpanded ? 'expanded' : ''}`}
             onTouchStart={handleTouchStart}
@@ -507,11 +514,12 @@ export default function ShowField({
             <div className="field-info">
                 {!isEditingProperties ? (
                     <>
-                        <h3>{field.Name || 'Без названия'}</h3>
+                    
+                        <h3>{field?.properties?.Name || 'Без названия'}</h3>
                         <p>Общая площадь поля: {fieldArea} га</p>
-                        {field.descriptio && <p>Описание: {field.descriptio}</p>}
+                        {field?.properties?.descriptio && <p>Описание: {field.properties.descriptio}</p>}
                         
-                        {field.seasons && field.seasons[0] && (
+                        {field?.properties?.seasons && field.properties.seasons[0] && (
                             field.seasons[0].crop || 
                             field.seasons[0].variety ||
                             field.seasons[0].yield ||
