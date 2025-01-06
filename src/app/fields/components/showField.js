@@ -519,29 +519,23 @@ export default function ShowField({
                         <p>Общая площадь поля: {fieldArea} га</p>
                         {field?.properties?.descriptio && <p>Описание: {field.properties.descriptio}</p>}
                         
-                        {field?.properties?.seasons && field.properties.seasons[0] && (
-                            field.seasons[0].crop || 
-                            field.seasons[0].variety ||
-                            field.seasons[0].yield ||
-                            field.seasons[0].sowingDate || 
-                            field.seasons[0].harvestDate
-                        ) && (
+                        {field?.properties?.seasons?.[0] && (
                             <div className="season-info">
                                 <h4>Текущий сезон</h4>
-                                {field.seasons[0].crop && (
-                                    <p>Культура: {field.seasons[0].crop}</p>
+                                {field.properties.seasons[0].crop && (
+                                    <p>Культура: {field.properties.seasons[0].crop}</p>
                                 )}
-                                {field.seasons[0].variety && (
-                                    <p>Сорт: {field.seasons[0].variety}</p>
+                                {field.properties.seasons[0].variety && (
+                                    <p>Сорт: {field.properties.seasons[0].variety}</p>
                                 )}
-                                {field.seasons[0].yield && (
-                                    <p>Средняя урожайность: {field.seasons[0].yield} ц/га</p>
+                                {field.properties.seasons[0].yield && (
+                                    <p>Средняя урожайность: {field.properties.seasons[0].yield} ц/га</p>
                                 )}
-                                {field.seasons[0].sowingDate && (
-                                    <p>Дата сева: {new Date(field.seasons[0].sowingDate).toLocaleDateString()}</p>
+                                {field.properties.seasons[0].sowingDate && (
+                                    <p>Дата сева: {new Date(field.properties.seasons[0].sowingDate).toLocaleDateString()}</p>
                                 )}
-                                {field.seasons[0].harvestDate && (
-                                    <p>Дата сбора: {new Date(field.seasons[0].harvestDate).toLocaleDateString()}</p>
+                                {field.properties.seasons[0].harvestDate && (
+                                    <p>Дата сбора: {new Date(field.properties.seasons[0].harvestDate).toLocaleDateString()}</p>
                                 )}
                             </div>
                         )}
