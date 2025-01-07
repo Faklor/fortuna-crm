@@ -538,6 +538,42 @@ export default function ShowField({
         }
     }, [selectedField]);
 
+    // Добавьте функцию удаления работы
+    const handleDeleteWork = async (workId, e) => {
+        e.stopPropagation(); // Предотвращаем всплытие события
+
+        if (window.confirm('Вы уверены, что хотите удалить эту работу?')) {
+            try {
+                const response = await fetch(`/api/fields/works/delete/${workId}`, {
+                    method: 'DELETE',
+                });
+
+                if (!response.ok) {
+                    throw new Error('Ошибка при удалении работы');
+                }
+
+                // Обновляем список работ после удаления
+                const updatedWorks = fieldWorks.filter(work => work._id !== workId);
+                setFieldWorks(updatedWorks);
+
+                // Если удаляем выбранную работу, снимаем выделение
+                if (selectedWork?._id === workId) {
+                    setSelectedWork(null);
+                    onWorkSelect(null);
+                }
+
+                // Обновляем архив, если работа была оттуда
+                if (archiveWorks.some(work => work._id === workId)) {
+                    const updatedArchive = archiveWorks.filter(work => work._id !== workId);
+                    setArchiveWorks(updatedArchive);
+                }
+            } catch (error) {
+                console.error('Error deleting work:', error);
+                alert('Ошибка при удалении работы');
+            }
+        }
+    };
+
     return field && field.properties ? (
         <div 
             className={`show-field ${isExpanded ? 'expanded' : ''}`}
@@ -971,6 +1007,12 @@ export default function ShowField({
                                             Завершить
                                         </button>
                                     )}
+                                    <button 
+                                        className="delete-work-btn"
+                                        onClick={(e) => handleDeleteWork(work._id, e)}
+                                    >
+                                        ✕
+                                    </button>
                                 </div>
                             </div>
                             <div className="work-details">
@@ -1054,7 +1096,15 @@ export default function ShowField({
                             >
                                 <div className="work-header">
                                     <h4>{work.name}</h4>
-                                    <span className="work-status completed">Завершено</span>
+                                    <div className="work-status-controls">
+                                        <span className="work-status completed">Завершено</span>
+                                        <button 
+                                            className="delete-work-btn"
+                                            onClick={(e) => handleDeleteWork(work._id, e)}
+                                        >
+                                            ✕
+                                        </button>
+                                    </div>
                                 </div>
                                 <div className="work-details">
                                     <p>Тип: {getWorkTypeName(work.type)}</p>
