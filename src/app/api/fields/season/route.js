@@ -1,20 +1,34 @@
-import dbConnet from "@/lib/db"
-import Seasons from '@/models/seasons'
+import dbConnect from "@/lib/db"
+import Season from '@/models/seasons'
 import { NextRequest, NextResponse } from "next/server"
 
-export async function GET(){
-    await dbConnet()
+export async function GET() {
+    await dbConnect();
     
-
-    try{
-        //const add = await Seasons.create({name:'2025'})
-        const seasons = await Seasons.find({})
-        //console.log(Seasons)
-        return NextResponse.json(seasons)
-        //return NextResponse.json('')
+    try {
+        const seasons = await Season.find().sort({ name: -1 }); // Сортировка по убыванию
+        return NextResponse.json(seasons);
+    } catch (error) {
+        return NextResponse.json(
+            { error: error.message },
+            { status: 500 }
+        );
     }
-    catch(e){
-        return NextResponse.json(e.message)
-    }
+}
 
+export async function POST(req) {
+    await dbConnect();
+    
+    try {
+        const data = await req.json();
+        const season = new Season(data);
+        await season.save();
+        
+        return NextResponse.json(season);
+    } catch (error) {
+        return NextResponse.json(
+            { error: error.message },
+            { status: 500 }
+        );
+    }
 }

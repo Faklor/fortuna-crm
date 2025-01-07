@@ -355,7 +355,10 @@ function Map({ fields }) {
   useEffect(() => {
     const loadAllSubFields = async () => {
       try {
-        const response = await axios.get('/api/fields/subFields/get');
+        // Получаем только подполя для текущего сезона
+        const response = await axios.get('/api/fields/subFields/get', {
+          params: { season: season }
+        });
         if (response.data.success) {
           setSubFields(response.data.subFields);
         }
@@ -365,7 +368,16 @@ function Map({ fields }) {
     };
 
     loadAllSubFields();
-  }, [subFieldsVersion]);
+    // Добавляем season в зависимости
+  }, [subFieldsVersion, season]);
+
+  // При смене сезона сбрасываем выбранное поле и подполя
+  useEffect(() => {
+    setSelectedField(null);
+    setSelectedSubField(null);
+    setShowFieldVisible(false);
+    setIsDrawingMode(false);
+  }, [season]);
 
   const handleFieldSelect = (fieldId) => {
     // Если выбирается другое поле, сбрасываем все режимы редактирования
