@@ -66,6 +66,11 @@ export default function ShowField({
     const [isCreateWorkModalOpen, setIsCreateWorkModalOpen] = useState(false);
     const [fieldWorks, setFieldWorks] = useState([]);
     const [selectedWork, setSelectedWork] = useState(null);
+    const [archiveDateRange, setArchiveDateRange] = useState({
+        startDate: '',
+        endDate: ''
+    });
+    const [archiveWorks, setArchiveWorks] = useState([]);
 
     const calculateAreaInHectares = (coordinates) => {
         try {
@@ -498,16 +503,40 @@ export default function ShowField({
         onWorkSelect(newSelectedWork?.processingArea || null);
     };
 
-    // Сортируем работы по дате (от будущих к прошлым)
+    // Обновляем сортировку и добавляем фильтрацию
     const sortedWorks = useMemo(() => {
         if (!fieldWorks) return [];
         
-        return [...fieldWorks].sort((a, b) => {
-            const dateA = new Date(a.plannedDate);
-            const dateB = new Date(b.plannedDate);
-            return dateB - dateA; // Сортировка от новых к старым
-        });
+        return [...fieldWorks]
+            .filter(work => work.status !== 'completed') // Фильтруем завершенные работы
+            .sort((a, b) => {
+                const dateA = new Date(a.plannedDate);
+                const dateB = new Date(b.plannedDate);
+                return dateB - dateA; // Сортировка от новых к старым
+            });
     }, [fieldWorks]);
+
+    const loadArchiveWorks = async () => {
+        try {
+            if (!archiveDateRange.startDate || !archiveDateRange.endDate) return;
+
+            // Исправляем путь к API
+            const response = await axios.get(
+                `/api/fields/works/archive/${selectedField}?` + // Изменено с archive на getArchive
+                `startDate=${archiveDateRange.startDate}&` +
+                `endDate=${archiveDateRange.endDate}`
+            );
+            setArchiveWorks(response.data);
+        } catch (error) {
+            console.error('Ошибка при загрузке архива работ:', error);
+        }
+    };
+
+    useEffect(() => {
+        if (selectedField) {
+            loadArchiveWorks();
+        }
+    }, [selectedField]);
 
     return field && field.properties ? (
         <div 
@@ -905,43 +934,127 @@ export default function ShowField({
                 />
             )}
 
-            <style jsx>{`
-                .create-work-btn {
-                    background-color: #4CAF50;
-                    color: white;
-                    padding: 8px 16px;
-                    border: none;
-                    border-radius: 4px;
-                    cursor: pointer;
-                    margin: 5px;
-                }
+            <div className="field-works">
+                <h3>Работы</h3>
+                <div className="works-list">
+                    {sortedWorks.map(work => (
+                        <div 
+                            key={work._id} 
+                            className={`work-item ${selectedWork?._id === work._id ? 'selected' : ''}`}
+                            onClick={(e) => handleWorkClick(work, e)}
+                        >
+                            <div className="work-header">
+                                <h4>{work.name}</h4>
+                                <div className="work-status-controls">
+                                    <span className={`work-status ${work.status}`}>
+                                        {work.status === 'planned' ? 'Запланировано' : 
+                                         work.status === 'in_progress' ? 'В процессе' : 
+                                         'Завершено'}
+                                    </span>
+                                    {work.status === 'planned' && (
+                                        <button 
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                updateWorkStatus(work._id, 'in_progress');
+                                            }}
+                                        >
+                                            Начать
+                                        </button>
+                                    )}
+                                    {work.status === 'in_progress' && (
+                                        <button 
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                updateWorkStatus(work._id, 'completed');
+                                            }}
+                                        >
+                                            Завершить
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="work-details">
+                                <p>Тип: {getWorkTypeName(work.type)}</p>
+                                <p>Дата: {new Date(work.plannedDate).toLocaleDateString()}</p>
+                                <p>Площадь обработки: {work.area} га</p>
+                                {work.description && <p>Описание: {work.description}</p>}
+                                
+                                <p>Работники:</p>
+                                {work.workers && work.workers.length > 0 ? (
+                                    <ul>
+                                        {work.workers.map((worker, index) => (
+                                            <li key={`${work._id}-worker-${worker._id || index}`}>
+                                                {worker.name}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    <ul><li>•</li></ul>
+                                )}
+                                
+                                <p>Техника:</p>
+                                {work.equipment && work.equipment.length > 0 ? (
+                                    <ul>
+                                        {work.equipment.map((tech, index) => (
+                                            <li key={`${work._id}-tech-${tech._id || index}`}>
+                                                {tech.name}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    <ul><li>•</li></ul>
+                                )}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
 
-                .create-work-btn:hover {
-                    background-color: #45a049;
-                }
-            `}</style>
+            <div className="field-works-archive">
+                <h3>Архив работ</h3>
+                <div className="archive-date-range">
+                    <div className="date-input">
+                        <label>С:</label>
+                        <input 
+                            type="date"
+                            value={archiveDateRange.startDate}
+                            onChange={(e) => setArchiveDateRange(prev => ({
+                                ...prev,
+                                startDate: e.target.value
+                            }))}
+                        />
+                    </div>
+                    <div className="date-input">
+                        <label>По:</label>
+                        <input 
+                            type="date"
+                            value={archiveDateRange.endDate}
+                            onChange={(e) => setArchiveDateRange(prev => ({
+                                ...prev,
+                                endDate: e.target.value
+                            }))}
+                        />
+                    </div>
+                    <button 
+                        className="search-archive-btn"
+                        onClick={loadArchiveWorks}
+                        disabled={!archiveDateRange.startDate || !archiveDateRange.endDate}
+                    >
+                        Найти работы
+                    </button>
+                </div>
 
-            {fieldWorks && fieldWorks.length > 0 && (
-                <div className="field-works">
-                    <h3>Работы на поле</h3>
-                    <div className="works-list">
-                        {sortedWorks.map(work => (
+                {archiveWorks.length > 0 ? (
+                    <div className="archive-works-list">
+                        {archiveWorks.map(work => (
                             <div 
                                 key={work._id} 
-                                className={`work-item ${selectedWork?._id === work._id ? 'active' : ''}`}
+                                className={`archive-work-item ${selectedWork?._id === work._id ? 'selected' : ''}`}
                                 onClick={(e) => handleWorkClick(work, e)}
                             >
                                 <div className="work-header">
                                     <h4>{work.name}</h4>
-                                    <select 
-                                        value={work.status || 'pending'} 
-                                        onChange={(e) => updateWorkStatus(work._id, e.target.value)}
-                                        onClick={(e) => e.stopPropagation()}
-                                    >
-                                        <option value="pending">В ожидании</option>
-                                        <option value="in_progress">В процессе</option>
-                                        <option value="completed">Завершено</option>
-                                    </select>
+                                    <span className="work-status completed">Завершено</span>
                                 </div>
                                 <div className="work-details">
                                     <p>Тип: {getWorkTypeName(work.type)}</p>
@@ -953,33 +1066,39 @@ export default function ShowField({
                                     {work.workers && work.workers.length > 0 ? (
                                         <ul>
                                             {work.workers.map((worker, index) => (
-                                                <li key={`${work._id}-worker-${worker._id || index}`}>{worker.name}</li>
+                                                <li key={`${work._id}-worker-${worker._id || index}`}>
+                                                    {worker.name}
+                                                </li>
                                             ))}
                                         </ul>
                                     ) : (
-                                        <ul>
-                                            <li key={`${work._id}-no-workers`}>•</li>
-                                        </ul>
+                                        <ul><li>•</li></ul>
                                     )}
                                     
                                     <p>Техника:</p>
                                     {work.equipment && work.equipment.length > 0 ? (
                                         <ul>
                                             {work.equipment.map((tech, index) => (
-                                                <li key={`${work._id}-tech-${tech._id || index}`}>{tech.name}</li>
+                                                <li key={`${work._id}-tech-${tech._id || index}`}>
+                                                    {tech.name}
+                                                </li>
                                             ))}
                                         </ul>
                                     ) : (
-                                        <ul>
-                                            <li key={`${work._id}-no-tech`}>•</li>
-                                        </ul>
+                                        <ul><li>•</li></ul>
                                     )}
                                 </div>
                             </div>
                         ))}
                     </div>
-                </div>
-            )}
+                ) : (
+                    <p className="no-archive-works">
+                        {archiveDateRange.startDate && archiveDateRange.endDate 
+                            ? 'Нет завершенных работ за выбранный период' 
+                            : 'Выберите период для просмотра архива работ'}
+                    </p>
+                )}
+            </div>
         </div>
     ) : <div>Loading...</div>
 }
