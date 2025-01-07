@@ -373,6 +373,7 @@ function Map({ fields }) {
         setIsEditingMainField(false);
         setIsDrawingMode(false);
         setSelectedSubField(null);
+        setProcessingArea(null); // Добавляем очистку выбранной зоны работы
     }
     
     setSelectedField(fieldId);
@@ -443,6 +444,7 @@ function Map({ fields }) {
     setSelectedField(null);
     setSelectedSubField(null);
     setIsDrawingMode(false);
+    setProcessingArea(null);
   };
 
   useEffect(() => {
