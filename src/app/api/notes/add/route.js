@@ -47,7 +47,6 @@ export async function POST(request) {
                 
                 await writeFile(fullPath, buffer);
                 imagePath = `/notes/${fileName}`;
-                console.log('Image saved successfully at:', imagePath);
             } catch (imageError) {
                 console.error('Error saving image:', imageError);
             }
@@ -61,11 +60,9 @@ export async function POST(request) {
             ...(imagePath && { image: imagePath })
         };
 
-        console.log('Creating note with data:', noteData);
 
         const newNote = await Notes.create(noteData);
 
-        console.log('Note created successfully:', newNote);
 
         return NextResponse.json({
             success: true,

@@ -332,6 +332,7 @@ function Map({ fields }) {
   const [processingArea, setProcessingArea] = useState(null);
   const [isDrawingProcessingArea, setIsDrawingProcessingArea] = useState(false);
   const [fieldWorks, setFieldWorks] = useState([]);
+  const [isCreatingNote, setIsCreatingNote] = useState(false);
 
   useEffect(() => {
     // Здесь можно добавить логику загрузки полей с учетом сезона
@@ -493,20 +494,19 @@ function Map({ fields }) {
   // Обработчик клика по карте
   const handleMapClick = (e) => {
     if (isAddingNote) {
-      // Получаем координаты клика
-      const coordinates = {
-        lat: e.latlng.lat,
-        lng: e.latlng.lng
-      };
-      setSelectedPoint(coordinates);
+        // Получаем координаты клика
+        const coordinates = {
+            lat: e.latlng.lat,
+            lng: e.latlng.lng
+        };
+        setSelectedPoint(coordinates);
+        setIsCreatingNote(true); // Устанавливаем в true при клике по карте
     }
   };
 
   // Обработчик сохранения заметки
   const handleSaveNote = async (noteData) => {
     try {
-        
-
         const formData = new FormData();
         formData.append('title', noteData.title);
         formData.append('description', noteData.description);
@@ -524,6 +524,8 @@ function Map({ fields }) {
         const data = await response.json();
 
         if (data.success) {
+            // Добавляем новую заметку в существующий массив заметок
+            setNotes(prevNotes => [...prevNotes, data.note]);
             setIsAddingNote(false);
             setSelectedPoint(null);
             alert('Заметка успешно добавлена');
@@ -631,6 +633,13 @@ function Map({ fields }) {
   // Обработчик выбора работы
   const handleWorkSelect = (area) => {
     setProcessingArea(area);
+  };
+
+  // Обработчик закрытия модального окна
+  const handleCloseModal = () => {
+    setIsCreatingNote(false);
+    setSelectedPoint(null);
+    setIsAddingNote(false);
   };
 
   return (
@@ -799,18 +808,17 @@ function Map({ fields }) {
 
       {/* Компонент добавления заметок */}
       <AddNotes 
-        onAddNote={(status) => setIsAddingNote(status)} 
+        onAddNote={(status) => setIsAddingNote(status)}
+        isCreatingNote={isCreatingNote}
+        onCancelNote={handleCloseModal}
       />
 
       {/* Модальное окно для добавления информации о заметке */}
-      {selectedPoint && (
+      {selectedPoint && isCreatingNote && (
         <NoteModal 
           coordinates={selectedPoint}
           onSave={handleSaveNote}
-          onClose={() => {
-            setSelectedPoint(null);
-            setIsAddingNote(false);
-          }}
+          onClose={handleCloseModal}
         />
       )}
     </div>
