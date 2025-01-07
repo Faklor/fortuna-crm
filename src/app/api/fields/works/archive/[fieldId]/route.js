@@ -33,7 +33,6 @@ export async function GET(request, { params: paramsPromise }) {
             }
         };
 
-        console.log('Archive query:', query); // Для отладки
 
         // Получаем работы
         const works = await Work.find(query).lean();
