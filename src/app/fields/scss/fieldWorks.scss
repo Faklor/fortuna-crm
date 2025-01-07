@@ -156,6 +156,48 @@
                     border-color: #4CAF50;
                 }
             }
+
+            position: relative;
+
+            input[type="date"] {
+                position: relative;
+                z-index: 1;
+
+                &::-webkit-calendar-picker-indicator {
+                    position: absolute;
+                    right: 0;
+                    padding-right: 8px;
+                    cursor: pointer;
+                }
+            }
+
+            @supports (-webkit-appearance: none) {
+                input[type="date"]::-webkit-datetime-edit {
+                    padding: 0 8px;
+                }
+
+                input[type="date"]::-webkit-calendar-picker-indicator {
+                    background: transparent;
+                    color: transparent;
+                    width: 2.5em;
+                    height: 100%;
+                    cursor: pointer;
+                    position: absolute;
+                    right: 0;
+                    top: 0;
+                    bottom: 0;
+                }
+            }
+        }
+
+        .date-input:last-of-type {
+            input[type="date"] {
+                &::-webkit-calendar-picker-indicator {
+                    transform-origin: right;
+                    transform: translateY(-100%);
+                    top: 100%;
+                }
+            }
         }
 
         .search-archive-btn {
@@ -189,5 +231,19 @@
 
     .archive-work-item {
         background: white;
+    }
+}
+
+@media (max-width: 768px) {
+    .field-works-archive {
+        .archive-date-range {
+            .date-input:last-of-type {
+                input[type="date"] {
+                    &::-webkit-calendar-picker-indicator {
+                        transform: none;
+                    }
+                }
+            }
+        }
     }
 }

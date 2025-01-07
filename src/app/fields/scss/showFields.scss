@@ -53,8 +53,21 @@
         }
 
         &.expanded {
-            max-height: 80vh;
+            max-height: 90vh;
             overflow-y: auto;
+            &:focus-within {
+                max-height: 90vh;
+            }
+        }
+
+        &:focus-within {
+            max-height: 90vh;
+            .subfields-info,
+            .field-actions,
+            .field-works,
+            .field-works-archive {
+                display: block;
+            }
         }
 
         &:not(.expanded) {
@@ -76,6 +89,18 @@
             right: 0;
             padding: 20px;
             margin: 0;
+        }
+
+        .archive-date-range {
+            .date-input {
+                input[type="date"] {
+                    height: 44px;
+                    font-size: 16px;
+                    -webkit-appearance: none;
+                    background-color: white;
+                    padding: 0 8px;
+                }
+            }
         }
     }
 
