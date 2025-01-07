@@ -614,6 +614,11 @@ function Map({ fields }) {
     );
   };
 
+  // Обработчик выбора работы
+  const handleWorkSelect = (area) => {
+    setProcessingArea(area);
+  };
+
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       <style jsx global>{`
@@ -658,7 +663,7 @@ function Map({ fields }) {
             positions={subField.coordinates}
             eventHandlers={{
               click: (e) => {
-                e.originalEvent.stopPropagation(); // Предотвращаем всплытие события
+                e.originalEvent.stopPropagation();
                 handleSubFieldSelect(subField._id, subField.properties.parentId);
               }
             }}
@@ -671,20 +676,21 @@ function Map({ fields }) {
           />
         ))}
 
-        {/* Отображение территории обработки */}
+        {/* Отображаем ТОЛЬКО выбранную зону работы */}
         {processingArea && (
           <Polygon 
-            positions={processingArea}
+            positions={processingArea.coordinates[0].map(coord => [coord[1], coord[0]])}
             pathOptions={{ 
-              color: '#FFB800',
-              fillColor: '#FFB800',
-              fillOpacity: 0.3,
-              weight: 2
+              color: '#FFFFFF',
+              weight: 2,
+              opacity: 0.8,
+              fillColor: '#FFFFFF',
+              fillOpacity: 0.3
             }}
           />
         )}
 
-        {/* Компонент DrawingControl с новыми пропсами */}
+        {/* Компонент DrawingControl */}
         {(isDrawingMode || isDrawingProcessingArea) && selectedField && (
           <DrawingControl 
             selectedFieldData={fields.find(f => f._id === selectedField)}
@@ -746,32 +752,7 @@ function Map({ fields }) {
           </Marker>
         ))}
 
-        {/* Отображение зон обработки для всех работ */}
-        {fieldWorks && fieldWorks.length > 0 && fieldWorks.map((work, index) => (
-            work.processingArea && (
-                <Polygon 
-                    key={`work-area-${work._id}`}
-                    positions={work.processingArea.coordinates[0].map(coord => [coord[1], coord[0]])}
-                    pathOptions={{ 
-                        color: getWorkTypeColor(work.type),
-                        fillColor: getWorkTypeColor(work.type),
-                        fillOpacity: 0.3,
-                        weight: 2
-                    }}
-                >
-                    <Popup>
-                        <div>
-                            <h4>{work.name}</h4>
-                            <p>Тип: {getWorkTypeName(work.type)}</p>
-                            <p>Дата: {new Date(work.plannedDate).toLocaleDateString()}</p>
-                            <p>Статус: {getWorkStatusName(work.status)}</p>
-                            <p>Площадь: {work.area} га</p>
-                            {work.description && <p>Описание: {work.description}</p>}
-                        </div>
-                    </Popup>
-                </Polygon>
-            )
-        ))}
+        
       </MapContainer>
 
       {/* Компонент ShowField */}
@@ -797,6 +778,8 @@ function Map({ fields }) {
           processingArea={processingArea}
           setProcessingArea={setProcessingArea}
           onWorkStatusUpdate={handleWorkStatusUpdate}
+          onWorkSelect={handleWorkSelect}
+          fieldWorks={fieldWorks}
         />
       )}
 

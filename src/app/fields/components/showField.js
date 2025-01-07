@@ -27,7 +27,8 @@ export default function ShowField({
     setIsDrawingProcessingArea,
     processingArea,
     setProcessingArea,
-    onWorkStatusUpdate
+    onWorkStatusUpdate,
+    onWorkSelect
 }) {
     
     const [field, setField] = useState(null)
@@ -64,6 +65,7 @@ export default function ShowField({
     const [showCropSuggestions, setShowCropSuggestions] = useState(false);
     const [isCreateWorkModalOpen, setIsCreateWorkModalOpen] = useState(false);
     const [fieldWorks, setFieldWorks] = useState([]);
+    const [selectedWork, setSelectedWork] = useState(null);
 
     const calculateAreaInHectares = (coordinates) => {
         try {
@@ -454,14 +456,14 @@ export default function ShowField({
         }
     }, [selectedField]);
 
-    const handleStatusChange = async (workId, newStatus) => {
+    const updateWorkStatus = async (workId, newStatus) => {
         try {
-            const response = await axios.patch(`/api/fields/works/updateStatus/${workId}`, { 
-                status: newStatus 
+            const response = await axios.put(`/api/fields/works/updateStatus/${workId}`, {
+                status: newStatus
             });
-
-            if (response.data.success) {
-                // Обновляем локальный список работ
+            
+            if (response.data) {
+                // Обновляем состояние работ локально
                 setFieldWorks(prevWorks => 
                     prevWorks.map(work => 
                         work._id === workId 
@@ -469,15 +471,10 @@ export default function ShowField({
                             : work
                     )
                 );
-
-                // Уведомляем родительский компонент об обновлении
-                if (onWorkStatusUpdate) {
-                    onWorkStatusUpdate(workId, newStatus);
-                }
             }
         } catch (error) {
             console.error('Error updating work status:', error);
-            alert('Ошибка при обновлении статуса');
+            alert('Ошибка при обновлении статуса работы');
         }
     };
 
@@ -491,6 +488,14 @@ export default function ShowField({
             harvesting: 'Уборка'
         };
         return names[type] || type;
+    };
+
+    const handleWorkClick = (work, e) => {
+        e.stopPropagation();
+        const newSelectedWork = selectedWork?._id === work._id ? null : work;
+        setSelectedWork(newSelectedWork);
+        // Передаем информацию о выбранной области в родительский компонент
+        onWorkSelect(newSelectedWork?.processingArea || null);
     };
 
     return field && field.properties ? (
@@ -910,18 +915,21 @@ export default function ShowField({
                     <h3>Работы на поле</h3>
                     <div className="works-list">
                         {fieldWorks.map(work => (
-                            <div key={work._id} className="work-item">
+                            <div 
+                                key={work._id} 
+                                className={`work-item ${selectedWork?._id === work._id ? 'active' : ''}`}
+                                onClick={(e) => handleWorkClick(work, e)}
+                            >
                                 <div className="work-header">
                                     <h4>{work.name}</h4>
                                     <select 
-                                        value={work.status}
-                                        onChange={(e) => handleStatusChange(work._id, e.target.value)}
-                                        className={`work-status ${work.status}`}
+                                        value={work.status || 'pending'} 
+                                        onChange={(e) => updateWorkStatus(work._id, e.target.value)}
+                                        onClick={(e) => e.stopPropagation()}
                                     >
-                                        <option value="planned">Запланировано</option>
+                                        <option value="pending">В ожидании</option>
                                         <option value="in_progress">В процессе</option>
                                         <option value="completed">Завершено</option>
-                                        <option value="cancelled">Отменено</option>
                                     </select>
                                 </div>
                                 <div className="work-details">

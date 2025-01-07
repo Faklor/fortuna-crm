@@ -2,10 +2,11 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Work from '@/models/works';
 
-export async function PATCH(request, { params }) {
+export async function PUT(request, { params: paramsPromise }) {
     await dbConnect();
 
     try {
+        const params = await paramsPromise;
         const workId = params.workId;
         const { status } = await request.json();
 
@@ -16,12 +17,18 @@ export async function PATCH(request, { params }) {
         );
 
         if (!work) {
-            return NextResponse.json({ success: false, error: 'Работа не найдена' }, { status: 404 });
+            return NextResponse.json(
+                { error: 'Работа не найдена' },
+                { status: 404 }
+            );
         }
 
-        return NextResponse.json({ success: true, work });
+        return NextResponse.json(work);
     } catch (error) {
         console.error('Error updating work status:', error);
-        return NextResponse.json({ success: false, error: 'Ошибка при обновлении статуса работы' }, { status: 500 });
+        return NextResponse.json(
+            { error: 'Ошибка при обновлении статуса работы' },
+            { status: 500 }
+        );
     }
-} 
+}
