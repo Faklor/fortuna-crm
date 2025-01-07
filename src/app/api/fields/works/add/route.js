@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Work from '@/models/works';
 import Field from '@/models/fields';
-import * as turf from '@turf/turf';
+import '@/models/workers';
+import '@/models/tech';
+import mongoose from 'mongoose';
 
 export async function POST(req) {
     await dbConnect();
@@ -17,53 +19,70 @@ export async function POST(req) {
             );
         }
 
-        // Убедимся, что fieldId это строка
-        const fieldId = workData.fieldId.toString();
-
         try {
-            // Проверяем существование поля
-            const field = await Field.findById(fieldId);
-
+            const field = await Field.findById(workData.fieldId);
             if (!field) {
                 return NextResponse.json(
-                    { error: `Field not found with ID: ${fieldId}` },
+                    { error: 'Field not found' },
                     { status: 404 }
                 );
             }
 
-            // Рассчитываем площадь
-            const geojsonPolygon = {
-                type: "Feature",
-                properties: {},
-                geometry: workData.processingArea
-            };
-            
-            const areaInSquareMeters = turf.area(geojsonPolygon);
-            const areaInHectares = Math.round((areaInSquareMeters / 10000) * 100) / 100;
+            // Подготавливаем данные в зависимости от типа обработки
+            let processingAreaData;
+            let areaInHectares;
 
-            // Создаем новую работу с площадью
+            if (workData.useFullField) {
+                processingAreaData = {
+                    type: 'Polygon',
+                    coordinates: field.coordinates
+                };
+                areaInHectares = workData.area;
+            } else {
+                processingAreaData = workData.processingArea;
+                areaInHectares = workData.area;
+            }
+
+            // Создаем новую работу
             const work = new Work({
-                fieldId: fieldId,
                 name: workData.name,
                 type: workData.type,
+                fieldId: workData.fieldId,
                 plannedDate: workData.plannedDate,
                 description: workData.description,
-                processingArea: {
-                    type: "Polygon",
-                    coordinates: [workData.processingArea.coordinates[0].map(coord => [coord[0], coord[1]])]
-                },
-                status: workData.status || 'planned',
+                processingArea: processingAreaData,
                 area: areaInHectares,
+                useFullField: workData.useFullField,
+                status: workData.status || 'planned',
                 workers: workData.workers || [],
                 equipment: workData.equipment || []
             });
 
             await work.save();
 
+            // Получаем сохраненную работу
+            const savedWork = await Work.findById(work._id).lean();
+
+            // Получаем работников и технику
+            const workers = await mongoose.model('workers').find({
+                _id: { $in: savedWork.workers }
+            }).lean();
+
+            const equipment = await mongoose.model('tech').find({
+                _id: { $in: savedWork.equipment }
+            }).lean();
+
+            // Собираем финальный результат
+            const populatedWork = {
+                ...savedWork,
+                workers: workers,
+                equipment: equipment
+            };
+
             return NextResponse.json({
                 success: true,
                 message: 'Work created successfully',
-                work: work
+                work: populatedWork
             });
 
         } catch (error) {

@@ -65,6 +65,22 @@
                     opacity: 0.9;
                 }
             }
+
+            .delete-work-btn {
+                padding: 5px 10px;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 12px;
+                background: none;
+                color: #666;
+                transition: all 0.2s ease;
+
+                &:hover {
+                    color: #dc3545;
+                    background-color: rgba(220, 53, 69, 0.1);
+                }
+            }
         }
 
         .work-status {

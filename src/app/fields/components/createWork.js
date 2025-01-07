@@ -21,23 +21,26 @@ function CreateWork({
     onSave, 
     processingArea,
     isDrawingProcessingArea, 
-    setIsDrawingProcessingArea 
+    setIsDrawingProcessingArea,
+    selectedField,
+    fieldArea
 }) {
     const [workData, setWorkData] = useState({
         name: '',
         type: '',
-        fieldId: '',
+        fieldId: selectedField?._id || '',
         plannedDate: '',
         description: '',
         processingArea: processingArea,
-        area: 0
+        area: 0,
+        useFullField: false,
+        workers: [],
+        equipment: []
     });
 
-    // Добавляем новые состояния для работников и техники
     const [workers, setWorkers] = useState([]);
     const [equipment, setEquipment] = useState([]);
 
-    // Добавляем загрузку работников и техники при монтировании компонента
     useEffect(() => {
         const loadData = async () => {
             try {
@@ -46,7 +49,6 @@ function CreateWork({
                     axios.get('/api/teches')
                 ]);
                 
-                // Проверяем, что получили массивы
                 setWorkers(Array.isArray(workersRes.data) ? workersRes.data : []);
                 setEquipment(Array.isArray(equipmentRes.data.tech) ? equipmentRes.data.tech : []);
             } catch (error) {
@@ -58,7 +60,19 @@ function CreateWork({
         loadData();
     }, []);
 
-    // Функция расчета площади
+    const handleAreaSelectionChange = (useFullField) => {
+        setWorkData(prev => ({
+            ...prev,
+            useFullField,
+            area: useFullField ? fieldArea : (processingArea?.area || 0),
+            processingArea: useFullField ? null : processingArea
+        }));
+        
+        if (useFullField) {
+            setIsDrawingProcessingArea(false);
+        }
+    };
+
     const calculateArea = (processingArea) => {
         if (!processingArea || !processingArea.coordinates) return 0;
         
@@ -70,7 +84,7 @@ function CreateWork({
             };
             
             const areaInSquareMeters = turf.area(geojsonPolygon);
-            return Math.round((areaInSquareMeters / 10000) * 100) / 100; // Конвертируем в гектары
+            return Math.round((areaInSquareMeters / 10000) * 100) / 100;
         } catch (error) {
             console.error('Error calculating area:', error);
             return 0;
@@ -88,24 +102,36 @@ function CreateWork({
         }
     }, [processingArea]);
 
+    useEffect(() => {
+        setWorkData(prev => ({
+            ...prev,
+            fieldId: selectedField?._id || ''
+        }));
+    }, [selectedField]);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         
-        if (!workData.processingArea) {
-            alert('Необходимо выделить область обработки');
+        if (!workData.useFullField && !workData.processingArea) {
+            alert('Необходимо выделить область обработки или выбрать всё поле');
             return;
         }
 
-        // Убедимся, что processingArea в правильном формате
-        const workDataToSave = {
-            ...workData,
-            processingArea: {
-                type: 'Polygon',
-                coordinates: Array.isArray(workData.processingArea) ? [workData.processingArea] : workData.processingArea.coordinates
-            }
-        };
-       
-        onSave(workDataToSave);
+        try {
+            const dataToSave = {
+                ...workData,
+                processingArea: {
+                    type: 'Polygon',
+                    coordinates: workData.useFullField ? [[]] : workData.processingArea.coordinates
+                },
+                area: workData.useFullField ? fieldArea : workData.area
+            };
+
+            onSave(dataToSave);
+        } catch (error) {
+            console.error('Error preparing work data:', error);
+            alert('Ошибка при подготовке данных работы');
+        }
     };
 
     return (
@@ -158,20 +184,42 @@ function CreateWork({
                         />
                     </div>
 
-                    <button 
-                        type="button"
-                        onClick={() => setIsDrawingProcessingArea(true)}
-                        className={workData.processingArea ? 'area-selected' : ''}
-                    >
-                        {workData.processingArea ? 'Область выделена ✓' : 'Выделить территорию обработки'}
-                    </button>
-
-                    {workData.processingArea && (
-                        <div className="form-group">
-                            <label>Площадь обработки:</label>
-                            <span>{workData.area} га</span>
+                    <div className="form-group area-selection">
+                        <label>Территория обработки:</label>
+                        <div className="area-selection-controls">
+                            <button
+                                type="button"
+                                className={`area-btn ${!workData.useFullField ? 'active' : ''}`}
+                                onClick={() => handleAreaSelectionChange(false)}
+                            >
+                                Выбрать зону
+                            </button>
+                            <button
+                                type="button"
+                                className={`area-btn ${workData.useFullField ? 'active' : ''}`}
+                                onClick={() => handleAreaSelectionChange(true)}
+                            >
+                                Всё поле
+                            </button>
                         </div>
-                    )}
+                        
+                        {!workData.useFullField && (
+                            <button 
+                                type="button"
+                                onClick={() => setIsDrawingProcessingArea(true)}
+                                className={workData.processingArea ? 'area-selected' : ''}
+                            >
+                                {workData.processingArea ? 'Область выделена ✓' : 'Выделить территорию обработки'}
+                            </button>
+                        )}
+
+                        {workData.processingArea && (
+                            <div className="form-group">
+                                <label>Площадь обработки:</label>
+                                <span>{workData.area} га</span>
+                            </div>
+                        )}
+                    </div>
 
                     <div className="form-group">
                         <label>Работники:</label>

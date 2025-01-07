@@ -967,6 +967,8 @@ export default function ShowField({
                     processingArea={processingArea}
                     isDrawingProcessingArea={isDrawingProcessingArea}
                     setIsDrawingProcessingArea={setIsDrawingProcessingArea}
+                    selectedField={field}
+                    fieldArea={fieldArea}
                 />
             )}
 
