@@ -1,7 +1,7 @@
 'use client'
 import '../scss/showFields.scss'
 import axios from 'axios'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { area, polygon } from '@turf/turf'
 import * as turf from '@turf/turf'
 import CreateWork from './createWork'
@@ -498,6 +498,17 @@ export default function ShowField({
         onWorkSelect(newSelectedWork?.processingArea || null);
     };
 
+    // Сортируем работы по дате (от будущих к прошлым)
+    const sortedWorks = useMemo(() => {
+        if (!fieldWorks) return [];
+        
+        return [...fieldWorks].sort((a, b) => {
+            const dateA = new Date(a.plannedDate);
+            const dateB = new Date(b.plannedDate);
+            return dateB - dateA; // Сортировка от новых к старым
+        });
+    }, [fieldWorks]);
+
     return field && field.properties ? (
         <div 
             className={`show-field ${isExpanded ? 'expanded' : ''}`}
@@ -914,7 +925,7 @@ export default function ShowField({
                 <div className="field-works">
                     <h3>Работы на поле</h3>
                     <div className="works-list">
-                        {fieldWorks.map(work => (
+                        {sortedWorks.map(work => (
                             <div 
                                 key={work._id} 
                                 className={`work-item ${selectedWork?._id === work._id ? 'active' : ''}`}
