@@ -11,6 +11,7 @@ import { useSearchParams } from 'next/navigation'
 import L from 'leaflet'
 import AddNotes from './addNotes'
 import NoteModal from './noteModal'
+import CreateField from './createField'
 
 function DrawingControl({ selectedFieldData, onSubFieldCreate, subFields, isProcessingArea, onProcessingAreaCreate }) {
   const map = useMap();
@@ -333,6 +334,8 @@ function Map({ fields }) {
   const [isDrawingProcessingArea, setIsDrawingProcessingArea] = useState(false);
   const [fieldWorks, setFieldWorks] = useState([]);
   const [isCreatingNote, setIsCreatingNote] = useState(false);
+  const [isCreatingField, setIsCreatingField] = useState(false);
+  const [isDrawingField, setIsDrawingField] = useState(false);
 
   useEffect(() => {
     // Здесь можно добавить логику загрузки полей с учетом сезона
@@ -642,6 +645,39 @@ function Map({ fields }) {
     setIsAddingNote(false);
   };
 
+  // Обработчик создания нового поля
+  const handleFieldCreate = async (coordinates) => {
+    try {
+        const fieldName = window.prompt('Введите название поля:', `Поле ${new Date().toLocaleDateString()}`);
+        
+        if (!fieldName) return;
+
+        const response = await fetch('/api/fields/create', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                name: fieldName,
+                coordinates: coordinates,
+                season: new Date().getFullYear().toString() // Текущий год как сезон
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Обновляем список полей или перезагружаем страницу
+            window.location.reload();
+        } else {
+            throw new Error(data.error || 'Failed to create field');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Ошибка при создании поля');
+    }
+  };
+
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       <style jsx global>{`
@@ -775,7 +811,49 @@ function Map({ fields }) {
           </Marker>
         ))}
 
-        
+        {/* Компонент для рисования нового поля */}
+        {isDrawingField && (
+          <FeatureGroup>
+            <EditControl
+              position='topright'
+              onCreated={e => {
+                if (e.layerType !== 'polygon') return;
+
+                const coordinates = e.layer.getLatLngs()[0]
+                  .map(latLng => [latLng.lng, latLng.lat]);
+                
+                // Замыкаем полигон
+                if (coordinates[0][0] !== coordinates[coordinates.length - 1][0] || 
+                    coordinates[0][1] !== coordinates[coordinates.length - 1][1]) {
+                    coordinates.push(coordinates[0]);
+                }
+
+                handleFieldCreate(coordinates);
+              }}
+              draw={{
+                rectangle: false,
+                circle: false,
+                circlemarker: false,
+                marker: false,
+                polyline: false,
+                polygon: {
+                  allowIntersection: false,
+                  drawError: {
+                    color: '#e1e100',
+                    message: 'Полигоны не должны пересекаться!'
+                  },
+                  shapeOptions: {
+                    color: '#97009c'
+                  }
+                }
+              }}
+              edit={{
+                edit: false,
+                remove: false
+              }}
+            />
+          </FeatureGroup>
+        )}
       </MapContainer>
 
       {/* Компонент ShowField */}
@@ -821,6 +899,16 @@ function Map({ fields }) {
           onClose={handleCloseModal}
         />
       )}
+
+      {/* Добавляем компонент создания поля */}
+      <CreateField 
+        onCreateField={(status) => setIsDrawingField(status)}
+        isCreating={isCreatingField}
+        onCancel={() => {
+          setIsDrawingField(false);
+          setIsCreatingField(false);
+        }}
+      />
     </div>
   );
 }

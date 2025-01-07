@@ -1,0 +1,40 @@
+.create-field {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 110;
+
+    .create-field-btn {
+        padding: 10px 20px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background-color 0.3s;
+
+        &:hover {
+            background-color: #45a049;
+        }
+
+        &.active {
+            background-color: #45a049;
+        }
+    }
+
+    .cancel-create-btn {
+        padding: 10px 20px;
+        background-color: #f44336;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background-color 0.3s;
+
+        &:hover {
+            background-color: #da190b;
+        }
+    }
+} 
