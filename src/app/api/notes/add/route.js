@@ -10,19 +10,14 @@ export async function POST(request) {
     try {
         const formData = await request.formData();
         
-        console.log('Received data:', {
-            title: formData.get('title'),
-            description: formData.get('description'),
-            coordinates: formData.get('coordinates'),
-            hasImage: formData.get('image') ? 'yes' : 'no'
-        });
+       
 
         const title = formData.get('title');
         const description = formData.get('description');
         const coordinates = JSON.parse(formData.get('coordinates'));
         const image = formData.get('image');
+        const season = formData.get('season') || new Date().getFullYear().toString();
 
-        // Проверяем только необходимые поля
         if (!title || !description || !coordinates) {
             console.error('Missing required fields:', { title, description, coordinates });
             return NextResponse.json({ 
@@ -38,7 +33,6 @@ export async function POST(request) {
                 const bytes = await image.arrayBuffer();
                 const buffer = Buffer.from(bytes);
                 
-                // Создаем директорию, если она не существует
                 const notesDir = path.join(process.cwd(), 'public', 'notes');
                 await mkdir(notesDir, { recursive: true });
                 
@@ -52,17 +46,15 @@ export async function POST(request) {
             }
         }
 
-        // Создаем объект заметки без привязки к полю
         const noteData = {
             title,
             description,
             coordinates,
+            season,
             ...(imagePath && { image: imagePath })
         };
 
-
         const newNote = await Notes.create(noteData);
-
 
         return NextResponse.json({
             success: true,

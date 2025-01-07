@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { MapContainer, TileLayer, Polygon, FeatureGroup, useMap, WMSTileLayer, Marker, Popup } from 'react-leaflet'
 import { EditControl } from 'react-leaflet-draw'
 import ShowField from './showField'
@@ -313,7 +313,7 @@ const arraysEqual = (a, b) => {
     return a.every((val, index) => Math.abs(val - b[index]) < 1e-10);
 };
 
-function Map({ fields }) {
+function Map({ fields, currentSeason }) {
   const [selectedField, setSelectedField] = useState(null);
   const [isDrawingMode, setIsDrawingMode] = useState(false);
   const [subFields, setSubFields] = useState([]);
@@ -515,6 +515,9 @@ function Map({ fields }) {
         formData.append('description', noteData.description);
         formData.append('coordinates', JSON.stringify(noteData.coordinates));
         
+        // Добавляем текущий сезон из пропсов или состояния
+        formData.append('season', season || new Date().getFullYear().toString());
+        
         if (noteData.image) {
             formData.append('image', noteData.image);
         }
@@ -527,7 +530,6 @@ function Map({ fields }) {
         const data = await response.json();
 
         if (data.success) {
-            // Добавляем новую заметку в существующий массив заметок
             setNotes(prevNotes => [...prevNotes, data.note]);
             setIsAddingNote(false);
             setSelectedPoint(null);
@@ -541,22 +543,26 @@ function Map({ fields }) {
     }
   };
 
-  // Загрузка заметок
-  useEffect(() => {
-    const fetchNotes = async () => {
-      try {
-        const response = await fetch('/api/notes');
+  // Обновляем функцию загрузки заметок
+  const loadNotes = useCallback(async () => {
+    try {
+        // Добавляем сезон в URL запроса
+        const response = await fetch(`/api/notes?season=${currentSeason}`);
         const data = await response.json();
+        
         if (data.success) {
-          setNotes(data.notes);
+            // Устанавливаем только заметки для текущего сезона
+            setNotes(data.notes);
         }
-      } catch (error) {
-        console.error('Error fetching notes:', error);
-      }
-    };
+    } catch (error) {
+        console.error('Error loading notes:', error);
+    }
+  }, [currentSeason]); // Добавляем currentSeason в зависимости
 
-    fetchNotes();
-  }, []);
+  // Вызываем загрузку заметок при изменении сезона
+  useEffect(() => {
+    loadNotes();
+  }, [currentSeason, loadNotes]);
 
   // Создаем кастомную иконку для заметок
   const noteIcon = L.divIcon({
@@ -776,37 +782,18 @@ function Map({ fields }) {
         )}
 
         {/* Отображаем заметки на карте */}
-        {notes.map((note) => (
+        {notes.map(note => (
           <Marker
             key={note._id}
             position={[note.coordinates.lat, note.coordinates.lng]}
             icon={noteIcon}
           >
             <Popup>
-              <div className="note-popup">
-                <h3>{note.title}</h3>
-                <p>{note.description}</p>
-                {note.image && (
-                  <img 
-                    src={note.image} 
-                    alt={note.title}
-                    style={{ 
-                      maxWidth: '200px', 
-                      maxHeight: '150px',
-                      marginTop: '10px'
-                    }} 
-                  />
-                )}
-                <div className="note-date">
-                  {new Date(note.createdAt).toLocaleDateString()}
-                </div>
-                <button 
-                  className="delete-note-btn"
-                  onClick={() => handleDeleteNote(note._id)}
-                >
-                  Удалить заметку
-                </button>
-              </div>
+              <h3>{note.title}</h3>
+              <p>{note.description}</p>
+              {note.image && (
+                <img src={note.image} alt={note.title} style={{ maxWidth: '200px' }} />
+              )}
             </Popup>
           </Marker>
         ))}
