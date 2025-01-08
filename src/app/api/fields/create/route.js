@@ -16,7 +16,7 @@ export async function POST(request) {
             );
         }
 
-        // Создаем документ с теми же свойствами, что и у загруженных полей
+        // Создаем документ с переданным сезоном
         const fieldDocument = {
             _id: new mongoose.Types.ObjectId(),
             geometryType: 'Polygon',
@@ -35,7 +35,7 @@ export async function POST(request) {
                 icon: ''
             },
             createdAt: new Date(),
-            seasons: [season || new Date().getFullYear().toString()],
+            seasons: [season], // Используем переданный сезон
             __v: 0
         };
 

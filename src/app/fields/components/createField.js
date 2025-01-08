@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import '../scss/createField.scss'
+import '../scss/createField.scss' 
 
 export default function CreateField({ onCreateField, isCreating, onCancel }) {
     const [isActive, setIsActive] = useState(false);

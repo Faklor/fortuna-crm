@@ -17,7 +17,16 @@ export default function PageClient({visibleArr}){
     
     //react
     const [seasons, setSeasons] = useState(JSON.parse(visibleArr))
-    const [selectSeason, setSelectSeason] = useState(seasons[0])
+    // Получаем сезон из URL при инициализации
+    const urlSeason = searchParams.get('season')
+    const [selectSeason, setSelectSeason] = useState(() => {
+        // Если есть сезон в URL, находим его в списке сезонов
+        if (urlSeason) {
+            const foundSeason = JSON.parse(visibleArr).find(s => s.name === urlSeason)
+            return foundSeason || JSON.parse(visibleArr)[0]
+        }
+        return JSON.parse(visibleArr)[0]
+    })
     const [fields, setFields] = useState([])
     const [newSeasonName, setNewSeasonName] = useState('')
     
@@ -47,17 +56,23 @@ export default function PageClient({visibleArr}){
         }
     }
 
-    useEffect(()=>{
-        if (typeof window !== 'undefined'){
-            router.push(pathname + '?' + createQueryString('season', selectSeason.name))
-        }
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            // Проверяем, есть ли сезон в URL
+            const currentUrlSeason = searchParams.get('season')
+            if (!currentUrlSeason) {
+                // Если нет, устанавливаем текущий выбранный сезон
+                router.push(pathname + '?' + createQueryString('season', selectSeason.name))
+            }
 
-        getFields(searchParams.get('season'))
-        .then(res=>{
-            setFields(res.data.fields)
-        })
-        .catch(err=>{console.log(err)})
-    },[])
+            // Загружаем поля для сезона из URL или выбранного сезона
+            getFields(currentUrlSeason || selectSeason.name)
+                .then(res => {
+                    setFields(res.data.fields)
+                })
+                .catch(err => {console.log(err)})
+        }
+    }, [selectSeason, pathname, router, searchParams])
 
     return <>
         <div className="select_season">

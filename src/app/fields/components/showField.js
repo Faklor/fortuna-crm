@@ -6,6 +6,7 @@ import { area, polygon } from '@turf/turf'
 import * as turf from '@turf/turf'
 import CreateWork from './createWork'
 import '../scss/fieldWorks.scss'
+import { useSearchParams } from 'next/navigation'
 
 export default function ShowField({
     setShowFieldVisible, 
@@ -71,6 +72,8 @@ export default function ShowField({
         endDate: ''
     });
     const [archiveWorks, setArchiveWorks] = useState([]);
+    const searchParams = useSearchParams();
+    const urlSeason = searchParams.get('season');
 
     const calculateAreaInHectares = (coordinates) => {
         try {
@@ -300,9 +303,12 @@ export default function ShowField({
         setEditingSubField(subField);
         setEditingSubFieldName(subField.properties.Name || '');
         
-        const currentYear = new Date().getFullYear();
-        const currentSeasonData = subField.properties.seasons?.find(s => s.year === currentYear) || {
-            year: currentYear,
+        // Используем сезон из URL вместо текущего года
+        const season = urlSeason || new Date().getFullYear().toString();
+        
+        // Ищем данные для выбранного сезона
+        const seasonData = subField.properties.seasons?.find(s => s.year === season) || {
+            year: season,
             crop: '',
             variety: '',
             yield: '',
@@ -311,30 +317,31 @@ export default function ShowField({
         };
 
         setCurrentSeason({
-            year: currentYear,
-            crop: currentSeasonData.crop || '',
-            variety: currentSeasonData.variety || '',
-            yield: currentSeasonData.yield || '',
-            sowingDate: currentSeasonData.sowingDate ? new Date(currentSeasonData.sowingDate).toISOString().split('T')[0] : '',
-            harvestDate: currentSeasonData.harvestDate ? new Date(currentSeasonData.harvestDate).toISOString().split('T')[0] : ''
+            year: season, // Используем выбранный сезон
+            crop: seasonData.crop || '',
+            variety: seasonData.variety || '',
+            yield: seasonData.yield || '',
+            sowingDate: seasonData.sowingDate ? new Date(seasonData.sowingDate).toISOString().split('T')[0] : '',
+            harvestDate: seasonData.harvestDate ? new Date(seasonData.harvestDate).toISOString().split('T')[0] : ''
         });
     };
 
     const handleSaveSubField = async () => {
         try {
-            const currentYear = new Date().getFullYear();
+            const season = urlSeason || new Date().getFullYear().toString();
             const updatedSeasons = editingSubField.properties.seasons || [];
-            const seasonIndex = updatedSeasons.findIndex(s => s.year === currentYear);
+            const seasonIndex = updatedSeasons.findIndex(s => s.year === season);
             
             if (seasonIndex !== -1) {
                 updatedSeasons[seasonIndex] = {
                     ...updatedSeasons[seasonIndex],
-                    ...currentSeason
+                    ...currentSeason,
+                    year: season // Убеждаемся, что год соответствует выбранному сезону
                 };
             } else {
                 updatedSeasons.push({
                     ...currentSeason,
-                    year: currentYear
+                    year: season
                 });
             }
 
@@ -348,6 +355,7 @@ export default function ShowField({
             });
 
             if (response.data.success) {
+                // Обновляем состояние с учетом текущего сезона
                 setSubFields(prev => prev.map(field => 
                     field._id === editingSubField._id 
                         ? { 
@@ -361,6 +369,21 @@ export default function ShowField({
                         : field
                 ));
                 setEditingSubField(null);
+                
+                // Принудительно перезагружаем данные подполей для текущего сезона
+                try {
+                    const refreshResponse = await axios.get('/api/fields/subFields/get', {
+                        params: {
+                            parentId: selectedField,
+                            season: season
+                        }
+                    });
+                    if (refreshResponse.data.success) {
+                        setSubFields(refreshResponse.data.subFields);
+                    }
+                } catch (error) {
+                    console.error('Error refreshing subfields:', error);
+                }
             }
         } catch (error) {
             console.error('Error updating subfield:', error);

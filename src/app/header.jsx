@@ -35,7 +35,8 @@ export default function Header(){
         {en:'tasks',ru:'Задачи',img:'/nav/task.svg'},
         {en:'objects',ru:'Объекты',img:'/nav/object.svg'},
         {en:'warehouse',ru:'Склад',img:'/nav/warehouse.svg'},
-        {en:`fields`,ru:'Поля',img:'/nav/fields.svg'}
+        {en:`fields`,ru:'Поля',img:'/nav/fields.svg'},
+        {en:`crop`,ru:'Севооборот',img:'/nav/crop.svg'}
       ]
 
 

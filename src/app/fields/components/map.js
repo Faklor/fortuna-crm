@@ -323,7 +323,7 @@ function Map({ fields, currentSeason }) {
   const [subFieldsVersion, setSubFieldsVersion] = useState(0);
   const [selectedSubField, setSelectedSubField] = useState(null);
   const searchParams = useSearchParams();
-  const season = searchParams.get('season');
+  const season = searchParams.get('season') || currentSeason;
   const [isEditingMainField, setIsEditingMainField] = useState(false);
   const [isEditingSubField, setIsEditingSubField] = useState(false);
   const [editingSubFieldId, setEditingSubFieldId] = useState(null);
@@ -359,7 +359,6 @@ function Map({ fields, currentSeason }) {
   useEffect(() => {
     const loadAllSubFields = async () => {
       try {
-        // Получаем только подполя для текущего сезона
         const response = await axios.get('/api/fields/subFields/get', {
           params: { season: season }
         });
@@ -371,9 +370,10 @@ function Map({ fields, currentSeason }) {
       }
     };
 
-    loadAllSubFields();
-    // Добавляем season в зависимости
-  }, [subFieldsVersion, season]);
+    if (season) {
+      loadAllSubFields();
+    }
+  }, [season, subFieldsVersion]);
 
   // При смене сезона сбрасываем выбранное поле и подполя
   useEffect(() => {
@@ -666,7 +666,7 @@ function Map({ fields, currentSeason }) {
             body: JSON.stringify({
                 name: fieldName,
                 coordinates: coordinates,
-                season: new Date().getFullYear().toString() // Текущий год как сезон
+                season: season || new Date().getFullYear().toString() // Используем выбранный сезон из URL
             })
         });
 

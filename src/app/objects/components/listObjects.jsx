@@ -18,12 +18,13 @@ export default function ListObjs({objects}){
     const [visibleArr, setVisibleArr] = useState(JSON.parse(objects))
 
     return <>
+        
+        <FilterCategory objects={JSON.parse(objects)} setVisibleArr={setVisibleArr}/>
+        <SearchObj objects={JSON.parse(objects)} setVisibleArr={setVisibleArr}/>
         <button className="btnAddObj" onClick={()=>router.push('/objects/addObject')}>
             <Image src={'/components/add.svg'} width={30} height={30} alt="btnAddObj"/>
             <p>Добавить объект</p>
         </button>
-        <FilterCategory objects={JSON.parse(objects)} setVisibleArr={setVisibleArr}/>
-        <SearchObj objects={JSON.parse(objects)} setVisibleArr={setVisibleArr}/>
         {visibleArr.map((obj,index)=>{
                 return <ObjectTitle key={index} obj={obj}/>
             })
