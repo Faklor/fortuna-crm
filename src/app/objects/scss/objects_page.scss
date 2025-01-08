@@ -1,85 +1,243 @@
-.objects{
+.objects {
+  min-height: 100vh;
+  //background: #f5f7fa;
+  padding: 20px;
 
-    .btnAddObj{
-        justify-self: center;
-        width: 80%;
-        margin: 0.5em 1em;
-        
-          //width: 100%;
-            display: flex;
-            justify-content: center;
-    
-            outline: 0;
-            background-color: #4F8DE3;
-            padding: 0.5em;
-            border:none;
-            transition: 0.5s;
-            gap:0.5em;
-            cursor: pointer;
-            box-shadow: 0px 4px 4px 0px rgba(0,0,0,0.25);
-            border-radius: 5px;
-    
-            &:hover{
-                transform: scale(0.9);
-            }
-    
-            img{
-                align-self: center;
-                margin-top: 0.7em;
-                align-content: center;
-            }
-            p{
-                align-self: center;
-                font-size: 16px;
-                color:#fff;
-            }
-        
-    } 
-    .object_title{
-        
-        margin:0.5em;
-        padding: 1em 0em 1em 2em;
-        display: flex;
-        cursor: pointer;
-        transition: 0.5s;
-        color:#354759;
-        width: 460px;
-        
-        
-        //border-bottom: 1px solid #678295;
-    
-        &:hover{
-            //background-color: #000;
-            transform: scale(0.9);
-        }
-        
-        p{
-            align-self: center;
-            margin:0.5em;
-            font-size: 24px;
-            font-weight: bold;
-        }
-    
-        img{
-            //object-fit: cover;
-            //margin:0;
-            //align-content: center;
-            //align-self: center;
-            height: auto;
-            width: auto;
-        }
-        
-        .png{
-            //width: 50%;
-            //height: 50%;
-        }
-    
-        .jpg{
-            border-radius: 5px;
-            object-fit: cover;
-            box-shadow: 1px 1px 4px 0 #000;
-        }
-    
+  // Контейнер для содержимого
+  .objects-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+
+    // Заголовок страницы
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+
+      h1 {
+        font-size: 24px;
+        color: #333;
+        margin: 0;
+      }
     }
-    
+
+    // Сетка объектов
+    .objects-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 20px;
+      padding: 20px 0;
+
+      .object_title {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+
+        &:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        // Контейнер для изображения
+        .image-container {
+          position: relative;
+          width: 100%;
+          padding-top: 75%; // Соотношение сторон 4:3
+
+          img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+
+            &.png {
+              object-fit: contain;
+              padding: 10px;
+            }
+          }
+        }
+
+        // Название объекта
+        p {
+          padding: 15px;
+          margin: 0;
+          font-size: 16px;
+          color: #333;
+          text-align: center;
+          font-weight: 500;
+        }
+      }
+    }
+
+    // Панель управления
+    .controls-panel {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      padding: 20px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+
+      .btnAddObj {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        background: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.2s ease;
+
+        &:hover {
+          background: #43A047;
+        }
+
+        p {
+          margin: 0;
+          font-weight: 500;
+        }
+      }
+    }
+  }
 }
+
+// Адаптивность
+@media (max-width: 1200px) {
+  .objects {
+    .objects-content {
+      max-width: 960px;
+    }
+  }
+}
+
+@media (max-width: 992px) {
+  .objects {
+    padding: 15px;
+    
+    .objects-content {
+      gap: 20px;
+
+      .objects-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 15px;
+      }
+    }
+  }
+}
+
+@media (max-width: 576px) {
+  .objects {
+    padding: 10px;
+
+    .objects-content {
+      gap: 15px;
+
+      .page-header {
+        h1 {
+          font-size: 20px;
+        }
+      }
+
+      .objects-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 10px;
+
+        .object_title {
+          p {
+            font-size: 14px;
+            padding: 10px;
+          }
+        }
+      }
+
+      .controls-panel {
+        padding: 15px;
+        flex-direction: column;
+
+        .btnAddObj {
+          width: 100%;
+          justify-content: center;
+        }
+      }
+    }
+  }
+}
+
+.btnAddObj {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 20px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(76, 175, 80, 0.2);
+    margin-bottom: 20px;
+    margin-left: auto;
+    margin-right: auto;
+  
+    &:hover {
+      background: #43A047;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
+    }
+  
+    &:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 4px rgba(76, 175, 80, 0.2);
+    }
+  
+    img {
+      width: 24px;
+      height: 24px;
+      transition: transform 0.2s ease;
+    }
+  
+    p {
+      margin: 0;
+      color: white;
+      font-weight: 500;
+    }
+  
+    &:hover img {
+      transform: rotate(90deg);
+    }
+  }
+  
+  // Адаптивность для кнопки
+  @media (max-width: 768px) {
+    .btnAddObj {
+      padding: 8px 16px;
+      font-size: 13px;
+  
+      img {
+        width: 20px;
+        height: 20px;
+      }
+    }
+  }
+  
+  @media (max-width: 576px) {
+    .btnAddObj {
+      width: 100%;
+      justify-content: center;
+      margin-bottom: 15px;
+    }
+  }

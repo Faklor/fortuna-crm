@@ -1,13 +1,16 @@
 .addObject {
   max-width: 600px;
-  margin: 0 auto;
-  padding: 20px;
+  margin: 20px auto;
+  padding: 30px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   display: flex;
   flex-direction: column;
   gap: 20px;
 
   // Кнопка "Отмена"
-  .cancel-btn {
+  button:first-child {
     align-self: flex-start;
     padding: 8px 16px;
     background: #f1f3f5;
@@ -23,66 +26,52 @@
     }
   }
 
-  // Контейнер для изображения
-  .image-container {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 15px;
+  // Контейнер изображения
+  img {
+    width: 300px;
+    height: 300px;
+    object-fit: contain;
+    border-radius: 8px;
+    background: #f8f9fa;
+    align-self: center;
+  }
 
-    img {
-      border-radius: 12px;
-      object-fit: contain;
-      background: #f8f9fa;
-    }
+  // Поле загрузки файла
+  input[type="file"] {
+    padding: 10px;
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    cursor: pointer;
+    
+    &::-webkit-file-upload-button {
+      padding: 8px 16px;
+      margin-right: 10px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s ease;
 
-    .file-input-wrapper {
-      width: 100%;
-      
-      input[type="file"] {
-        width: 100%;
-        padding: 10px;
-        border: 2px dashed #dee2e6;
-        border-radius: 8px;
-        cursor: pointer;
-        
-        &::-webkit-file-upload-button {
-          visibility: hidden;
-          display: none;
-        }
-
-        &::before {
-          content: 'Выберите изображение';
-          display: inline-block;
-          padding: 8px 12px;
-          border-radius: 6px;
-          background: #e9ecef;
-          color: #495057;
-          margin-right: 10px;
-        }
-
-        &:hover::before {
-          background: #dee2e6;
-        }
+      &:hover {
+        background: #43A047;
       }
     }
   }
 
-  // Стили для инпутов
+  // Текстовые поля и select
   input[type="text"],
-  select,
-  textarea {
-    width: 100%;
+  select {
     padding: 12px;
     border: 1px solid #dee2e6;
     border-radius: 8px;
     font-size: 14px;
-    transition: border-color 0.2s ease;
+    transition: all 0.2s ease;
 
     &:focus {
       outline: none;
       border-color: #4CAF50;
+      box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
     }
 
     &::placeholder {
@@ -92,27 +81,39 @@
 
   // Специальные стили для select
   select {
+    cursor: pointer;
     appearance: none;
     background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
     background-repeat: no-repeat;
     background-position: right 12px center;
     background-size: 16px;
     padding-right: 40px;
-    cursor: pointer;
+  }
 
-    option {
-      padding: 8px;
+  // Текстовая область
+  textarea {
+    padding: 12px;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    min-height: 120px;
+    resize: vertical;
+    font-size: 14px;
+    font-family: inherit;
+    transition: all 0.2s ease;
+
+    &:focus {
+      outline: none;
+      border-color: #4CAF50;
+      box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+    }
+
+    &::placeholder {
+      color: #adb5bd;
     }
   }
 
-  // Специальные стили для textarea
-  textarea {
-    min-height: 120px;
-    resize: vertical;
-  }
-
   // Кнопка "Добавить"
-  .submit-btn {
+  button:last-child {
     padding: 12px 24px;
     background: #4CAF50;
     color: white;
@@ -121,10 +122,12 @@
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
+    margin-top: 10px;
 
     &:hover {
       background: #43A047;
-      transform: translateY(-1px);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(76, 175, 80, 0.2);
     }
 
     &:active {
@@ -136,25 +139,21 @@
 // Адаптивность
 @media (max-width: 768px) {
   .addObject {
-    padding: 15px;
+    margin: 15px;
+    padding: 20px;
     gap: 15px;
 
     img {
       width: 250px;
       height: 250px;
     }
-
-    input[type="text"],
-    select,
-    textarea {
-      padding: 10px;
-    }
   }
 }
 
 @media (max-width: 576px) {
   .addObject {
-    padding: 10px;
+    margin: 10px;
+    padding: 15px;
     gap: 12px;
 
     img {
@@ -162,8 +161,8 @@
       height: 200px;
     }
 
-    .submit-btn,
-    .cancel-btn {
+    button:first-child,
+    button:last-child {
       width: 100%;
     }
   }

@@ -1,65 +1,148 @@
-.blockAddPart{
-    background-color: #fff;
+.blockAddPart {
+  max-width: 600px;
+  margin: 20px auto;
+  padding: 30px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 
-    //border:1px solid #ECF3FC;
-    border-radius: 10px;
-    // box-shadow: inset 1px 1px 6px 3px #C9D8EE,
-    // -1px -1px 4px  0 rgba(255, 255, 255, 1),
-    // 2px 2px 6px 3px rgba(158, 158, 158, 0.25);
+  // Кнопка "Вернуться на склад"
+  button:first-child {
+    align-self: flex-start;
+    padding: 10px 20px;
+    background: #f1f3f5;
+    border: none;
+    border-radius: 6px;
+    color: #354759;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
 
-    width: 360px;
-    margin:0.5em 1em 0 2em;
-    padding: 1em;
-
-    display: grid;
-
-    h2{
-        text-align: center;
-        color: #A1B0CA;
-        margin:0.15em;
+    &:hover {
+      background: #e9ecef;
+      transform: translateY(-2px);
     }
-    
+  }
 
-    input, select{
-        //width: 100%;
-        margin:0.15em;
-        padding: 0.2em 0.5em;
-        border:none;
-        border-radius: 5px;
-        box-shadow: inset 1px 1px 4px 0 #A1B0CA;
-        outline: none;
+  // Заголовки
+  h2 {
+    color: #354759;
+    font-size: 20px;
+    margin: 10px 0;
+    font-weight: 600;
+  }
 
-        font-size: 18px;
+  // Select
+  select {
+    padding: 12px;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    background: #f8f9fa;
+    color: #354759;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
 
-        &::placeholder{
-            color: #A1B0CA;
-        }
+    &:hover {
+      border-color: #4F8DE3;
     }
 
-    button{
-        align-self: center;
-        justify-self: center;
-
-        padding:0.7em 2em;
-        margin:0.5em 0;
-        outline: 0;
-        //border:1px solid #ECF3FC;
-        border-radius: 10px;
-        border:none;
-        // box-shadow: -1px -1px 4px  0 rgba(255, 255, 255, 1),
-        // 2px 2px 6px 3px rgba(158, 158, 158, 0.25);
-        box-shadow: 1px 1px 4px 0px rgba(0, 0, 0, 0.25);
-        cursor: pointer;
-        background-color: #4F8DE3;
-        color: #fff;
-        font-weight: bold;
-
-        transition: 0.5s;
-        &:hover{
-            transform: scale(0.95);
-        }
-        &:active{
-            background-color: #AEFFAE;
-        }
+    &:focus {
+      outline: none;
+      border-color: #4F8DE3;
+      box-shadow: 0 0 0 3px rgba(79, 141, 227, 0.1);
     }
+  }
+
+  // Inputs
+  input {
+    padding: 12px;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+
+    &::placeholder {
+      color: #adb5bd;
+    }
+
+    &:hover {
+      border-color: #4F8DE3;
+    }
+
+    &:focus {
+      outline: none;
+      border-color: #4F8DE3;
+      box-shadow: 0 0 0 3px rgba(79, 141, 227, 0.1);
+    }
+
+    // Числовые поля
+    &[type="number"] {
+      -moz-appearance: textfield;
+      &::-webkit-outer-spin-button,
+      &::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+    }
+  }
+
+  // Кнопка "ДОБАВИТЬ"
+  button:last-child {
+    margin-top: 10px;
+    padding: 14px;
+    background: #4F8DE3;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: #4277c7;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(79, 141, 227, 0.2);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+}
+
+// Адаптивность
+@media (max-width: 768px) {
+  .blockAddPart {
+    margin: 15px;
+    padding: 20px;
+    gap: 12px;
+
+    h2 {
+      font-size: 18px;
+    }
+
+    input, select {
+      padding: 10px;
+    }
+
+    button:last-child {
+      padding: 12px;
+    }
+  }
+}
+
+@media (max-width: 576px) {
+  .blockAddPart {
+    margin: 10px;
+    padding: 15px;
+
+    button:first-child,
+    button:last-child {
+      width: 100%;
+    }
+  }
 }

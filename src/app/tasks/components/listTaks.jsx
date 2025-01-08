@@ -1,5 +1,6 @@
 'use client'
 import { useState } from "react"
+import '../scss/listTasks.scss'
 //--------------components-------------------
 import Requisition from './requisition'
 import NoticesInspection from "./noticesInspection"
@@ -28,6 +29,7 @@ export default function ListTasks({
 
     return <>
         <SeasonalWorks />
+        <NoticesInspection objects={objects}/>
         <Requisition 
             requisition={requisition}
             setRequisition={setRequisition} 
@@ -35,7 +37,6 @@ export default function ListTasks({
             objects={objects}
             parts={parts}
         />
-        <NoticesInspection objects={objects}/>
         <HistoryReqs />
     </>
 }

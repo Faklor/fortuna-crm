@@ -2,7 +2,7 @@
 import Image from 'next/image'
 import axios from 'axios'
 import { useRouter } from "next/navigation";
-
+import '../scss/controllersObj.scss'
 
 export default function ControllersObj({_id}){
 

@@ -3,7 +3,7 @@ import Image from 'next/image'
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { useRouter  } from 'next/navigation'
-import '../scss/addObject.scss'
+import './page.scss'
 
 export default function Page(){
 

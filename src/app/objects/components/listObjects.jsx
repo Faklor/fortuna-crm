@@ -9,6 +9,7 @@ import SearchObj from "./searchObj"
 import FilterCategory from './filterCategory'
 
 
+
 export default function ListObjs({objects}){
 
     //navigation
