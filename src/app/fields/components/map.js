@@ -693,6 +693,18 @@ function Map({ fields, currentSeason }) {
         }
       `}</style>
 
+      <style jsx global>{`
+        .leaflet-editing-icon {
+          border-radius: 50% !important;
+          width: 12px !important;
+          height: 12px !important;
+          margin-left: -6px !important;
+          margin-top: -6px !important;
+          background-color: white !important;
+          border: 2px solid #FFF !important;
+        }
+      `}</style>
+
       <MapContainer 
         key={key}
         center={defaultCenter} 
@@ -819,16 +831,13 @@ function Map({ fields, currentSeason }) {
               position='topright'
               onCreated={e => {
                 if (e.layerType !== 'polygon') return;
-
                 const coordinates = e.layer.getLatLngs()[0]
                   .map(latLng => [latLng.lng, latLng.lat]);
                 
-                // Замыкаем полигон
                 if (coordinates[0][0] !== coordinates[coordinates.length - 1][0] || 
                     coordinates[0][1] !== coordinates[coordinates.length - 1][1]) {
                     coordinates.push(coordinates[0]);
                 }
-
                 handleFieldCreate(coordinates);
               }}
               draw={{
@@ -844,7 +853,10 @@ function Map({ fields, currentSeason }) {
                     message: 'Полигоны не должны пересекаться!'
                   },
                   shapeOptions: {
-                    color: '#97009c'
+                    color: '#FFF',
+                    fillColor: '#FFF',
+                    fillOpacity: 0.2,
+                    weight: 2
                   }
                 }
               }}

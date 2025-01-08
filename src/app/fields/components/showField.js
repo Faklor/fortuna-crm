@@ -574,6 +574,28 @@ export default function ShowField({
         }
     };
 
+    // Добавляем функцию удаления поля
+    const handleDeleteField = async () => {
+        // Показываем подтверждение перед удалением
+        if (window.confirm('Вы уверены, что хотите удалить это поле? Это действие нельзя отменить.')) {
+            try {
+                const response = await axios.delete(`/api/fields/delete/${selectedField}`);
+                
+                if (response.data.success) {
+                    // Закрываем окно просмотра поля
+                    setShowFieldVisible(false);
+                    // Перезагружаем страницу для обновления списка полей
+                    window.location.reload();
+                } else {
+                    throw new Error(response.data.error || 'Ошибка при удалении поля');
+                }
+            } catch (error) {
+                console.error('Error deleting field:', error);
+                alert('Ошибка при удалении поля');
+            }
+        }
+    };
+
     return field && field.properties ? (
         <div 
             className={`show-field ${isExpanded ? 'expanded' : ''}`}
@@ -948,6 +970,20 @@ export default function ShowField({
                     }}
                 >
                     {isDrawingMode ? 'Завершить создание подполя' : 'Создать подполе'}
+                </button>
+
+                <button 
+                    className="delete-field-button"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteField();
+                    }}
+                    style={{
+                        backgroundColor: '#ff4444',
+                        color: 'white'
+                    }}
+                >
+                    Удалить поле
                 </button>
             </div>
 
