@@ -1,0 +1,188 @@
+.seasonal-works {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+
+    .seasonal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #eee;
+
+        h2 {
+            margin: 0;
+            color: #333;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .season-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+
+            &.winter {
+                background: #E3F2FD;
+                color: #1976D2;
+            }
+
+            &.spring {
+                background: #F1F8E9;
+                color: #689F38;
+            }
+
+            &.summer {
+                background: #FFFDE7;
+                color: #FBC02D;
+            }
+
+            &.autumn {
+                background: #FBE9E7;
+                color: #D84315;
+            }
+        }
+    }
+
+    .works-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .work-item {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        transition: transform 0.2s ease;
+
+        &:hover {
+            transform: translateY(-2px);
+        }
+
+        &.winter {
+            background: linear-gradient(to right, #E3F2FD, #FFFFFF);
+            border-left: 4px solid #1976D2;
+
+            .status-badge {
+                background: rgba(25, 118, 210, 0.1);
+                color: #1976D2;
+            }
+        }
+
+        &.spring {
+            background: linear-gradient(to right, #F1F8E9, #FFFFFF);
+            border-left: 4px solid #689F38;
+
+            .status-badge {
+                background: rgba(104, 159, 56, 0.1);
+                color: #689F38;
+            }
+        }
+
+        &.summer {
+            background: linear-gradient(to right, #FFFDE7, #FFFFFF);
+            border-left: 4px solid #FBC02D;
+
+            .status-badge {
+                background: rgba(251, 192, 45, 0.1);
+                color: #FBC02D;
+            }
+        }
+
+        &.autumn {
+            background: linear-gradient(to right, #FBE9E7, #FFFFFF);
+            border-left: 4px solid #D84315;
+
+            .status-badge {
+                background: rgba(216, 67, 21, 0.1);
+                color: #D84315;
+            }
+        }
+
+        .work-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+
+            h3 {
+                margin: 0;
+                font-size: 16px;
+                color: #333;
+            }
+
+            .field-name {
+                font-size: 14px;
+                color: #666;
+                margin: 0 10px;
+            }
+
+            .status-badge {
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-size: 12px;
+                font-weight: 500;
+            }
+        }
+
+        .work-details {
+            .description {
+                color: #666;
+                font-size: 14px;
+                margin: 10px 0;
+            }
+
+            .work-meta {
+                display: flex;
+                gap: 15px;
+                margin: 10px 0;
+                font-size: 13px;
+                color: #777;
+
+                span {
+                    display: flex;
+                    align-items: center;
+                    gap: 5px;
+                }
+            }
+
+            .assigned {
+                font-size: 13px;
+                color: #495057;
+                margin-top: 8px;
+            }
+        }
+    }
+
+    .loading, .no-works {
+        text-align: center;
+        padding: 30px;
+        color: #666;
+    }
+}
+
+@media (max-width: 768px) {
+    .seasonal-works {
+        margin: 10px;
+        padding: 15px;
+
+        .work-item {
+            .work-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .work-meta {
+                flex-direction: column;
+                gap: 5px;
+            }
+        }
+    }
+} 

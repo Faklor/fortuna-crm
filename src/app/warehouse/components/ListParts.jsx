@@ -1,6 +1,6 @@
 'use client'
 import '../scss/addPartBt.scss'
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 
@@ -9,15 +9,22 @@ import Parts from "./parts"
 import Search from "./search"
 import SlyderCategory from './slyder_category'
 
-
 export default function WareHouse({parts, workers, objects}){
-
     //react
     const [visibleParts, setVisibleParts] = useState(JSON.parse(parts))
     const [visibleObjects, setVisibleObjects] = useState(JSON.parse(objects))
     const [visibleWorkers, setVisibleWorkers] = useState(JSON.parse(workers))
 
-    const router = useRouter() 
+    const router = useRouter()
+
+    // Сортировка массива при инициализации и при обновлении parts
+    useEffect(() => {
+        const sortedParts = JSON.parse(parts).sort((a, b) => {
+            // Игнорируем регистр при сортировке
+            return a.name.localeCompare(b.name, 'ru', { sensitivity: 'base' });
+        });
+        setVisibleParts(sortedParts);
+    }, [parts]);
 
     return <>
         <SlyderCategory parts={JSON.parse(parts)} setVisibleParts={setVisibleParts}/>
@@ -32,7 +39,6 @@ export default function WareHouse({parts, workers, objects}){
                 array={visibleParts} 
                 workers={visibleWorkers} 
                 objects={visibleObjects} 
-                
                 setVisibleParts={setVisibleParts}
             />
         </div>

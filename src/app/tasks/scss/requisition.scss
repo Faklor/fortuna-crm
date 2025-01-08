@@ -1,28 +1,98 @@
-.requisition{
+.requisition {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
 
-    text-align: center;
-
-    .title{
+    .title {
         display: flex;
-        justify-self: center;
-        margin:1em;
-        gap:1em;
-        button{
-            background-color: #4F8DE3;
-            color:#fff;
-            outline:0;
-            border:none;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #eee;
 
-            border-radius: 5px;
-            padding: 0.3em 0.7em;
-            margin:0 0.3em;
-            box-shadow: 1px 1px 4px 0px rgba(0, 0, 0, 0.25);
+        h2 {
+            font-size: 24px;
+            color: #333;
+            margin: 0;
+            font-weight: 600;
+        }
+
+        button {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
             cursor: pointer;
-            transition: 0.3s;
+            transition: all 0.2s ease;
+            font-weight: 500;
 
-            &:hover{
-                transform: scale(0.9);
+            &:hover {
+                background: #43a047;
+                transform: translateY(-1px);
+            }
+
+            &:active {
+                transform: translateY(0);
             }
         }
     }
+
+    // Стили для пустого состояния
+    > p {
+        text-align: center;
+        padding: 40px;
+        background: white;
+        border-radius: 12px;
+        color: #666;
+        font-size: 16px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin: 20px 0;
+    }
+
+    // Контейнер для списка заявок
+    > div {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+}
+
+// Медиа-запросы для адаптивности
+@media (max-width: 768px) {
+    .requisition {
+        padding: 15px;
+
+        .title {
+            flex-direction: column;
+            gap: 15px;
+            align-items: stretch;
+            text-align: center;
+
+            button {
+                justify-content: center;
+            }
+        }
+    }
+}
+
+// Анимация для появления новых заявок
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.requisition > div > * {
+    animation: fadeIn 0.3s ease-out forwards;
 }

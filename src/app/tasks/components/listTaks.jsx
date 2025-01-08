@@ -4,6 +4,7 @@ import { useState } from "react"
 import Requisition from './requisition'
 import NoticesInspection from "./noticesInspection"
 import HistoryReqs from "./historyReqs"
+import SeasonalWorks from "./seasonalWorks"
 
 export default function ListTasks({
     visibleParts,
@@ -26,6 +27,7 @@ export default function ListTasks({
     
 
     return <>
+        <SeasonalWorks />
         <Requisition 
             requisition={requisition}
             setRequisition={setRequisition} 
