@@ -82,3 +82,47 @@
         }
     }
 }
+
+.fields-tabs {
+    display: flex;
+    gap: 12px;
+    margin: 5px 0;
+    padding: 0 2em;
+    z-index: 110;
+    max-width: 400px;
+    width: 400px;
+    justify-self: center;
+    overflow-x: auto;
+
+    .tab {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        background: white;
+        color: #678295;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+
+        &:hover {
+            background: #f8f9fa;
+        }
+
+        &.active {
+            background: #4F8DE3;
+            color: white;
+        }
+    }
+}
+
+@media (max-width: 768px) {
+    .fields-tabs {
+        padding: 0 16px;
+        
+        .tab {
+            padding: 10px 20px;
+            font-size: 14px;
+        }
+    }
+}

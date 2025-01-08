@@ -6,20 +6,24 @@ import { useEffect, useState, useCallback } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 //components
 import ShapefileUploader from './components/ShapefileUploader'
+import CropRotation from './components/CropRotation'
 
 const Map = dynamic(()=> import("./components/map"),{ ssr: false })
 
-export default function PageClient({visibleArr}){
+export default function PageClient({visibleArr, allFields, allWorks}){
     //navigate
     const searchParams = useSearchParams()
     const router = useRouter()
     const pathname = usePathname()
     
     //react
+    const [activeTab, setActiveTab] = useState('fields') // 'fields' или 'rotation'
     const [seasons, setSeasons] = useState(JSON.parse(visibleArr))
+    const [allFieldsState, setAllFieldsState] = useState(JSON.parse(allFields))
     const [selectSeason, setSelectSeason] = useState(seasons[0])
     const [fields, setFields] = useState([])
     const [newSeasonName, setNewSeasonName] = useState('')
+    const [allWorksState, setAllWorks] = useState(JSON.parse(allWorks))
     
     const createQueryString = useCallback(
         (name, value) => {
@@ -51,6 +55,7 @@ export default function PageClient({visibleArr}){
         if (typeof window !== 'undefined'){
             router.push(pathname + '?' + createQueryString('season', selectSeason.name))
         }
+        
 
         getFields(searchParams.get('season'))
         .then(res=>{
@@ -95,10 +100,36 @@ export default function PageClient({visibleArr}){
                 </div>
             </div>
         </div>
-        <ShapefileUploader season={searchParams.get('season')}/>
-        <Map 
-            fields={fields} 
-            currentSeason={searchParams.get('season')}
-        />
+        
+        
+        <div className="fields-tabs">
+            <button 
+                className={`tab ${activeTab === 'fields' ? 'active' : ''}`}
+                onClick={() => setActiveTab('fields')}
+            >
+                Поля
+            </button>
+            <button 
+                className={`tab ${activeTab === 'rotation' ? 'active' : ''}`}
+                onClick={() => setActiveTab('rotation')}
+            >
+                Севооборот
+            </button>
+        </div>
+
+        {activeTab === 'fields' ? (
+            <>
+            <Map 
+                fields={fields} 
+                currentSeason={searchParams.get('season')}
+            />
+            <ShapefileUploader season={searchParams.get('season')}/>
+            </>
+        ) : (
+            <CropRotation 
+                fields={allFieldsState} 
+                works={allWorksState}
+            />
+        )}
     </>
 }
