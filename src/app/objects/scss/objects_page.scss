@@ -9,7 +9,7 @@
     margin: 0 auto;
     display: flex;
     flex-direction: column;
-    gap: 30px;
+    gap: 10px;
 
     // Заголовок страницы
     .page-header {
@@ -189,9 +189,10 @@
     font-size: 14px;
     font-weight: 500;
     box-shadow: 0 2px 4px rgba(76, 175, 80, 0.2);
-    margin-bottom: 20px;
+    margin-bottom: 0px;
     margin-left: auto;
     margin-right: auto;
+    outline: 0;
   
     &:hover {
       background: #43A047;
