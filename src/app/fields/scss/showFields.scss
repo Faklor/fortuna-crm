@@ -5,13 +5,20 @@
     position: fixed;
     box-shadow: 0 0 15px rgba(0, 0, 0, 0.15);
     transition: transform 0.3s ease, max-height 0.3s ease;
+    
+    
+    
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
 
     // ПК версия
     @media (min-width: 769px) {
         top: 0;
         left: 0;
         bottom: 0;
-        width: 400px;
+        //width: 400px;
+        width: 450px;
         border-radius: 0;
         padding: 32px 24px;
         overflow-y: auto;
@@ -127,6 +134,31 @@
     }
 
     .field-info {
+
+        h3{
+            font-size: 32px;
+        }
+        p{
+            font-size: 22px;
+            color: #5a5a5a;
+        }
+        .season-info {
+            p {
+                &:not(:last-child) {
+                    margin-bottom: 4px;
+                }
+            }
+        }
+        .edit-properties-button{
+            flex: 1;
+            padding: 10px 16px;
+            margin:1em 0;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            transition: all 0.2s ease;
+        }
         .properties-form {
             .form-group {
                 margin-bottom: 20px;
@@ -207,11 +239,19 @@
             }
         }
     }
+    .info-text {
+        margin: 0.7em 0;
+        color: #444;
+        font-size: 20px;
+        
+    }
 
     .subfields-info {
         margin-top: 24px;
         padding-top: 20px;
         border-top: 1px solid #eee;
+        
+       
     }
 
     .subfield-item {
@@ -225,22 +265,29 @@
         justify-content: space-between;
         gap: 12px;
         
+        
         &:hover {
             background-color: #f0f4f8;
         }
         
         &.selected {
-            background-color: rgba(255, 153, 0, 0.1);
-            border-left: 4px solid #ff9900;
+            background-color: rgba(79, 141, 227, 0.2);
+            border-left: 24px solid #4F8DE3;
         }
-        
+        .subfield-info{
+            max-width: calc(100% - 130px);
+
+            p{
+
+            }
+        }
         p {
             margin: 0;
             word-wrap: break-word;
             white-space: pre-wrap;
             line-height: 1.5;
             color: #444;
-            max-width: calc(100% - 110px);
+            text-align: justify;
         }
 
         .subfield-actions {
@@ -274,6 +321,7 @@
                 }
             }
         }
+       
     }
 
     .field-actions {
@@ -297,6 +345,22 @@
             }
         }
     }
+
+    .create-work-btn{
+        margin: 1em 0;
+        padding: 10px 16px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 15px;
+        transition: all 0.2s ease;
+        background-color: #4CAF50;
+        color: white;
+        &:hover {
+            background-color: #45a049;
+        }
+    }
+   
 }
 
 .crop-input-container {
@@ -339,10 +403,10 @@
     flex-grow: 1;
     cursor: pointer;
 
-    .subfield-name {
-        font-weight: 500;
-        margin-bottom: 8px;
-    }
+    // .subfield-name {
+    //     font-weight: 500;
+    //     margin-bottom: 8px;
+    // }
 
     .subfield-season-info {
         font-size: 14px;
@@ -419,13 +483,7 @@
     }
 }
 
-.season-info {
-    p {
-        &:not(:last-child) {
-            margin-bottom: 4px;
-        }
-    }
-}
+
 
 .subfield-season-info {
     p {

@@ -515,7 +515,6 @@ function Map({ fields, currentSeason }) {
         formData.append('description', noteData.description);
         formData.append('coordinates', JSON.stringify(noteData.coordinates));
         
-        // Добавляем текущий сезон из пропсов или состояния
         formData.append('season', season || new Date().getFullYear().toString());
         
         if (noteData.image) {
@@ -531,8 +530,9 @@ function Map({ fields, currentSeason }) {
 
         if (data.success) {
             setNotes(prevNotes => [...prevNotes, data.note]);
-            setIsAddingNote(false);
+            setIsAddingNote(false); // Сбрасываем состояние добавления заметки
             setSelectedPoint(null);
+            setIsCreatingNote(false); // Закрываем модальное окно
             alert('Заметка успешно добавлена');
         } else {
             throw new Error(data.error || 'Ошибка при сохранении заметки');
@@ -712,8 +712,8 @@ function Map({ fields, currentSeason }) {
                 click: () => handleFieldSelect(field._id)
               }}
               pathOptions={{
-                fillColor: field._id === selectedField ? '#F74F73' : '#FFF',
-                fillOpacity: field._id === selectedField ? 0.4 : 0.2,
+                fillColor: field._id === selectedField ? '#FFF' : '#FFF',
+                fillOpacity: field._id === selectedField ? 0.2 : 0.2,
                 weight: field._id === selectedField ? 3 : 2,
                 color: field._id === selectedField ? '#F74F73' : '#FFF'
               }}
@@ -794,6 +794,20 @@ function Map({ fields, currentSeason }) {
               {note.image && (
                 <img src={note.image} alt={note.title} style={{ maxWidth: '200px' }} />
               )}
+              <button 
+                onClick={() => handleDeleteNote(note._id)}
+                style={{
+                  marginTop: '10px',
+                  padding: '5px 10px',
+                  backgroundColor: '#ff4444',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                Удалить заметку
+              </button>
             </Popup>
           </Marker>
         ))}
@@ -917,37 +931,7 @@ function MapEvents({ onClick }) {
   return null;
 }
 
-// Вспомогательные функции
-const getWorkTypeColor = (type) => {
-  const colors = {
-    plowing: '#8B4513',     // Коричневый для вспашки
-    seeding: '#32CD32',     // Зеленый для посева
-    fertilizing: '#FFD700',  // Желтый для удобрений
-    spraying: '#00BFFF',    // Голубой для опрыскивания
-    harvesting: '#FFA500'    // Оранжевый для уборки
-  };
-  return colors[type] || '#808080';
-};
 
-const getWorkTypeName = (type) => {
-  const names = {
-    plowing: 'Вспашка',
-    seeding: 'Посев',
-    fertilizing: 'Внесение удобрений',
-    spraying: 'Опрыскивание',
-    harvesting: 'Уборка'
-  };
-  return names[type] || type;
-};
-
-const getWorkStatusName = (status) => {
-  const names = {
-    planned: 'Запланировано',
-    inProgress: 'В процессе',
-    completed: 'Завершено'
-  };
-  return names[status] || status;
-};
 
 export default Map;
 

@@ -23,6 +23,22 @@
     font-weight: 500;
     color: #2c3e50;
     white-space: nowrap;
+
+    // Добавляем медиа-запрос для мобильных устройств
+    @media (max-width: 768px) {
+        padding: 4px 8px;
+        font-size: 14px;
+        
+        select {
+            font-size: 14px !important;
+        }
+        
+        input {
+            max-width: 80px; // Ограничиваем ширину поля ввода
+            font-size: 14px;
+        }
+    }
+
     select {
         background-color: transparent;
         border: none;
@@ -31,15 +47,15 @@
         font-weight: 500;
     }
 
-    // Мобильная версия
-    @media (max-width: 768px) {
-        
-    }
+    
 
     .season-controls {
+        
         display: flex;
         align-items: center;
         gap: 20px;
+
+       
         
         .add-season {
             display: flex;

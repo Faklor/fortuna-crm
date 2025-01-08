@@ -595,17 +595,14 @@ export default function ShowField({
             <div className="field-info">
                 {!isEditingProperties ? (
                     <>
-                    
                         <h3>{field?.properties?.Name || 'Без названия'}</h3>
                         <p>Общая площадь поля: {fieldArea} га</p>
                         {field?.properties?.descriptio && <p>Описание: {field.properties.descriptio}</p>}
                         
-                        {field?.properties?.seasons?.[0] && (
+                        {field?.properties?.seasons?.[0]?.crop && (
                             <div className="season-info">
-                                <h4>Текущий сезон</h4>
-                                {field.properties.seasons[0].crop && (
-                                    <p>Культура: {field.properties.seasons[0].crop}</p>
-                                )}
+                                
+                                <p>Культура: {field.properties.seasons[0].crop}</p>
                                 {field.properties.seasons[0].variety && (
                                     <p>Сорт: {field.properties.seasons[0].variety}</p>
                                 )}
@@ -927,13 +924,15 @@ export default function ShowField({
                                 </div>
                             );
                         })}
-                    <p>Общая площадь подполей: {totalArea.toFixed(2)} га</p>
-                    <p>Свободная площадь: {(fieldArea - totalArea).toFixed(2)} га</p>
+                    <p className='info-text'>Общая площадь подполей: {totalArea.toFixed(2)} га</p>
+                    <p className='info-text'>Свободная площадь: {(fieldArea - totalArea).toFixed(2)} га</p>
                 </div>
             )}
 
+            <h4>Действия:</h4>
             <div className="field-actions">
                 <button 
+                    className="edit-boundaries-button"
                     onClick={(e) => {
                         e.stopPropagation();
                         setIsEditingMainField(!isEditingMainField);
