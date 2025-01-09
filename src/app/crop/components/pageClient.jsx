@@ -74,17 +74,21 @@ export default function PageClient({
         const parsedSeasons = safeJSONParse(seasons);
         const parsedSubFields = safeJSONParse(subFields);
         const parsedWorks = safeJSONParse(works);
-        
+
+        // Сначала обрабатываем каждое поле как раньше
         const fieldsWithAreas = parsedFields.map(field => {
             const fieldSeasons = field.properties?.seasons || [];
             const fieldWorks = parsedWorks.filter(work => work.fieldId === field._id);
             
             return {
-                ...field,
+                id: field._id,
+                name: field.properties?.Name || 'Без названия',
                 area: calculateArea(field.coordinates),
+                coordinates: field.coordinates,
                 seasons: field.seasons.map(seasonId => {
                     const seasonInfo = fieldSeasons.find(s => s.year.toString() === seasonId.toString());
-                    
+                    const seasonWorks = fieldWorks; // Все работы поля в каждом сезоне
+
                     const fieldSubFields = parsedSubFields
                         .filter(sub => sub.properties?.parentId === field._id)
                         .map(sub => ({
@@ -101,10 +105,7 @@ export default function PageClient({
                         description: seasonInfo?.description || 'Не указано',
                         sowingDate: seasonInfo?.sowingDate || 'Не указана',
                         harvestDate: seasonInfo?.harvestDate || 'Не указана',
-                        works: fieldWorks.filter(work => {
-                            const workYear = new Date(work.plannedDate).getFullYear().toString();
-                            return workYear === seasonId.toString();
-                        }).map(work => ({
+                        works: seasonWorks.map(work => ({
                             id: work._id,
                             name: work.name,
                             type: work.type,
@@ -119,44 +120,53 @@ export default function PageClient({
             };
         });
 
+        // Теперь группируем поля с одинаковыми названиями
         const groupedFields = fieldsWithAreas.reduce((acc, field) => {
-            const fieldName = field.properties?.Name || 'Без названия';
-            
-            if (!acc[fieldName]) {
-                acc[fieldName] = {
-                    id: field._id,
-                    name: fieldName,
+            if (!acc[field.name]) {
+                acc[field.name] = {
+                    id: field.name, // Используем имя как ID группы
+                    name: field.name,
                     area: field.area,
-                    seasons: field.seasons,
-                    coordinates: field.coordinates,
-                    subFields: field.subFields || []
+                    fields: [field]
                 };
             } else {
-                // Объединяем только сезоны, избегая дубликатов
-                const existingSeasonYears = acc[fieldName].seasons.map(s => s.year);
-                const newSeasons = field.seasons.filter(season => 
-                    !existingSeasonYears.includes(season.year)
-                );
-                acc[fieldName].seasons = [...acc[fieldName].seasons, ...newSeasons];
-                
-                // Сортируем сезоны по году в обратном порядке
-                acc[fieldName].seasons.sort((a, b) => b.year - a.year);
-                
-                // Обновляем площадь (можно суммировать или взять максимальную)
-                acc[fieldName].area = Math.max(acc[fieldName].area, field.area);
+                acc[field.name].area += field.area;
+                acc[field.name].fields.push(field);
             }
-            
             return acc;
         }, {});
 
-        return Object.values(groupedFields).sort((a, b) => a.name.localeCompare(b.name, 'ru'));
+        // Преобразуем обратно в массив и объединяем сезоны
+        const mergedFields = Object.values(groupedFields).map(group => ({
+            id: group.id,
+            name: group.name,
+            area: group.area,
+            seasons: [...new Set(group.fields.flatMap(f => f.seasons.map(s => s.year)))]
+                .sort((a, b) => b - a)
+                .map(year => ({
+                    year,
+                    crop: group.fields[0].seasons.find(s => s.year === year)?.crop || 'Ничего',
+                    variety: group.fields[0].seasons.find(s => s.year === year)?.variety || 'Не указан',
+                    description: group.fields[0].seasons.find(s => s.year === year)?.description || 'Не указано',
+                    sowingDate: group.fields[0].seasons.find(s => s.year === year)?.sowingDate || 'Не указана',
+                    harvestDate: group.fields[0].seasons.find(s => s.year === year)?.harvestDate || 'Не указана',
+                    works: group.fields.flatMap(f => 
+                        f.seasons.find(s => s.year === year)?.works || []
+                    ),
+                    subFields: group.fields.flatMap(f => 
+                        f.seasons.find(s => s.year === year)?.subFields || []
+                    )
+                }))
+        }));
+
+        return mergedFields.sort((a, b) => a.name.localeCompare(b.name, 'ru'));
     });
 
     return (
         <div className="crop-rotation">
             <ul className="crop-rotation__fields-list">
-                {fieldsState.map(field => (
-                    <li key={field.name} className="crop-rotation__field-item">
+                {fieldsState.map((field, fieldIndex) => (
+                    <li key={`field-${field.id}-${fieldIndex}`} className="crop-rotation__field-item">
                         <div className="crop-rotation__field-header">
                             <div className="crop-rotation__field-name">
                                 {field.name}
@@ -253,25 +263,50 @@ export default function PageClient({
                                                     )}
                                                 </td>
                                                 <td>
+                                                    {console.log('Rendering works cell for season:', season.year)}
+                                                    {console.log('Works array:', season.works)}
                                                     {season.works && season.works.length > 0 ? (
-                                                        <div className="crop-rotation__works">
-                                                            {season.works.map(work => (
-                                                                <div 
-                                                                    key={work.id} 
-                                                                    className="crop-rotation__work"
-                                                                    data-type={work.type}
-                                                                >
-                                                                    <div className="crop-rotation__work-name">
-                                                                        {work.name}
+                                                        <div className="crop-rotation__works-grid">
+                                                            {Object.keys(workTypeTranslations).map(workType => {
+                                                                const worksOfType = season.works.filter(work => work.type === workType);
+                                                                
+                                                                if (!worksOfType || worksOfType.length === 0) return null;
+                                                                
+                                                                return (
+                                                                    <div key={`${workType}-${field.id}-${season.year}`} className="crop-rotation__works-column">
+                                                                        <div className="crop-rotation__works-type">
+                                                                            {workTypeTranslations[workType]}
+                                                                        </div>
+                                                                        <div className="crop-rotation__works-list">
+                                                                            {worksOfType.map(work => (
+                                                                                <div 
+                                                                                    key={`${work.id}-${workType}`}
+                                                                                    className="crop-rotation__work"
+                                                                                    data-type={work.type}
+                                                                                >
+                                                                                    <div className="crop-rotation__work-name">
+                                                                                        {work.name || 'Без названия'}
+                                                                                    </div>
+                                                                                    <div className="crop-rotation__work-info">
+                                                                                        {work.status && (
+                                                                                            <div>Статус: {workStatusTranslations[work.status] || work.status}</div>
+                                                                                        )}
+                                                                                        {work.plannedDate && (
+                                                                                            <div>Дата: {work.plannedDate}</div>
+                                                                                        )}
+                                                                                        {work.area && (
+                                                                                            <div>Площадь: {work.area.toFixed(2)} га</div>
+                                                                                        )}
+                                                                                        {work.description && (
+                                                                                            <div>Описание: {work.description}</div>
+                                                                                        )}
+                                                                                    </div>
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
                                                                     </div>
-                                                                    <div className="crop-rotation__work-info">
-                                                                        <div>Тип: {workTypeTranslations[work.type] || work.type}</div>
-                                                                        <div>Статус: {workStatusTranslations[work.status] || work.status}</div>
-                                                                        <div>Дата: {work.plannedDate}</div>
-                                                                        <div>Площадь: {work.area?.toFixed(2)} га</div>
-                                                                    </div>
-                                                                </div>
-                                                            ))}
+                                                                );
+                                                            })}
                                                         </div>
                                                     ) : (
                                                         <span className="crop-rotation__no-works">Нет работ</span>

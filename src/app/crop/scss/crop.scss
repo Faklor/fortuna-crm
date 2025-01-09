@@ -290,4 +290,82 @@ body {
             }
         }
     }
+
+    &__works-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 12px;
+    }
+
+    &__works-column {
+        min-width: 150px;
+    }
+
+    &__works-type {
+        font-weight: 500;
+        color: #374151;
+        padding: 4px 8px;
+        background: #f3f4f6;
+        border-radius: 4px;
+        margin-bottom: 8px;
+    }
+
+    &__works-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    &__work {
+        padding: 8px;
+        border-radius: 4px;
+        font-size: 13px;
+
+        &[data-type="plowing"] {
+            background: #efebe9;
+            border-left: 3px solid #795548;
+        }
+
+        &[data-type="sowing"] {
+            background: #f0fdf4;
+            border-left: 3px solid #22c55e;
+        }
+
+        &[data-type="fertilizing"] {
+            background: #fef9c3;
+            border-left: 3px solid #eab308;
+        }
+
+        &[data-type="spraying"] {
+            background: #e8f4ff;
+            border-left: 3px solid #3b82f6;
+        }
+
+        &[data-type="harvesting"] {
+            background: #fff7ed;
+            border-left: 3px solid #f97316;
+        }
+
+        &[data-type="other"] {
+            background: #f1f5f9;
+            border-left: 3px solid #64748b;
+        }
+
+        &-name {
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        &-info {
+            color: #6b7280;
+            
+            > div {
+                margin-bottom: 2px;
+                
+                &:last-child {
+                    margin-bottom: 0;
+                }
+            }
+        }
+    }
 }
