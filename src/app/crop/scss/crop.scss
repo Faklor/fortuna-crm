@@ -49,6 +49,55 @@
         margin-top: 8px;
         color: #616161;
     }
+
+    &__operations {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    &__operation {
+        background: #f8f9fa;
+        border-radius: 6px;
+        padding: 8px;
+        border-left: 3px solid #2196f3;
+
+        &-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        &-date {
+            font-weight: 500;
+            color: #1976d2;
+        }
+
+        &-type {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.85em;
+        }
+
+        &-description {
+            font-size: 0.9em;
+            color: #616161;
+            margin-top: 4px;
+            padding-top: 4px;
+            border-top: 1px solid #e9ecef;
+        }
+    }
+
+    &__no-operations {
+        color: #6b7280;
+        font-style: italic;
+        font-size: 13px;
+    }
 }
 
 body {
@@ -352,6 +401,45 @@ body {
 
         &:hover {
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        &[data-type="harvesting"] {
+            background-color: #FFF3E0;  // Светло-оранжевый для уборки
+        }
+        &[data-type="seeding"] {
+            background-color: #E8F5E9;  // Светло-зеленый для посева
+        }
+        &[data-type="fertilizing"] {
+            background-color: #FFF8E1;  // Светло-желтый для удобрений
+        }
+        &[data-type="spraying"] {
+            background-color: #E3F2FD;  // Светло-голубой для опрыскивания
+        }
+        &[data-type="plowing"] {
+            background-color: #EFEBE9;  // Светло-коричневый для вспашки
+        }
+
+        // Новые типы работ
+        &[data-type="harrowing"] {
+            background-color: #F1F8E9;  // Светлый оливковый для боронования
+        }
+        &[data-type="deep_loosening"] {
+            background-color: #FFEBEE;  // Светло-красный для глубокого рыхления
+        }
+        &[data-type="disking"] {
+            background-color: #EDE7F6;  // Светло-фиолетовый для дискования
+        }
+        &[data-type="cultivation"] {
+            background-color: #E8F5E9;  // Мятный для культивации
+        }
+        &[data-type="peeling"] {
+            background-color: #F3E5F5;  // Светло-пурпурный для лущения
+        }
+        &[data-type="rolling"] {
+            background-color: #ECEFF1;  // Светло-серый для прокатывания
+        }
+        &[data-type="chiseling"] {
+            background-color: #FCE4EC;  // Светло-розовый для чизелевания
         }
     }
 

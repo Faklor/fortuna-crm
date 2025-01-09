@@ -158,11 +158,18 @@ function CreateWork({
                             required
                         >
                             <option value="">Выберите тип работы</option>
-                            <option value="plowing">Вспашка</option>
-                            <option value="seeding">Посев</option>
                             <option value="fertilizing">Внесение удобрений</option>
+                            <option value="harrowing">Боронование</option>
+                            <option value="deep_loosening">Глубокое рыхление</option>
+                            <option value="disking">Дискование</option>
+                            <option value="cultivation">Культивация</option>
+                            <option value="peeling">Лущение</option>
+                            <option value="plowing">Вспашка</option>
+                            <option value="rolling">Прокатывание</option>
+                            <option value="seeding">Посев</option>
                             <option value="spraying">Опрыскивание</option>
                             <option value="harvesting">Уборка</option>
+                            <option value="chiseling">Чизелевание</option>
                         </select>
                     </div>
 
@@ -221,7 +228,7 @@ function CreateWork({
                         )}
                     </div>
 
-                    <div className="form-group">
+                    <div className="form-group workers-group multiple-select-hint">
                         <label>Работники:</label>
                         <select
                             multiple
@@ -233,13 +240,13 @@ function CreateWork({
                         >
                             {Array.isArray(workers) && workers.map(worker => (
                                 <option key={worker._id} value={worker._id}>
-                                    {worker.name}
+                                    {worker.name || worker.properties?.Name || 'Без имени'}
                                 </option>
                             ))}
                         </select>
                     </div>
 
-                    <div className="form-group">
+                    <div className="form-group equipment-group multiple-select-hint">
                         <label>Техника:</label>
                         <select
                             multiple

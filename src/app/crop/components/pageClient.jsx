@@ -11,7 +11,8 @@ export default function PageClient({
     subFields,
     works,
     workers,
-    tech
+    tech,
+    operations
 }){
     const safeJSONParse = (data, fallback = []) => {
         try {
@@ -56,6 +57,7 @@ export default function PageClient({
         const parsedWorks = safeJSONParse(works);
         const parsedWorkers = safeJSONParse(workers);
         const parsedTech = safeJSONParse(tech);
+        
 
         const processedFields = parsedFields.map(field => {
             const fieldWorks = parsedWorks.filter(work => work.fieldId === field._id);

@@ -525,11 +525,18 @@ export default function ShowField({
     // Добавим функцию для перевода типа работы
     const getWorkTypeName = (type) => {
         const names = {
-            plowing: 'Вспашка',
-            seeding: 'Посев',
-            fertilizing: 'Внесение удобрений',
-            spraying: 'Опрыскивание',
-            harvesting: 'Уборка'
+            'fertilizing': 'Внесение удобрений',
+            'harrowing': 'Боронование',
+            'deep_loosening': 'Глубокое рыхление',
+            'disking': 'Дискование',
+            'cultivation': 'Культивация',
+            'peeling': 'Лущение',
+            'plowing': 'Вспашка',
+            'rolling': 'Прокатывание',
+            'seeding': 'Посев',
+            'spraying': 'Опрыскивание',
+            'harvesting': 'Уборка',
+            'chiseling': 'Чизелевание'
         };
         return names[type] || type;
     };

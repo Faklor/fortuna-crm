@@ -1,12 +1,16 @@
 export const workTypeTranslations = {
-    'plowing': 'Вспашка',
-    'cultivation': 'Культивация',
-    'sowing': 'Посев',
-    'seeding': 'Посев',
     'fertilizing': 'Внесение удобрений',
+    'harrowing': 'Боронование',
+    'deep_loosening': 'Глубокое рыхление',
+    'disking': 'Дискование',
+    'cultivation': 'Культивация',
+    'peeling': 'Лущение',
+    'plowing': 'Вспашка',
+    'rolling': 'Прокатывание',
+    'seeding': 'Посев',
     'spraying': 'Опрыскивание',
     'harvesting': 'Уборка',
-    'other': 'Другое'
+    'chiseling': 'Чизелевание'
 };
 
 export const workStatusTranslations = {

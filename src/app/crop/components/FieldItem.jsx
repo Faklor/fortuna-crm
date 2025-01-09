@@ -4,7 +4,7 @@ import { memo, useMemo } from 'react'
 
 // Выносим подкомпоненты для оптимизации ререндеров
 const WorkDetails = memo(({ work }) => (
-    <div className="crop-rotation__work-info">
+    <div className="crop-rotation__work-info"> 
         {work.status && (
             <div className={`status ${work.status}`}>
                 {workStatusTranslations[work.status] || work.status}
@@ -72,15 +72,42 @@ const SubField = memo(({ subField }) => (
 ));
 
 const WorksGroup = memo(({ works, workType, seasonYear }) => {
+    // Порядок типов работ для сортировки
+    const workTypeOrder = {
+        'plowing': 1,        // Вспашка
+        'chiseling': 2,      // Чизелевание
+        'deep_loosening': 3, // Глубокое рыхление
+        'cultivation': 4,    // Культивация
+        'disking': 5,        // Дискование
+        'peeling': 6,        // Лущение
+        'harrowing': 7,      // Боронование
+        'rolling': 8,        // Прокатывание
+        'fertilizing': 9,    // Внесение удобрений
+        'seeding': 10,       // Посев
+        'spraying': 11,      // Опрыскивание
+        'harvesting': 12     // Уборка
+    };
+
     const sortedWorks = useMemo(() => 
-        works.sort((a, b) => new Date(b.plannedDate) - new Date(a.plannedDate)),
+        works.sort((a, b) => {
+            // Сначала сортируем по типу работы
+            const typeOrderDiff = (workTypeOrder[a.type] || 99) - (workTypeOrder[b.type] || 99);
+            if (typeOrderDiff !== 0) return typeOrderDiff;
+            
+            // Затем по дате
+            return new Date(b.plannedDate) - new Date(a.plannedDate);
+        }),
         [works]
     );
 
     return (
-        <details key={`worktype-${workType}-${seasonYear}`} className="crop-rotation__works-group">
+        <details 
+            key={`worktype-${workType}-${seasonYear}`} 
+            className="crop-rotation__works-group"
+            data-type={workType}
+        >
             <summary className="crop-rotation__works-type">
-                {workTypeTranslations[workType]}
+                {workTypeTranslations[workType] || workType}
                 <span className="crop-rotation__works-count">{works.length}</span>
             </summary>
             <div className="crop-rotation__works-list">
@@ -91,7 +118,7 @@ const WorksGroup = memo(({ works, workType, seasonYear }) => {
                         data-type={work.type}
                     >
                         <div className="crop-rotation__work-name">
-                            {work.name || 'Без названия'}
+                            {work.name || workTypeTranslations[work.type] || 'Без названия'}
                         </div>
                         <WorkDetails work={work} />
                     </div>

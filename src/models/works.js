@@ -16,7 +16,20 @@ const worksSchema = new mongoose.Schema({
     type: {
         type: String,
         required: true,
-        enum: ['plowing', 'seeding', 'fertilizing', 'spraying', 'harvesting'] // типы работ
+        enum: [
+            'fertilizing',
+            'harrowing',
+            'deep_loosening',
+            'disking',
+            'cultivation',
+            'peeling',
+            'plowing',
+            'rolling',
+            'seeding',
+            'spraying',
+            'harvesting',
+            'chiseling'
+        ]
     },
     plannedDate: {
         type: Date,
