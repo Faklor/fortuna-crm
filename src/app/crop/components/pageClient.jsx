@@ -12,17 +12,14 @@ export default function PageClient({
     workers,
     tech
 }){
-    // Базовый парсинг данных
     const safeJSONParse = (data, fallback = []) => {
         try {
             return JSON.parse(data) || fallback;
         } catch (e) {
-            console.error('JSON Parse error:', e);
             return fallback;
         }
     };
 
-    // Улучшенная функция для расчета площади
     const calculateArea = (coordinates) => {
         try {
             if (!coordinates || !Array.isArray(coordinates)) {
@@ -32,7 +29,6 @@ export default function PageClient({
             let polygonCoords = Array.isArray(coordinates[0][0]) ? coordinates[0] : coordinates;
 
             if (polygonCoords.length < 3) {
-                console.warn('Not enough points for polygon');
                 return 0;
             }
 
@@ -46,10 +42,8 @@ export default function PageClient({
             const polygon = turf.polygon([polygonCoords]);
             const area = turf.area(polygon);
             
-            // Округляем до 2 знаков после запятой
             return Number((area / 10000).toFixed(2));
         } catch (e) {
-            console.error('Error calculating area:', e);
             return 0;
         }
     };
@@ -62,7 +56,6 @@ export default function PageClient({
         const parsedWorkers = safeJSONParse(workers);
         const parsedTech = safeJSONParse(tech);
 
-        // Сначала обрабатываем все поля
         const processedFields = parsedFields.map(field => {
             const fieldWorks = parsedWorks.filter(work => work.fieldId === field._id);
             const fieldSeasons = field.properties?.seasons || [];
@@ -75,28 +68,16 @@ export default function PageClient({
                 seasons: field.seasons.map(seasonId => {
                     const seasonInfo = fieldSeasons.find(s => s.year.toString() === seasonId.toString());
                     
-                    // Фильтруем работы для конкретного сезона
                     const seasonWorks = fieldWorks.filter(work => {
                         if (!work.plannedDate) return false;
                         
-                        // Получаем даты начала и конца двухлетнего периода
                         const seasonYear = parseInt(seasonId);
-                        const seasonStart = new Date(seasonYear - 1, 0, 1); // 1 января предыдущего года
-                        const seasonEnd = new Date(seasonYear, 11, 31); // 31 декабря текущего года
+                        const seasonStart = new Date(seasonYear - 1, 0, 1);
+                        const seasonEnd = new Date(seasonYear, 11, 31);
                         const workDate = new Date(work.plannedDate);
 
-                        console.log(`Checking work date ${workDate} against season range:`, {
-                            seasonYear,
-                            seasonStart,
-                            seasonEnd,
-                            isInRange: workDate >= seasonStart && workDate <= seasonEnd
-                        });
-
-                        // Проверяем, попадает ли дата работы в двухлетний диапазон
                         return workDate >= seasonStart && workDate <= seasonEnd;
                     });
-
-                    console.log(`Works for season ${seasonId}:`, seasonWorks);
 
                     const fieldSubFields = parsedSubFields
                         .filter(sub => sub.properties?.parentId === field._id)
@@ -135,25 +116,21 @@ export default function PageClient({
             };
         });
 
-        // Группируем поля с одинаковыми названиями
         const groupedFields = processedFields.reduce((acc, field) => {
             const existingFieldIndex = acc.findIndex(f => f.name === field.name);
             
             if (existingFieldIndex !== -1 && field.name !== 'Без названия') {
-                // Если нашли поле с таким же названием и это не "Без названия"
                 const existingField = acc[existingFieldIndex];
                 
-                // Объединяем поля, но оставляем площадь первого поля
                 acc[existingFieldIndex] = {
                     ...existingField,
-                    area: existingField.area, // Оставляем площадь первого поля
+                    area: existingField.area,
                     seasons: [...existingField.seasons, ...field.seasons]
                         .sort((a, b) => b.year - a.year),
                     relatedIds: [...(existingField.relatedIds || [existingField.id]), field.id],
                     isGrouped: true
                 };
             } else {
-                // Если это уникальное название или "Без названия", добавляем как есть
                 acc.push({
                     ...field,
                     relatedIds: [field.id],

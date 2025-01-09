@@ -1,9 +1,7 @@
 'use client'
-import { workTypeTranslations, workStatusTranslations } from './translations' // Нужно будет создать
+import { workTypeTranslations, workStatusTranslations } from './translations'
 
 export default function FieldItem({ field }) {
-    console.log('Rendering FieldItem for:', field.name, 'with seasons:', field.seasons);
-    
     const renderWorkDetails = (work) => (
         <div className="crop-rotation__work-info">
             {work.status && (
@@ -72,7 +70,6 @@ export default function FieldItem({ field }) {
                         </thead>
                         <tbody>
                             {field.seasons.map((season, index) => {
-                                console.log('Rendering season:', season.year, 'with works:', season.works);
                                 return (
                                     <tr key={`${field.name}-season-${index}`}>
                                         <td>{season.year || 'Не указан'}</td>
@@ -145,16 +142,24 @@ export default function FieldItem({ field }) {
                                             {season.works && season.works.length > 0 ? (
                                                 <div className="crop-rotation__works-grid">
                                                     {Object.keys(workTypeTranslations).map(workType => {
-                                                        const worksOfType = season.works.filter(work => work.type === workType);
-                                                        console.log(`Works of type ${workType}:`, worksOfType);
+                                                        const worksOfType = season.works
+                                                            .filter(work => work.type === workType)
+                                                            // Сортируем работы по дате (будущие сверху)
+                                                            .sort((a, b) => new Date(b.plannedDate) - new Date(a.plannedDate));
                                                         
-                                                        if (!worksOfType || worksOfType.length === 0) return null;
+                                                        if (!worksOfType.length) return null;
                                                         
                                                         return (
-                                                            <div key={`worktype-${workType}-${season.year}`} className="crop-rotation__works-column">
-                                                                <div className="crop-rotation__works-type">
+                                                            <details 
+                                                                key={`worktype-${workType}-${season.year}`} 
+                                                                className="crop-rotation__works-group"
+                                                            >
+                                                                <summary className="crop-rotation__works-type">
                                                                     {workTypeTranslations[workType]}
-                                                                </div>
+                                                                    <span className="crop-rotation__works-count">
+                                                                        {worksOfType.length}
+                                                                    </span>
+                                                                </summary>
                                                                 <div className="crop-rotation__works-list">
                                                                     {worksOfType.map(work => (
                                                                         <div 
@@ -169,7 +174,7 @@ export default function FieldItem({ field }) {
                                                                         </div>
                                                                     ))}
                                                                 </div>
-                                                            </div>
+                                                            </details>
                                                         );
                                                     }).filter(Boolean)}
                                                 </div>

@@ -283,119 +283,78 @@ body {
     }
 
     &__works-grid {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 12px;
+        padding: 8px;
+        max-height: 400px;
+        overflow-y: auto;
     }
 
-    &__works-column {
-        background: #f8f9fa;
-        border-radius: 6px;
-        padding: 8px;
+    &__works-group {
+        background: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        transition: box-shadow 0.2s;
+
+        &:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
     }
 
     &__works-type {
-        font-weight: 500;
-        color: #495057;
-        padding-bottom: 4px;
-        margin-bottom: 8px;
-        border-bottom: 1px solid #dee2e6;
-    }
-
-    &__works-list {
         display: flex;
-        flex-direction: column;
-        gap: 8px;
-    }
-
-    &__work {
-        background: white;
-        border: 1px solid #e9ecef;
-        border-radius: 4px;
-        padding: 8px;
-
-        &[data-type="seeding"],
-        &[data-type="sowing"] {
-            border-left: 3px solid #2ecc71;
-        }
-
-        &[data-type="harvesting"] {
-            border-left: 3px solid #e74c3c;
-        }
-
-        &[data-type="fertilizing"] {
-            border-left: 3px solid #3498db;
-        }
-
-        &[data-type="spraying"] {
-            border-left: 3px solid #9b59b6;
-        }
-
-        &[data-type="plowing"] {
-            border-left: 3px solid #f1c40f;
-        }
-
-        &[data-type="cultivation"] {
-            border-left: 3px solid #e67e22;
-        }
-    }
-
-    &__work-name {
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px;
+        cursor: pointer;
         font-weight: 500;
-        color: #212529;
-        margin-bottom: 4px;
-    }
+        user-select: none;
+        background: #f8f9fa;
+        border-radius: 8px 8px 0 0;
 
-    &__work-info {
-        font-size: 0.9em;
-        color: #6c757d;
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
+        &::-webkit-details-marker {
+            display: none;
+        }
 
-        > div {
-            display: flex;
-            align-items: center;
-            gap: 4px;
+        &::after {
+            content: '▼';
+            font-size: 12px;
+            transition: transform 0.2s;
         }
     }
 
-    &__no-works {
-        color: #6c757d;
-        font-style: italic;
-        padding: 8px;
+    details[open] &__works-type::after {
+        transform: rotate(180deg);
     }
 
-    &__work-section-title {
-        font-weight: 500;
-        color: #495057;
-        margin-top: 8px;
-        font-size: 0.9em;
-    }
-
-    &__work-items {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 4px;
-        margin-top: 4px;
-    }
-
-    &__work-item {
-        background: rgba(255, 255, 255, 0.8);
+    &__works-count {
+        background: #e9ecef;
         padding: 2px 8px;
         border-radius: 12px;
         font-size: 0.85em;
         color: #495057;
-        
-        &:hover {
-            background: rgba(255, 255, 255, 0.9);
-        }
     }
 
-    &__work-workers,
-    &__work-equipment {
-        margin-top: 8px;
-        padding-top: 8px;
-        border-top: 1px solid #dee2e6;
+    &__works-list {
+        padding: 12px;
+        border-top: 1px solid #e9ecef;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    &__work {
+        margin-bottom: 8px;
+        padding: 8px;
+        border-radius: 6px;
+        background: #f8f9fa;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+
+        &:hover {
+            background: #f3f4f6;
+        }
     }
 }
