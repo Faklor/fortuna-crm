@@ -257,22 +257,41 @@ export default function ShowField({
 
     const handleSaveProperties = async () => {
         try {
-            // Создаем новый сезон или обновляем существующий
-            const updatedSeasons = editedProperties.seasons || [];
-            const currentYear = new Date().getFullYear();
+            // Получаем текущий сезон из URL или используем текущий год
+            const season = urlSeason || new Date().getFullYear().toString();
             
-            const seasonIndex = updatedSeasons.findIndex(s => s.year === currentYear);
+            // Получаем существующие сезоны или создаем новый массив
+            let updatedSeasons = [...(editedProperties.seasons || [])];
+            
+            // Находим индекс текущего сезона
+            const seasonIndex = updatedSeasons.findIndex(s => 
+                s.year && s.year.toString() === season.toString()
+            );
+
+            // Подготавливаем данные сезона
+            const seasonData = {
+                year: season,
+                crop: currentSeason.crop || '',
+                variety: currentSeason.variety || '',
+                yield: currentSeason.yield || '',
+                sowingDate: currentSeason.sowingDate || '',
+                harvestDate: currentSeason.harvestDate || ''
+            };
+
+            // Обновляем или добавляем сезон
             if (seasonIndex !== -1) {
+                // Обновляем существующий сезон
                 updatedSeasons[seasonIndex] = {
                     ...updatedSeasons[seasonIndex],
-                    ...currentSeason
+                    ...seasonData
                 };
             } else {
-                updatedSeasons.push({
-                    ...currentSeason,
-                    year: currentYear
-                });
+                // Добавляем новый сезон
+                updatedSeasons.push(seasonData);
             }
+
+            // Фильтруем сезоны, чтобы убрать строковые значения
+            updatedSeasons = updatedSeasons.filter(s => typeof s === 'object' && s !== null);
 
             const response = await axios.post('/api/fields/update', {
                 _id: selectedField,
@@ -283,15 +302,12 @@ export default function ShowField({
             });
 
             if (response.data.success) {
-                // Обновляем состояние, сохраняя структуру объекта field
                 setField(prev => ({
                     ...prev,
                     properties: response.data.data.properties
                 }));
                 setEditedProperties(response.data.data.properties);
                 setIsEditingProperties(false);
-                // НЕ закрываем окно просмотра поля
-                // setShowFieldVisible(false); - убираем эту строку если она есть
             }
         } catch (error) {
             console.error('Error updating field properties:', error);

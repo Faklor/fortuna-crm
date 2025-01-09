@@ -1,0 +1,124 @@
+body {
+    .container {
+        width: 1200px;
+        padding: 0 15px;
+        margin: 0 auto;
+        
+        @media (max-width: 1200px) {
+            width: 100%;
+        }
+    }
+}
+
+.crop-rotation {
+    padding: 20px;
+
+    &__fields-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    &__field-item {
+        margin-bottom: 20px;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+
+    &__field-header {
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    &__field-name {
+        flex: 1;
+        font-weight: 600;
+        color: #1f2937;
+    }
+
+    &__field-area {
+        padding: 4px 8px;
+        background: #e2e8f0;
+        border-radius: 4px;
+        color: #4b5563;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    &__seasons-table {
+        padding: 16px;
+        overflow-x: auto;
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+
+            th, td {
+                padding: 8px 12px;
+                text-align: left;
+                border-bottom: 1px solid #e2e8f0;
+            }
+
+            th {
+                background: #f1f5f9;
+                font-weight: 500;
+                color: #4b5563;
+            }
+
+            tr:last-child td {
+                border-bottom: none;
+            }
+        }
+    }
+
+    &__no-seasons {
+        padding: 16px;
+        text-align: center;
+        color: #6b7280;
+        font-style: italic;
+    }
+
+    &__subfields {
+        padding: 8px 0;
+    }
+
+    &__subfield {
+        padding: 4px 8px;
+        margin-bottom: 4px;
+        background: #f8fafc;
+        border-radius: 4px;
+        font-size: 13px;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
+
+    &__subfield-name {
+        font-weight: 500;
+        color: #374151;
+    }
+
+    &__subfield-area {
+        color: #6b7280;
+        font-size: 12px;
+    }
+
+    &__subfield-info {
+        color: #4b5563;
+        font-size: 12px;
+        margin-top: 2px;
+    }
+
+    &__no-subfields {
+        color: #6b7280;
+        font-style: italic;
+        font-size: 13px;
+    }
+}
