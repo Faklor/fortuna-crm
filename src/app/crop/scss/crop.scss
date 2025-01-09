@@ -1,6 +1,59 @@
+.crop-rotation {
+    display: flex;
+    gap: 24px;
+    height: 100vh;
+
+    &__content {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 24px;
+    }
+
+    &__work-items {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 4px;
+    }
+
+    &__work-item {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.85em;
+        white-space: nowrap;
+    }
+
+    &__work-workers &__work-item {
+        background: #e3f2fd;
+        color: #1976d2;
+        border: 1px solid #bbdefb;
+
+        &:hover {
+            background: #bbdefb;
+        }
+    }
+
+    &__work-equipment &__work-item {
+        background: #f3e5f5;
+        color: #7b1fa2;
+        border: 1px solid #e1bee7;
+
+        &:hover {
+            background: #e1bee7;
+        }
+    }
+
+    &__work-section-title {
+        font-size: 0.9em;
+        font-weight: 500;
+        margin-top: 8px;
+        color: #616161;
+    }
+}
+
 body {
     .container {
-        width: 1200px;
+        width: 1400px;
         padding: 0 15px;
         margin: 0 auto;
         

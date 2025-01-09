@@ -3,6 +3,7 @@ import { useState } from "react"
 import * as turf from '@turf/turf'
 import '../scss/crop.scss'
 import FieldItem from './FieldItem'
+import FieldNavigation from './FieldNavigation'
 
 export default function PageClient({
     fields,
@@ -145,14 +146,17 @@ export default function PageClient({
 
     return (
         <div className="crop-rotation">
-            <ul className="crop-rotation__fields-list">
-                {fieldsState.map((field, fieldIndex) => (
-                    <FieldItem 
-                        key={`field-${field.relatedIds.join('-')}-${fieldIndex}`}
-                        field={field}
-                    />
-                ))}
-            </ul>
+            <FieldNavigation fields={fieldsState} />
+            <div className="crop-rotation__content">
+                <ul className="crop-rotation__fields-list">
+                    {fieldsState.map((field, fieldIndex) => (
+                        <FieldItem 
+                            key={`field-${field.relatedIds.join('-')}-${fieldIndex}`}
+                            field={field}
+                        />
+                    ))}
+                </ul>
+            </div>
         </div>
     );
 }
