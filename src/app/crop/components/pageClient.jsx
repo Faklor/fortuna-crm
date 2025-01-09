@@ -63,15 +63,12 @@ export default function PageClient({
         const parsedSubFields = safeJSONParse(subFields);
         
         const fieldsWithAreas = parsedFields.map(field => {
-            // Получаем информацию о сезонах из properties
             const fieldSeasons = field.properties?.seasons || [];
             
             return {
                 ...field,
                 area: calculateArea(field.coordinates),
-                // Преобразуем сезоны в нужный формат
                 seasons: field.seasons.map(seasonId => {
-                    // Находим информацию о сезоне в properties
                     const seasonInfo = fieldSeasons.find(s => s.year.toString() === seasonId.toString());
                     
                     return {
@@ -106,6 +103,22 @@ export default function PageClient({
                     coordinates: field.coordinates,
                     subFields: field.subFields
                 };
+            } else {
+                // Объединяем сезоны, избегая дубликатов
+                const existingSeasonYears = acc[fieldName].seasons.map(s => s.year);
+                const newSeasons = field.seasons.filter(season => 
+                    !existingSeasonYears.includes(season.year)
+                );
+                acc[fieldName].seasons = [...acc[fieldName].seasons, ...newSeasons];
+                
+                // Сортируем сезоны по году в обратном порядке
+                acc[fieldName].seasons.sort((a, b) => b.year - a.year);
+                
+                // Обновляем площадь (можно суммировать или взять максимальную)
+                acc[fieldName].area = Math.max(acc[fieldName].area, field.area);
+                
+                // Объединяем подполя
+                acc[fieldName].subFields = [...acc[fieldName].subFields, ...field.subFields];
             }
             
             return acc;
