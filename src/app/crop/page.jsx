@@ -5,6 +5,8 @@ import Fields from "@/models/fields";
 import Works from "@/models/works";
 import Applications from "@/models/historyReq";
 import Operations from "@/models/operations";
+import Workers from "@/models/workers";
+import Tech from "@/models/tech";
 import { unstable_cache } from 'next/cache'
 import Image from "next/image";
 import Link from "next/link";
@@ -26,7 +28,8 @@ export default async function Page({searchParams}){
     const works = await Works.find({})
     const applications = await Applications.find({})
     const operations = await Operations.find({})
-
+    const workers = await Workers.find({})
+    const tech = await Tech.find({})
 
     //default
     let visibleSeasons = JSON.stringify(await seasons)
@@ -35,6 +38,8 @@ export default async function Page({searchParams}){
     let visibleWorks = JSON.stringify(await works)
     let visibleApplications = JSON.stringify(await applications)
     let visibleOperations = JSON.stringify(await operations)
+    let visibleWorkers = JSON.stringify(await workers)
+    let visibleTech = JSON.stringify(await tech)
 
 
     return <PageClient
@@ -44,6 +49,8 @@ export default async function Page({searchParams}){
         works={visibleWorks}
         applications={visibleApplications}
         operations={visibleOperations}
+        workers={visibleWorkers}
+        tech={visibleTech}
     />
        
 }
