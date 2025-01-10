@@ -28,6 +28,7 @@ export default function ListTasks({
     
 
     return <>
+       
         <SeasonalWorks />
         <NoticesInspection objects={objects}/>
         <Requisition 

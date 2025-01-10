@@ -19,7 +19,7 @@ export const revalidate = 1
 export const dynamic = "force-dynamic"
 
 export default async function Page({searchParams}){
-
+    
     //db
     await dbConnect()
     const seasons = await Seasons.find({})
@@ -41,7 +41,7 @@ export default async function Page({searchParams}){
     let visibleWorkers = JSON.stringify(await workers)
     let visibleTech = JSON.stringify(await tech)
 
-    return <PageClient
+    return <PageClient 
         seasons={visibleSeasons}
         fields={visibleFields}
         subFields={visibleSubFields}

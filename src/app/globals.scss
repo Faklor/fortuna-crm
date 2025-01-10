@@ -85,3 +85,29 @@ body{
         width: 100%;
     }
 }
+
+// Стили для прогресс-бара
+#nprogress {
+    pointer-events: none;
+    
+    .bar {
+        background: #354759;
+        position: fixed;
+        z-index: 200;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 3px;
+    }
+    
+    .peg {
+        display: block;
+        position: absolute;
+        right: 0px;
+        width: 100px;
+        height: 100%;
+        box-shadow: 0 0 10px #354759, 0 0 5px #354759;
+        opacity: 1.0;
+        transform: rotate(3deg) translate(0px, -4px);
+    }
+}

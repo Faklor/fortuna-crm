@@ -1,0 +1,74 @@
+.logoWrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #354759;
+    padding: 0rem;
+    min-height: 200px;
+}
+
+.logo {
+    width: 100%;
+    max-width: 600px;
+    height: auto;
+}
+
+.text {
+    font-weight: bold;
+    fill: none;
+    stroke-width: 2px;
+}
+
+.mainText {
+    font-size: 62px;
+    stroke: #fff;
+    stroke-dasharray: 400;
+    animation: textAnimation 3s linear forwards;
+    animation-delay: 0.5s;
+    opacity: 0;
+}
+
+.subText {
+    font-size: 28px;
+    stroke: #fff;
+    stroke-dasharray: 400;
+    animation: textAnimation 3s linear forwards;
+    animation-delay: 1.5s;
+    opacity: 0;
+}
+
+@keyframes textAnimation {
+    
+    0% {
+        stroke-dashoffset: 400;
+        opacity: 0;
+    }
+    100% {
+        stroke-dashoffset: 0;
+        opacity: 1;
+    }
+}
+
+// Медиа-запросы для адаптивности
+@media (max-width: 768px) {
+    .mainText {
+        font-size: 36px;
+    }
+    .subText {
+        font-size: 18px;
+    }
+}
+
+@media (max-width: 480px) {
+    .mainText {
+        font-size: 28px;
+    }
+    .subText {
+        font-size: 14px;
+    }
+    
+    .logoWrapper {
+        padding: 1rem;
+        min-height: 150px;
+    }
+}
