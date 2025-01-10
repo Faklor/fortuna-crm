@@ -1,10 +1,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.scss";
 import StoreProvider from "@/store/storeProvider";
-//--------------componetns----------------
-import Header from "./header";
-import { Suspense } from 'react'
-import PreLoader from './preLoader'
+import ClientWrapper from './components/ClientWrapper'
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,16 +27,11 @@ export default function RootLayout({ children }) {
         crossOrigin=""/>
       </head>
       <StoreProvider>
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        
-        <div className="container">
-        <Header/>
-        <Suspense fallback={<PreLoader/>}>
-        {children}
-        </Suspense>
-        </div>
-        
-      </body>
+        <body className={`${geistSans.variable} ${geistMono.variable}`}>
+          <ClientWrapper>
+            {children}
+          </ClientWrapper>
+        </body>
       </StoreProvider>
     </html>
   );

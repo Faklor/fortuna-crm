@@ -18,7 +18,8 @@
             padding: 16px;
             font-weight: 500;
             border-bottom: 1px solid #e9ecef;
-            background: #f8f9fa;
+            background: #354759;
+            color: white;
         }
 
         &-list {
@@ -57,6 +58,79 @@
         &-area {
             color: #6c757d;
             font-size: 0.9em;
+        }
+
+        @media (max-width: 1200px) {
+            width: 250px;
+        }
+
+        @media (max-width: 992px) {
+            width: 220px;
+        }
+
+        @media (max-width: 768px) {
+            position: relative;
+            width: 100%;
+            height: auto;
+            min-height: auto;
+            border-right: none;
+            border-bottom: 1px solid #e9ecef;
+
+            &-header {
+                padding: 12px;
+                font-size: 14px;
+            }
+
+            &-list {
+                max-height: 200px;
+                padding: 6px;
+            }
+
+            &-item {
+                padding: 8px;
+                margin-bottom: 2px;
+                
+                &:last-child {
+                    margin-bottom: 0;
+                }
+            }
+
+            &-name {
+                font-size: 14px;
+            }
+
+            &-area {
+                font-size: 12px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            &-header {
+                padding: 10px;
+                font-size: 13px;
+            }
+
+            &-list {
+                max-height: 180px;
+                padding: 4px;
+            }
+
+            &-item {
+                padding: 6px;
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+
+            &-name {
+                font-size: 13px;
+                width: 100%;
+            }
+
+            &-area {
+                font-size: 11px;
+                width: 100%;
+                text-align: right;
+            }
         }
     }
 

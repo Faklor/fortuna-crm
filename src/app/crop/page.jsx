@@ -41,7 +41,6 @@ export default async function Page({searchParams}){
     let visibleWorkers = JSON.stringify(await workers)
     let visibleTech = JSON.stringify(await tech)
 
-
     return <PageClient
         seasons={visibleSeasons}
         fields={visibleFields}
@@ -52,5 +51,6 @@ export default async function Page({searchParams}){
         workers={visibleWorkers}
         tech={visibleTech}
     />
+        
        
 }

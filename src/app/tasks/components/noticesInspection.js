@@ -31,7 +31,7 @@ export default function NoticesInspection({objects}){
                         name: el.name,
                         text: `Осталось ${days} дн.`,
                         color: 'warning',
-                        icon: el.catagory
+                        icon: el.catagory.split(' ')[0]
                     })
                 }
                 else if(days < 0){
@@ -39,7 +39,7 @@ export default function NoticesInspection({objects}){
                         name: el.name,
                         text: `Просрочен на ${Math.abs(days)} дн.`,
                         color: 'danger',
-                        icon: el.catagory
+                        icon: el.catagory.split(' ')[0]
                     })
                 }
                 else if(days === 0){
@@ -47,7 +47,7 @@ export default function NoticesInspection({objects}){
                         name: el.name,
                         text: `Сегодня заканчивается`,
                         color: 'alert',
-                        icon: el.catagory
+                        icon: el.catagory.split(' ')[0]
                     })
                 }
             }

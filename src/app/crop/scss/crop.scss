@@ -3,6 +3,18 @@
     gap: 24px;
     height: 100vh;
 
+    // Стили для контейнера внутри crop страницы
+    .container-wide {
+        width: 1600px;
+        padding: 0 15px;
+        margin: 0 auto;
+        
+        @media (max-width: 1200px) {
+            width: 100%;
+            padding: 0 20px;
+        }
+    }
+
     &__content {
         flex-grow: 1;
         overflow-y: auto;
@@ -100,14 +112,20 @@
     }
 }
 
-body {
-    .container {
-        width: 1400px;
-        padding: 0 15px;
+// Если нужны дополнительные стили для контейнера вне .crop-rotation
+.container-wide {
+    &.crop-container {
+        max-width: 1600px;
+        width: 100%;
         margin: 0 auto;
+        padding: 0 15px;
+        
+        @media (max-width: 1400px) {
+            padding: 0 20px;
+        }
         
         @media (max-width: 1200px) {
-            width: 100%;
+            padding: 0 15px;
         }
     }
 }
@@ -496,6 +514,173 @@ body {
 
         &:hover {
             background: #f3f4f6;
+        }
+    }
+}
+
+// Адаптивные стили
+@media (max-width: 1200px) {
+    .crop-rotation {
+        &__works-grid {
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        }
+
+        &__seasons-table {
+            table {
+                min-width: 900px;
+            }
+        }
+    }
+}
+
+@media (max-width: 992px) {
+    .crop-rotation {
+        gap: 16px;
+
+        &__content {
+            padding: 16px;
+        }
+
+        &__field-header {
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        &__works-grid {
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            max-height: 350px;
+        }
+    }
+}
+
+@media (max-width: 768px) {
+    .crop-rotation {
+        flex-direction: column;
+        height: auto;
+        min-height: 100vh;
+        gap: 12px;
+
+        &__content {
+            padding: 12px;
+        }
+
+        &__field {
+            margin-bottom: 16px;
+        }
+
+        &__field-header {
+            padding: 12px;
+        }
+
+        &__field-name {
+            font-size: 18px;
+        }
+
+        &__field-area {
+            font-size: 14px;
+        }
+
+        &__seasons-table {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            
+            td, th {
+                padding: 8px 12px;
+                font-size: 14px;
+            }
+        }
+
+        &__works-grid {
+            grid-template-columns: 1fr;
+            gap: 8px;
+            max-height: none;
+        }
+
+        &__work {
+            margin-bottom: 8px;
+            
+            &-name {
+                font-size: 14px;
+            }
+            
+            &-info {
+                font-size: 13px;
+                padding: 6px;
+            }
+        }
+
+        &__subfields {
+            gap: 6px;
+        }
+
+        &__subfield {
+            padding: 6px;
+            
+            &-name {
+                font-size: 14px;
+            }
+            
+            &-area {
+                font-size: 13px;
+            }
+        }
+    }
+}
+
+@media (max-width: 576px) {
+    .crop-rotation {
+        padding: 8px;
+
+        &__content {
+            padding: 8px;
+        }
+
+        &__field-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 10px;
+        }
+
+        &__seasons-table {
+            th, td {
+                padding: 6px 10px;
+                font-size: 13px;
+            }
+        }
+
+        &__work {
+            padding: 10px;
+            
+            &-info {
+                margin-top: 6px;
+            }
+        }
+
+        &__works-type {
+            padding: 10px;
+            font-size: 14px;
+        }
+
+        &__works-count {
+            padding: 1px 6px;
+            font-size: 12px;
+        }
+
+        &__works-list {
+            padding: 10px;
+        }
+
+        &__crop-info {
+            padding: 10px;
+        }
+
+        &__crop-main {
+            font-size: 14px;
+        }
+
+        &__crop-detail {
+            font-size: 12px;
         }
     }
 }
