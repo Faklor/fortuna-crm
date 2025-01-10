@@ -156,9 +156,10 @@ function CreateWork({
                             value={workData.type}
                             onChange={(e) => setWorkData({ ...workData, type: e.target.value })}
                             required
-                        >
+                        > 
                             <option value="">Выберите тип работы</option>
-                            <option value="fertilizing">Внесение удобрений</option>
+                            <option value="organic_fertilizing">Внесение органических удобрений</option>
+                            <option value="mineral_fertilizing">Внесение минеральных удобрений</option>
                             <option value="harrowing">Боронование</option>
                             <option value="deep_loosening">Глубокое рыхление</option>
                             <option value="disking">Дискование</option>
@@ -167,9 +168,13 @@ function CreateWork({
                             <option value="plowing">Вспашка</option>
                             <option value="rolling">Прокатывание</option>
                             <option value="seeding">Посев</option>
+                            <option value="planting">Посадка</option>
+                            <option value="chemical_treatment">Хим. обработка</option>
                             <option value="spraying">Опрыскивание</option>
                             <option value="harvesting">Уборка</option>
                             <option value="chiseling">Чизелевание</option>
+                            <option value="stone_separation">Сепарация камней</option>
+                            <option value="ridge_cutting">Нарезка гребней</option>
                         </select>
                     </div>
 

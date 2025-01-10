@@ -1,9 +1,8 @@
 import mongoose from 'mongoose'
 const ObjectId = mongoose.Schema.ObjectId
 
-
 const worksSchema = new mongoose.Schema({
-    id:ObjectId,
+    id: ObjectId,
     fieldId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Field',
@@ -17,18 +16,23 @@ const worksSchema = new mongoose.Schema({
         type: String,
         required: true,
         enum: [
-            'fertilizing',
-            'harrowing',
-            'deep_loosening',
-            'disking',
-            'cultivation',
-            'peeling',
-            'plowing',
-            'rolling',
-            'seeding',
-            'spraying',
-            'harvesting',
-            'chiseling'
+            'organic_fertilizing',    // Внесение органических удобрений
+            'mineral_fertilizing',    // Внесение минеральных удобрений
+            'harrowing',             // Боронование
+            'deep_loosening',        // Глубокое рыхление
+            'disking',               // Дискование
+            'cultivation',           // Культивация
+            'peeling',               // Лущение
+            'plowing',               // Вспашка
+            'rolling',               // Прокатывание
+            'seeding',               // Посев
+            'planting',              // Посадка
+            'chemical_treatment',     // Хим. обработка
+            'spraying',              // Опрыскивание
+            'harvesting',            // Уборка
+            'chiseling',             // Чизелевание
+            'stone_separation',       // Сепарация камней
+            'ridge_cutting'          // Нарезка гребней
         ]
     },
     plannedDate: {
@@ -80,7 +84,6 @@ const worksSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Tech'
     }]
-    
 })
 
 worksSchema.pre('save', function(next) {

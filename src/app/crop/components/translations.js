@@ -1,5 +1,6 @@
 export const workTypeTranslations = {
-    'fertilizing': 'Внесение удобрений',
+    'organic_fertilizing': 'Внесение органических удобрений',
+    'mineral_fertilizing': 'Внесение минеральных удобрений',
     'harrowing': 'Боронование',
     'deep_loosening': 'Глубокое рыхление',
     'disking': 'Дискование',
@@ -8,9 +9,13 @@ export const workTypeTranslations = {
     'plowing': 'Вспашка',
     'rolling': 'Прокатывание',
     'seeding': 'Посев',
+    'planting': 'Посадка',
+    'chemical_treatment': 'Хим. обработка',
     'spraying': 'Опрыскивание',
     'harvesting': 'Уборка',
-    'chiseling': 'Чизелевание'
+    'chiseling': 'Чизелевание',
+    'stone_separation': 'Сепарация камней',
+    'ridge_cutting': 'Нарезка гребней'
 };
 
 export const workStatusTranslations = {

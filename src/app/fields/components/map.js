@@ -12,6 +12,7 @@ import L from 'leaflet'
 import AddNotes from './addNotes'
 import NoteModal from './noteModal'
 import CreateField from './createField'
+import ImageModal from './ImageModal'
 
 function DrawingControl({ selectedFieldData, onSubFieldCreate, subFields, isProcessingArea, onProcessingAreaCreate }) {
   const map = useMap();
@@ -336,6 +337,7 @@ function Map({ fields, currentSeason }) {
   const [isCreatingNote, setIsCreatingNote] = useState(false);
   const [isCreatingField, setIsCreatingField] = useState(false);
   const [isDrawingField, setIsDrawingField] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
 
   useEffect(() => {
     // Здесь можно добавить логику загрузки полей с учетом сезона
@@ -804,7 +806,15 @@ function Map({ fields, currentSeason }) {
               <h3>{note.title}</h3>
               <p>{note.description}</p>
               {note.image && (
-                <img src={note.image} alt={note.title} style={{ maxWidth: '200px' }} />
+                <img 
+                  src={note.image} 
+                  alt={note.title} 
+                  style={{ 
+                    maxWidth: '200px',
+                    cursor: 'pointer'
+                  }} 
+                  onClick={() => setSelectedImage(note.image)}
+                />
               )}
               <button 
                 onClick={() => handleDeleteNote(note._id)}
@@ -922,6 +932,14 @@ function Map({ fields, currentSeason }) {
           setIsCreatingField(false);
         }}
       />
+
+      {/* Модальное окно для просмотра изображения */}
+      {selectedImage && (
+        <ImageModal 
+          imageUrl={selectedImage} 
+          onClose={() => setSelectedImage(null)} 
+        />
+      )}
     </div>
   );
 }
