@@ -2,7 +2,14 @@ import axios from "axios"
 import { useState } from "react"
 import { useRouter } from "next/navigation";
 
-export default function AddInspection({ period, type, objectID, setOperations}){
+export default function AddInspection({ 
+    period, 
+    type, 
+    objectID, 
+    setOperations,
+    listTypesOperations,
+    setTypeOperation
+}){
     
     //navigation
     const router = useRouter()
@@ -48,6 +55,8 @@ export default function AddInspection({ period, type, objectID, setOperations}){
                     return updatedParts;
                 })
                 router.push(`/objects/${objectID}`)
+                setTypeOperation(listTypesOperations[0])
+
             })
             .catch(e=>console.log(e))
         }}>Добавить</button>

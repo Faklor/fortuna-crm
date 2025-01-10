@@ -7,7 +7,9 @@ export default function Repair({
     type,
     objectID,
 
-    setOperations
+    setOperations,
+    setTypeOperation,
+    listTypesOperations
 }){
 
     //navigation
@@ -49,7 +51,7 @@ export default function Repair({
                     return updatedParts;
                 })
                 router.push(`/objects/${objectID}`)
-               
+                setTypeOperation(listTypesOperations[0])
             })
             .catch(e=>console.log(e))
         }}>Добавить</button>

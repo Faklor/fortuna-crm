@@ -3,7 +3,15 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 
 
-export default function AddMaintance({ type, objectID, category, periodTO, setOperations}){
+export default function AddMaintance({ 
+    type, 
+    objectID, 
+    category, 
+    periodTO, 
+    setOperations,
+    listTypesOperations,
+    setTypeOperation
+}){
 
     //navigation
     const router = useRouter()
@@ -57,6 +65,7 @@ export default function AddMaintance({ type, objectID, category, periodTO, setOp
                     return updatedParts;
                 })
                 router.push(`/objects/${objectID}`)
+                setTypeOperation(listTypesOperations[0])
             })
             .catch(e=>console.log(e))
         }}>Добавить</button>   

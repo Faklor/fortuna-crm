@@ -30,28 +30,33 @@ export default function Page({objectID, setOperations}){
     useEffect(()=>{
         getObject(objectID)
         .then(res=>{
-            // if(res.data.catagory === '🏠 Подразделения'){
-            //     listTypesOperations = ['Ремонт']
-            // }
-
+           
             setObj(res.data)
         })
         .catch(e=>{})
     },[])
 
-   
+    
     
     return searchParams.get('name') === 'addOperation'?<div className='windowAddOperation'>
         <div className='messageOperation'>
             <div className='controllers'>
-                <button onClick={()=>router.push(`/objects/${objectID}`)}>Вернуться</button>
+                <button onClick={()=>{
+
+                    router.push(`/objects/${objectID}`)
+                    setTypeOperation(listTypesOperations[0])
+
+                }}>Вернуться</button>
                 <p>Добавление выполненной операции</p>
             </div>
 
             <select onChange={e=>setTypeOperation(e.target.value)}>
-                {listTypesOperations.map((type,index)=>{
+                {obj.catagory !== '🏠 Подразделения'?listTypesOperations.map((type,index)=>{
                     return <option key={index} value={type}>{type}</option>
-                })}
+                })
+                :
+                    <option value='Ремонт'>Ремонт</option>
+                }
             </select>
             {typeOperation === 'Ремонт' || typeOperation === 'Навигация'?<Repair 
              
@@ -59,6 +64,8 @@ export default function Page({objectID, setOperations}){
             objectID={objectID} 
 
             setOperations={setOperations}
+            listTypesOperations={listTypesOperations}
+            setTypeOperation={setTypeOperation}
             />:''}
             {typeOperation === 'Технический Осмотр'?<AddInspection 
             
@@ -67,6 +74,8 @@ export default function Page({objectID, setOperations}){
             objectID={objectID}
 
             setOperations={setOperations}
+            listTypesOperations={listTypesOperations}
+            setTypeOperation={setTypeOperation} 
             />:''}
             {typeOperation === 'Техническое обслуживание'?<AddMaintance 
             
@@ -76,6 +85,8 @@ export default function Page({objectID, setOperations}){
             periodTO={obj.maintance.periodTO}
 
             setOperations={setOperations}
+            listTypesOperations={listTypesOperations}
+            setTypeOperation={setTypeOperation}
             />:''}
 
         </div>
