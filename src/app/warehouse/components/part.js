@@ -31,21 +31,29 @@ export default function Parts({
 
     setVisibleParts
 }){
-
+    
     //navigation
      
     //react
     const [visibleEditPanel, setVisibleEditPanel] = useState(false)
     const [visibleBinding, setVisibleBinding] = useState(false)
     const [sendVisible, setSendVisible] = useState(false)
+    const [isHighlighted, setIsHighlighted] = useState(false)
 
-    
-    // useEffect(()=>{
-    //     console.log(router)
-    // },[router])
+    useEffect(() => {
+        // Проверяем, соответствует ли hash текущему _id
+        if (typeof window !== 'undefined' && window.location.hash === `#${_id}`) {
+            // Подсвечиваем компонент
+            setIsHighlighted(true)
+            // Скроллим к компоненту
+            document.getElementById(_id)?.scrollIntoView({ behavior: 'smooth' })
+            // Убираем подсветку через 2 секунды
+            setTimeout(() => setIsHighlighted(false), 2000)
+        }
+    }, [_id])
     
 
-    return !visibleEditPanel && !visibleBinding?<div className={count !== 0? 'part': 'part none'} id={_id}>
+    return !visibleEditPanel && !visibleBinding?<div className={`part ${count !== 0 ? '' : 'none'} ${isHighlighted ? 'highlighted' : ''}`} id={_id}>
         <Image src={`/catagoryParts/${catagory}.svg`} width={55} height={55} priority={false} alt={name} onClick={()=>{setSelectedPart(index)}}/>
         <p>{manufacturer?`${name} ( ${manufacturer} )`:name}</p>
         

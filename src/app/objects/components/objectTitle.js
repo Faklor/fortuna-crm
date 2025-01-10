@@ -20,8 +20,10 @@ export default function ObjectTitle({obj}){
                 />
             </div>
             <div className="object-info">
-                <h3>{obj.catagory || 'Без категории'}{obj.name}</h3>
-                
+                <div className="category-badge">
+                    <span>{obj.catagory || 'Без категории'}</span>
+                </div>
+                <h3>{obj.name}</h3>
             </div>
         </div>
     )

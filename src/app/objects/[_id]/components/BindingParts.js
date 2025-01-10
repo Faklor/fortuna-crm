@@ -37,7 +37,7 @@ export default  function BindingParts({bindingParts}){
                 <p>{part.manufacturer?part.name + ' ( ' + part.manufacturer + ' )':part.name}</p>
                 <button onClick={()=>router.push(`/warehouse/#${part._id}`)}>
                     <Image src={'/components/to.svg'} width={10} height={10} alt="toPart"/>
-                </button>
+                </button> 
             </div>
         })} 
         
