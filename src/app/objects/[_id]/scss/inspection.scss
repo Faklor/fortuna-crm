@@ -2,7 +2,7 @@
     //box-shadow: 1px 1px 4px 0 black;
     
     //padding: 1em;
-    //margin:1em;
+    margin:1.5em 0;
     //border-radius: 5px;
     width: 100%;
     h2{
@@ -25,43 +25,67 @@
     }
 
     .viewInspection{
-        width: 100%;
-        
-        .fullLine{
-           
-            background-color: #354759;
-            box-shadow: 0px 4px 4px 0px rgba(0,0,0,0.25);
-            height: 20px;
-            position: relative;
-            top:20px;
-            border-radius: 5px;
+        position: relative;
+        height: 12px;
+        background: #f3f4f6;
+        border-radius: 6px;
+        overflow: hidden;
+        margin: 20px 0;
 
+        .fullLine {
+            position: absolute;
+            height: 100%;
+            background: #e5e7eb;
+            border-radius: 6px;
+            transition: width 0.3s ease;
         }
 
-        .activeLine{
-            
-            background-color: #4F8DE3;
-            height: 20px;
-            position: relative;
-            border-radius: 5px;
+        .activeLine {
+            position: absolute;
+            height: 100%;
+            border-radius: 6px;
+            transition: all 0.5s ease;
 
+            &::after {
+                content: '';
+                position: absolute;
+                right: -6px;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 12px;
+                height: 12px;
+                background: inherit;
+                border: 3px solid white;
+                border-radius: 50%;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
         }
     }
     .nowDate{
-        text-align: start;
-        width: 5.4em;
         position: relative;
-        //full - 79% border-right
-        //start - 0% border-left 
-        //left:0%;
-        //border-right: 0.3em solid #FA5C62;
-        //border-left: 0.3em solid #FA5C62;
-        padding-top:0.9em;
-        margin-top: -0.5em;
-        span{
-            padding-left: 0.3em;
+        padding: 8px 12px;
+        background: white;
+        border-radius: 6px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+        border: 2px solid;
+        
+        span {
+            font-weight: 500;
+            font-size: 14px;
+            transition: color 0.3s ease;
         }
 
+        &::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-bottom: 8px solid white;
+        }
     }
 
 }
