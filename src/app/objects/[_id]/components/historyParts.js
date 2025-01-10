@@ -46,70 +46,75 @@ export default function HistoryParts({visibleOrders}){
 
     return <div className="historyParts" > 
         {parts.length?
-            sortArray.map((item,index)=>{
-                return <div className='order' key={index}> 
-                    <h2 className='titleOrder'>{item.date}</h2>
-                    {item.data.map((el,index)=>{
-                        
-                        return <div key={index} className='infoOrder'>
-                            <div className='worker'>
-                                <p>{el.workerName}</p>
-                                <div className='controllers'>
-                                    {/* <button onClick={()=>{
-                                        setEditOrder(true)
-                                    }}><Image src={require('@/res/components/edit.svg')} width={10} height={10} alt='editOrder'/></button> */}
-                                    <button onClick={async ()=>{
-                                       
-                                        deleteOrder(el._id, el.part, el.countPart)
-                                        .then(res=>{
-                                        
-                                            setParts((prevParts) => prevParts.filter((part) => part._id !== res.data))
-                                            
-                                        })
-                                        .catch(e=>{
-                                            console.log(e)
-                                        })
-                                    }}><Image src={'/components/delete.svg'} width={10} height={10} alt='deleteOrder'/></button>
-                                </div>
-                            </div>
-                            <div className='part'>
-                                <Image src={`/catagoryParts/${el.part.catagory}.svg`} width={20} height={20} alt='img_category'/>
-                                <p>{el.part.name}</p>
-                                <p className='count'>{el.countPart +' '+el.description}</p>
-                                <div className='otherInformation'>
-                                    {el.part.sellNumber?<div>
-                                        <Image src={'/components/sellNumber.svg'} width={20} height={20} alt='sellNumber'/>
-                                        <p>{el.part.sellNumber}</p>
-                                    </div>:<></>}
-                                    {el.part.serialNumber?<div>
-                                        <Image src={'/components/serialNumber.svg'} width={20} height={20} alt='serialNumber'/>
-                                        <p>{el.part.serialNumber}</p>
-                                    </div>:<></>}
-                                    {el.part.sum?<div>
-                                        <Image src={'/components/sum.svg'} width={20} height={20} alt='sum'/>
-                                        <p className='sum'>{el.part.sum} б.р.</p>
-                                    </div>:<></>}
+            <div className="parts-accordion">
+                {sortArray.map((item,index)=>{
+                    return (
+                        <details className='parts-item' key={index}>
+                            <summary className='parts-header'>
+                                <span className="parts-date">{item.date}</span>
+                                <span className="parts-count">{item.data.length}</span>
+                            </summary>
+                            <div className='parts-content'>
+                                {item.data.map((el,index)=>{
+                                    return <div key={index} className='infoOrder'>
+                                        <div className='worker'>
+                                            <p>{el.workerName}</p>
+                                            <div className='controllers'>
+                                                {/* <button onClick={()=>{
+                                                    setEditOrder(true)
+                                                }}><Image src={require('@/res/components/edit.svg')} width={10} height={10} alt='editOrder'/></button> */}
+                                                <button onClick={async ()=>{
+                                                   
+                                                    deleteOrder(el._id, el.part, el.countPart)
+                                                    .then(res=>{
+                                                    
+                                                        setParts((prevParts) => prevParts.filter((part) => part._id !== res.data))
+                                                        
+                                                    })
+                                                    .catch(e=>{
+                                                        console.log(e)
+                                                    })
+                                                }}><Image src={'/components/delete.svg'} width={10} height={10} alt='deleteOrder'/></button>
+                                            </div>
+                                        </div>
+                                        <div className='part'>
+                                            <Image src={`/catagoryParts/${el.part.catagory}.svg`} width={20} height={20} alt='img_category'/>
+                                            <p>{el.part.name}</p>
+                                            <p className='count'>{el.countPart +' '+el.description}</p>
+                                            <div className='otherInformation'>
+                                                {el.part.sellNumber?<div>
+                                                    <Image src={'/components/sellNumber.svg'} width={20} height={20} alt='sellNumber'/>
+                                                    <p>{el.part.sellNumber}</p>
+                                                </div>:<></>}
+                                                {el.part.serialNumber?<div>
+                                                    <Image src={'/components/serialNumber.svg'} width={20} height={20} alt='serialNumber'/>
+                                                    <p>{el.part.serialNumber}</p>
+                                                </div>:<></>}
+                                                {el.part.sum?<div>
+                                                    <Image src={'/components/sum.svg'} width={20} height={20} alt='sum'/>
+                                                    <p className='sum'>{el.part.sum} б.р.</p>
+                                                </div>:<></>}
 
-                                    {el.part.contact.name || el.part.contact.link?<p className='titleContacts'>Контакты</p>:''}
+                                                {el.part.contact.name || el.part.contact.link?<p className='titleContacts'>Контакты</p>:''}
 
-                                    {el.part.contact.name?<div>
-                                        <Image src={'/components/contactName.svg'} width={20} height={20} alt='contactName'/>
-                                        <p>{el.part.contact.name}</p>
-                                    </div>:<></>}
-                                    {el.part.contact.link?<div>
-                                        <Image src={'/components/link.svg'} width={20} height={20} alt='contactLink'/>
-                                        <p>{el.part.contact.link}</p>
-                                    </div>:<></>}
-                                </div>
+                                                {el.part.contact.name?<div>
+                                                    <Image src={'/components/contactName.svg'} width={20} height={20} alt='contactName'/>
+                                                    <p>{el.part.contact.name}</p>
+                                                </div>:<></>}
+                                                {el.part.contact.link?<div>
+                                                    <Image src={'/components/link.svg'} width={20} height={20} alt='contactLink'/>
+                                                    <p>{el.part.contact.link}</p>
+                                                </div>:<></>}
+                                            </div>
+                                        </div>
+                                    </div>
+                                })}
                             </div>
-                            
-                            
-                        </div>
-                    })}
-                </div>
-            })
-        :
-        <p>Нет выданных запчестей</p>}
+                        </details> 
+                    )
+                })}
+            </div>
+        : <p className="no-parts">Нет выданных запчестей</p>}
     </div>
    
 }

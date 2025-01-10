@@ -1,5 +1,6 @@
 import { useState } from "react"
 import axios from "axios"
+import '../scss/editOperation.scss'
 
 
 export default function EditOperation({
@@ -27,7 +28,7 @@ export default function EditOperation({
     }
     
     
-    return <div className="operation">
+    return <div className="operation edit-mode">
         <button onClick={()=>setVisibleEdit(false)}>Назад</button>
         
         <h2>Редактирование операции</h2>

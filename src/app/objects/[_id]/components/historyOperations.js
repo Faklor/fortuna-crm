@@ -47,24 +47,31 @@ export default function HistoryOperation({visibleOperation, category, objectID})
 
     return <div className="historyOperations" > 
         <AddOperation objectID={objectID} setOperations={setOperations}/>
-        {operations.length?
-        sortArray.map((item,index)=>{
-            return <div className='operations' key={index}>
-                <h2 className='titleOperation'>{item.date}</h2>
-                {item.data.map((operation,index)=>{
-                    
-                    return <Operation {...operation}  
-                        operations={operations} 
-                        key={index} 
-                        refText={textAreaRef} 
-                        index={index} 
-                        category={category} 
-                        
-                        setOperations={setOperations}
-                    />
+        {operations.length ?
+            <div className="operations-accordion">
+                {sortArray.map((item,index)=>{
+                    return (
+                        <details className='operations-item' key={index}>
+                            <summary className='operations-header'>
+                                <span className="operations-date">{item.date}</span>
+                                <span className="operations-count">{item.data.length}</span>
+                            </summary>
+                            <div className='operations-content'>
+                                {item.data.map((operation,index)=>{
+                                    return <Operation {...operation}  
+                                        operations={operations} 
+                                        key={index} 
+                                        refText={textAreaRef} 
+                                        index={index} 
+                                        category={category} 
+                                        setOperations={setOperations}
+                                    />
+                                })}
+                            </div>
+                        </details> 
+                    )
                 })}
-            </div> 
-        }):
-        <p>Нет записей</p>}
+            </div>
+        : <p className="no-operations">Нет записей</p>}
     </div>
 }

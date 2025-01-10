@@ -1,34 +1,27 @@
-.historyParts{
-    margin:0em 0;
-    //height: 30em;
-    overflow-y: auto;
-    max-height: 30em;
-    height: auto;
-    text-align: justify;
-
-    .order{
-        
-       
-
-        .titleOrder{
-            background-color: #354759;
-            text-align: center;
-            color: #fff;
-            border-radius: 5px;
-            box-shadow: 1px 1px 4px 0 #000;
-            margin:1em 0;
+.historyParts {
+    //padding: 20px;
+    
+    // Новые стили для аккордеона
+    .parts-accordion {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        margin-top: 20px;
+    }
 
 
-        }
-        
-        &:nth-child(1){
-            .titleOrder{
-                margin-top:0.2em;
+    .parts-item {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+
+        &[open] {
+            .parts-header::after {
+                transform: rotate(180deg);
             }
-           
         }
-        .infoOrder{
-            margin:1em;
+    
 
             .worker{
                 display: flex;
@@ -137,8 +130,55 @@
                     }
                 }
             }
-        }
+        
         
 
     }
+
+    .parts-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 20px;
+        background: #f8fafc;
+        cursor: pointer;
+        user-select: none;
+        position: relative;
+        font-weight: 500;
+        transition: background-color 0.2s;
+
+        &::-webkit-details-marker {
+            display: none;
+        }
+
+        &:hover {
+            background: #f1f5f9;
+        }
+
+        &::after {
+            content: '▼';
+            font-size: 12px;
+            transition: transform 0.3s ease;
+        }
+    }
+
+    .parts-date {
+        font-size: 16px;
+        color: #1f2937;
+    }
+
+    .parts-count {
+        background: #e5e7eb;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 13px;
+        color: #4b5563;
+    }
+
+    .parts-content {
+        padding: 16px;
+        animation: slideDown 0.3s ease-out;
+    }
 }
+
+// Оставляем все существующие стили для .infoOrder, .worker, .part и других внутренних элементов без изменений
