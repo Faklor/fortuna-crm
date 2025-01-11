@@ -1,56 +1,132 @@
 .editPanelObj{
-    justify-self: center;
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+    background: white;
+    animation: fadeIn 0.3s ease-out;
+    
+    // Кнопка "Назад"
+    button:first-child {
+        padding: 8px 16px;
+        background: #354759;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        margin-bottom: 20px;
+        transition: background 0.2s;
+        &:hover {
+            background: #2c3e50;
+        }
+    }
 
-    display: grid;
-    margin-top: 1em;
-    //width: 100%;
-
-    .editImg{
-        margin:1em;
-        height: 20em;
-        img{
+    .editImg {
+        margin: 24px auto;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        align-items: center;
+        max-width: 800px;
+        img {
+            width: 100% !important;
+            height: auto !important;
+            object-fit: contain !important;
+            background: white;
+            border-radius: 0;
+            box-shadow: none;
+            max-height: 400px;
+            position: relative !important;
+        }
+        input[type="file"] {
             width: 100%;
             height: 100%;
             object-fit: cover;
             
+            max-width: 500px;
+            padding: 10px;
+            border: 2px dashed #d1d5db;
+            border-radius: 6px;
+            cursor: pointer;
+            &:hover {
+                border-color: #3b82f6;
+            }
         }
     }
     .editDefaultState{
-        margin-top:1em;
-        display: grid;
-        width: 90%;
-        input, select, textarea, p{
-            margin:0.3em 1em;
-            outline: 0;
-            padding: 0.3em;
-            font-size: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        margin-bottom: 24px;
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 15px;
+            transition: all 0.2s;
+            &:focus {
+                outline: none;
+                border-color: #3b82f6;
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            }
+        }
+        textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+        select {
             cursor: pointer;
-            transition: 0.5s;
+            background: #f9fafb;
 
-            &:focus{
-                background-color: #354759;
-                color: #fff;
+            &:hover {
+                border-color: #3b82f6;
             }
         }
     }
 
-    button{
-        margin: 1em 0;
-        justify-self: center;
-        padding:0.5em 1em;
-        box-shadow: 0px 4px 4px 0px rgba(0,0,0,0.25);
-        border:none;
-        border-radius: 5px;
-        font-size: 16px;
-
+    button:last-child {
+        width: 100%;
+        padding: 12px 20px;
+        background: #2563eb;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-weight: 500;
         cursor: pointer;
-        transition: 0.5s;
-
-        &:hover{
-            background-color: #354759;
-            color:#fff;
-            transform: scale(0.9);
+        transition: all 0.2s;
+        &:hover {
+            background: #1d4ed8;
+        }
+        &:active {
+            transform: translateY(1px);
         }
     }
+     // Медиа-запросы для адаптивности
+     @media (max-width: 768px) {
+        padding: 16px;
+        .editImg {
+            img {
+                width: 100%;
+                height: auto;
+            }
+        }
+        input, select, textarea {
+            font-size: 14px;
+        }
+        button {
+            padding: 10px 16px;
+            font-size: 14px;
+        }
+    }
+}
 
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }

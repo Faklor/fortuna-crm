@@ -7,7 +7,7 @@
     
     .message{
         display: block;
-        top:35%;
+        top:15%;
         left:0%;
         width: 100%;
         
@@ -96,6 +96,9 @@
                 }
             }
 
+        }
+        .objects{
+            min-height: 0;
         }
        
     }
