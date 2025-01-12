@@ -511,62 +511,25 @@ function Map({ fields, currentSeason }) {
     }
   };
 
-  // Обработчик сохранения заметки
-  const handleSaveNote = async (noteData) => {
-    try {
-        const formData = new FormData();
-        formData.append('title', noteData.title);
-        formData.append('description', noteData.description);
-        formData.append('coordinates', JSON.stringify(noteData.coordinates));
-        formData.append('season', season || new Date().getFullYear().toString());
-        
-        if (noteData.image) {
-            formData.append('image', noteData.image);
-        }
-
-        const response = await fetch('/api/notes/add', {
-            method: 'POST',
-            body: formData
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-            // Используем полученные данные для обновления состояния
-            setNotes(data.allNotes);
-            setIsAddingNote(false);
-            setSelectedPoint(null);
-            setIsCreatingNote(false);
-            alert('Заметка успешно добавлена');
-        } else {
-            throw new Error(data.error || 'Ошибка при сохранении заметки');
-        }
-    } catch (error) {
-        console.error('Detailed error:', error);
-        alert(`Ошибка при сохранении заметки: ${error.message}`);
-    }
-  };
-
   // Обновляем функцию загрузки заметок
   const loadNotes = useCallback(async () => {
     try {
-        // Добавляем сезон в URL запроса
-        const response = await fetch(`/api/notes?season=${currentSeason}`);
-        const data = await response.json();
-        
-        if (data.success) {
-            // Устанавливаем только заметки для текущего сезона
-            setNotes(data.notes);
-        }
+      console.log('Loading notes for season:', season); // для отладки
+      const response = await fetch(`/api/notes?season=${season}`);
+      const data = await response.json();
+      setNotes(data);
     } catch (error) {
-        console.error('Error loading notes:', error);
+      console.error('Error loading notes:', error);
+      setNotes([]);
     }
-  }, [currentSeason]); // Добавляем currentSeason в зависимости
+  }, [season]); // Зависимость от season
 
-  // Вызываем загрузку заметок при изменении сезона
+  // Вызываем загрузку заметок при монтировании и изменении сезона
   useEffect(() => {
-    loadNotes();
-  }, [currentSeason, loadNotes]);
+    if (season) {
+      loadNotes();
+    }
+  }, [season, loadNotes]);
 
   // Создаем кастомную иконку для заметок
   const noteIcon = L.divIcon({
@@ -713,6 +676,41 @@ function Map({ fields, currentSeason }) {
 
     fetchNotes();
   }, []); 
+
+  // Обработчик сохранения заметки
+  const handleSaveNote = async (noteData) => {
+    try {
+      const formData = new FormData();
+      formData.append('title', noteData.title);
+      formData.append('description', noteData.description);
+      formData.append('coordinates', JSON.stringify(noteData.coordinates));
+      formData.append('season', season); // Используем текущий сезон из URL или currentSeason
+
+      if (noteData.image) {
+        formData.append('image', noteData.image);
+      }
+
+      const response = await fetch('/api/notes/add', {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        await loadNotes(); // Дожидаемся загрузки заметок
+        setIsAddingNote(false);
+        setSelectedPoint(null);
+        setIsCreatingNote(false);
+        alert('Заметка успешно добавлена');
+      } else {
+        throw new Error(data.error || 'Ошибка при сохранении заметки');
+      }
+    } catch (error) {
+      console.error('Error saving note:', error);
+      alert(`Ошибка при сохранении заметки: ${error.message}`);
+    }
+  };
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>

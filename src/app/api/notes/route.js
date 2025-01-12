@@ -2,10 +2,23 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Notes from '@/models/notes';
 
-export async function GET() {
+export async function GET(request) {
     await dbConnect();
+    
+    // Получаем сезон из URL
+    const url = new URL(request.url);
+    const referer = request.headers.get('referer') || '';
+    const refererUrl = new URL(referer);
+    const season = refererUrl.searchParams.get('season') || url.searchParams.get('season');
+
+    console.log('Season from URL:', season); // для отладки
+
     try {
-        const notes = await Notes.find({});
+        // Используем сезон для фильтрации
+        const query = season ? { season } : {};
+        console.log('Query:', query); // для отладки
+        
+        const notes = await Notes.find(query);
         
         // Преобразуем документы в простые объекты
         const serializedNotes = notes.map(note => {
