@@ -81,21 +81,24 @@ function CreateWork({
         }
     };
 
-    const calculateArea = (processingArea) => {
+    const calculateArea = (processingArea, isSubField = false) => {
         if (!processingArea || !processingArea.coordinates) return 0;
         
         try {
             // Проверяем и нормализуем координаты
             let coordinates = processingArea.coordinates[0];
             
-            // Проверяем порядок координат (lat/lng или lng/lat)
-            const needsSwap = Math.abs(coordinates[0][0]) < 90;
+            // Для ручного выделения: needsSwap = coordinates[0][0] > 90
+            // Для подполей: needsSwap = coordinates[0][0] < 90
+            const needsSwap = isSubField 
+                ? Math.abs(coordinates[0][0]) < 90
+                : Math.abs(coordinates[0][0]) > 90;
             
             // Если нужно, меняем порядок координат
             if (needsSwap) {
                 coordinates = coordinates.map(coord => [coord[1], coord[0]]);
             }
-    
+
             // Создаем полигон с правильными координатами
             const geojsonPolygon = {
                 type: "Feature",
@@ -111,6 +114,7 @@ function CreateWork({
             return Math.round((areaInSquareMeters / 10000) * 100) / 100;
         } catch (error) {
             console.error('Error calculating area:', error);
+            console.error('Coordinates that caused error:', processingArea.coordinates);
             return 0;
         }
     };
@@ -124,7 +128,7 @@ function CreateWork({
                 coordinates: [selectedSubField.coordinates]
             };
             
-            const area = calculateArea(processingAreaData);
+            const area = calculateArea(processingAreaData, true);
             
             setWorkData(prev => ({
                 ...prev,
@@ -137,7 +141,7 @@ function CreateWork({
 
     useEffect(() => {
         if (processingArea) {
-            const area = calculateArea(processingArea);
+            const area = calculateArea(processingArea, false);
             setWorkData(prev => ({
                 ...prev,
                 processingArea: processingArea,
