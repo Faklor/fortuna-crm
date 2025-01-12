@@ -340,6 +340,7 @@ function Map({ fields, currentSeason }) {
   const [isCreatingField, setIsCreatingField] = useState(false);
   const [isDrawingField, setIsDrawingField] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [isCreateWorkModalOpen, setIsCreateWorkModalOpen] = useState(false);
 
   useEffect(() => {
     // Здесь можно добавить логику загрузки полей с учетом сезона
@@ -393,7 +394,8 @@ function Map({ fields, currentSeason }) {
         setIsEditingMainField(false);
         setIsDrawingMode(false);
         setSelectedSubField(null);
-        setProcessingArea(null); // Добавляем очистку выбранной зоны работы
+        setProcessingArea(null);
+        setIsCreateWorkModalOpen(false);
     }
     
     setSelectedField(fieldId);
@@ -940,6 +942,8 @@ function Map({ fields, currentSeason }) {
           onWorkStatusUpdate={handleWorkStatusUpdate}
           onWorkSelect={handleWorkSelect}
           fieldWorks={fieldWorks}
+          isCreateWorkModalOpen={isCreateWorkModalOpen}
+          setIsCreateWorkModalOpen={setIsCreateWorkModalOpen}
         />
       )}
 
