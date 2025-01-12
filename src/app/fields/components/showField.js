@@ -29,7 +29,9 @@ export default function ShowField({
     processingArea,
     setProcessingArea,
     onWorkStatusUpdate,
-    onWorkSelect
+    onWorkSelect,
+    isCreateWorkModalOpen,
+    setIsCreateWorkModalOpen
 }) {
     
     const [field, setField] = useState(null)
@@ -64,7 +66,6 @@ export default function ShowField({
     });
     const [existingCrops, setExistingCrops] = useState([]);
     const [showCropSuggestions, setShowCropSuggestions] = useState(false);
-    const [isCreateWorkModalOpen, setIsCreateWorkModalOpen] = useState(false);
     const [fieldWorks, setFieldWorks] = useState([]);
     const [selectedWork, setSelectedWork] = useState(null);
     const [archiveDateRange, setArchiveDateRange] = useState({
