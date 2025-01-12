@@ -11,12 +11,10 @@ export async function GET(request) {
     const refererUrl = new URL(referer);
     const season = refererUrl.searchParams.get('season') || url.searchParams.get('season');
 
-    console.log('Season from URL:', season); // для отладки
 
     try {
         // Используем сезон для фильтрации
         const query = season ? { season } : {};
-        console.log('Query:', query); // для отладки
         
         const notes = await Notes.find(query);
         
