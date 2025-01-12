@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import '../scss/createWork.scss';
 import * as turf from '@turf/turf';
 import axios from 'axios';
+import { WORK_TYPES } from '../constants/workTypes';
 
 // Определяем функцию вне компонента
 const handleProcessingAreaUpdate = (setWorkData, coordinates) => {
@@ -23,7 +24,8 @@ function CreateWork({
     isDrawingProcessingArea, 
     setIsDrawingProcessingArea,
     selectedField,
-    fieldArea
+    fieldArea,
+    subFields
 }) {
     const [workData, setWorkData] = useState({
         name: '',
@@ -34,6 +36,8 @@ function CreateWork({
         processingArea: processingArea,
         area: 0,
         useFullField: false,
+        useSubField: false,
+        selectedSubFieldId: '',
         workers: [],
         equipment: []
     });
@@ -60,15 +64,19 @@ function CreateWork({
         loadData();
     }, []);
 
-    const handleAreaSelectionChange = (useFullField) => {
+    const handleAreaSelectionChange = (type) => {
         setWorkData(prev => ({
             ...prev,
-            useFullField,
-            area: useFullField ? fieldArea : (processingArea?.area || 0),
-            processingArea: useFullField ? null : processingArea
+            useFullField: type === 'full',
+            useSubField: type === 'subfield',
+            area: type === 'full' ? fieldArea : 
+                  type === 'subfield' ? 0 : 
+                  (processingArea?.area || 0),
+            processingArea: type === 'custom' ? processingArea : null,
+            selectedSubFieldId: type === 'subfield' ? prev.selectedSubFieldId : ''
         }));
         
-        if (useFullField) {
+        if (type !== 'custom') {
             setIsDrawingProcessingArea(false);
         }
     };
@@ -77,17 +85,53 @@ function CreateWork({
         if (!processingArea || !processingArea.coordinates) return 0;
         
         try {
+            // Проверяем и нормализуем координаты
+            let coordinates = processingArea.coordinates[0];
+            
+            // Проверяем порядок координат (lat/lng или lng/lat)
+            const needsSwap = Math.abs(coordinates[0][0]) < 90;
+            
+            // Если нужно, меняем порядок координат
+            if (needsSwap) {
+                coordinates = coordinates.map(coord => [coord[1], coord[0]]);
+            }
+    
+            // Создаем полигон с правильными координатами
             const geojsonPolygon = {
                 type: "Feature",
                 properties: {},
-                geometry: processingArea
+                geometry: {
+                    type: "Polygon",
+                    coordinates: [coordinates]
+                }
             };
             
             const areaInSquareMeters = turf.area(geojsonPolygon);
+            // Округляем до 2 знаков после запятой
             return Math.round((areaInSquareMeters / 10000) * 100) / 100;
         } catch (error) {
             console.error('Error calculating area:', error);
             return 0;
+        }
+    };
+
+    const handleSubFieldSelect = (subFieldId) => {
+        const selectedSubField = subFields.find(sf => sf._id === subFieldId);
+        if (selectedSubField) {
+            // Создаем правильную структуру для расчета площади
+            const processingAreaData = {
+                type: 'Polygon',
+                coordinates: [selectedSubField.coordinates]
+            };
+            
+            const area = calculateArea(processingAreaData);
+            
+            setWorkData(prev => ({
+                ...prev,
+                selectedSubFieldId: subFieldId,
+                area: area,
+                processingArea: processingAreaData
+            }));
         }
     };
 
@@ -112,8 +156,8 @@ function CreateWork({
     const handleSubmit = async (e) => {
         e.preventDefault();
         
-        if (!workData.useFullField && !workData.processingArea) {
-            alert('Необходимо выделить область обработки или выбрать всё поле');
+        if (!workData.useFullField && !workData.useSubField && !workData.processingArea) {
+            alert('Необходимо выбрать область обработки');
             return;
         }
 
@@ -122,7 +166,8 @@ function CreateWork({
                 ...workData,
                 processingArea: {
                     type: 'Polygon',
-                    coordinates: workData.useFullField ? [[]] : workData.processingArea.coordinates
+                    coordinates: workData.useFullField ? [[]] : 
+                               workData.processingArea.coordinates
                 },
                 area: workData.useFullField ? fieldArea : workData.area
             };
@@ -156,25 +201,13 @@ function CreateWork({
                             value={workData.type}
                             onChange={(e) => setWorkData({ ...workData, type: e.target.value })}
                             required
-                        > 
+                        >
                             <option value="">Выберите тип работы</option>
-                            <option value="organic_fertilizing">Внесение органических удобрений</option>
-                            <option value="mineral_fertilizing">Внесение минеральных удобрений</option>
-                            <option value="harrowing">Боронование</option>
-                            <option value="deep_loosening">Глубокое рыхление</option>
-                            <option value="disking">Дискование</option>
-                            <option value="cultivation">Культивация</option>
-                            <option value="peeling">Лущение</option>
-                            <option value="plowing">Вспашка</option>
-                            <option value="rolling">Прокатывание</option>
-                            <option value="seeding">Посев</option>
-                            <option value="planting">Посадка</option>
-                            <option value="chemical_treatment">Хим. обработка</option>
-                            <option value="spraying">Опрыскивание</option>
-                            <option value="harvesting">Уборка</option>
-                            <option value="chiseling">Чизелевание</option>
-                            <option value="stone_separation">Сепарация камней</option>
-                            <option value="ridge_cutting">Нарезка гребней</option>
+                            {Object.entries(WORK_TYPES).map(([value, label]) => (
+                                <option key={value} value={value}>
+                                    {label}
+                                </option>
+                            ))}
                         </select>
                     </div>
 
@@ -201,21 +234,28 @@ function CreateWork({
                         <div className="area-selection-controls">
                             <button
                                 type="button"
-                                className={`area-btn ${!workData.useFullField ? 'active' : ''}`}
-                                onClick={() => handleAreaSelectionChange(false)}
+                                className={`area-btn ${!workData.useFullField && !workData.useSubField ? 'active' : ''}`}
+                                onClick={() => handleAreaSelectionChange('custom')}
                             >
                                 Выбрать зону
                             </button>
                             <button
                                 type="button"
                                 className={`area-btn ${workData.useFullField ? 'active' : ''}`}
-                                onClick={() => handleAreaSelectionChange(true)}
+                                onClick={() => handleAreaSelectionChange('full')}
                             >
                                 Всё поле
                             </button>
+                            <button
+                                type="button"
+                                className={`area-btn ${workData.useSubField ? 'active' : ''}`}
+                                onClick={() => handleAreaSelectionChange('subfield')}
+                            >
+                                По подполю
+                            </button>
                         </div>
                         
-                        {!workData.useFullField && (
+                        {!workData.useFullField && !workData.useSubField && (
                             <button 
                                 type="button"
                                 onClick={() => setIsDrawingProcessingArea(true)}
@@ -225,7 +265,28 @@ function CreateWork({
                             </button>
                         )}
 
-                        {workData.processingArea && (
+                        {workData.useSubField && (
+                            <div className="form-group">
+                                <label>Выберите подполе:</label>
+                                <select
+                                    value={workData.selectedSubFieldId}
+                                    onChange={(e) => handleSubFieldSelect(e.target.value)}
+                                    required={workData.useSubField}
+                                >
+                                    <option value="">Выберите подполе</option>
+                                    {subFields
+                                        .filter(subField => subField.properties.parentId === selectedField._id)
+                                        .map(subField => (
+                                            <option key={subField._id} value={subField._id}>
+                                                {subField.properties.Name || `Подполе ${subField._id}`}
+                                            </option>
+                                        ))
+                                    }
+                                </select>
+                            </div>
+                        )}
+
+                        {(workData.processingArea || workData.useFullField || workData.selectedSubFieldId) && (
                             <div className="form-group">
                                 <label>Площадь обработки:</label>
                                 <span>{workData.area} га</span>

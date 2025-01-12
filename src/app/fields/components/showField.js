@@ -7,6 +7,7 @@ import * as turf from '@turf/turf'
 import CreateWork from './createWork'
 import '../scss/fieldWorks.scss'
 import { useSearchParams } from 'next/navigation'
+import { WORK_TYPES } from '../constants/workTypes';
 
 export default function ShowField({
     setShowFieldVisible, 
@@ -523,23 +524,9 @@ export default function ShowField({
         }
     };
 
-    // Добавим функцию для перевода типа работы
+    // Заменяем существующую функцию
     const getWorkTypeName = (type) => {
-        const names = {
-            'fertilizing': 'Внесение удобрений',
-            'harrowing': 'Боронование',
-            'deep_loosening': 'Глубокое рыхление',
-            'disking': 'Дискование',
-            'cultivation': 'Культивация',
-            'peeling': 'Лущение',
-            'plowing': 'Вспашка',
-            'rolling': 'Прокатывание',
-            'seeding': 'Посев',
-            'spraying': 'Опрыскивание',
-            'harvesting': 'Уборка',
-            'chiseling': 'Чизелевание'
-        };
-        return names[type] || type;
+        return WORK_TYPES[type] || type;
     };
 
     const handleWorkClick = (work, e) => {
@@ -1051,6 +1038,7 @@ export default function ShowField({
                     setIsDrawingProcessingArea={setIsDrawingProcessingArea}
                     selectedField={field}
                     fieldArea={fieldArea}
+                    subFields={subFields}
                 />
             )}
 
