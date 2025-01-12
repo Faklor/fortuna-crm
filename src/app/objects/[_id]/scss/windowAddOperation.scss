@@ -10,6 +10,7 @@
     align-items: center;
     z-index: 1000;
     padding: 16px;
+    animation: slideIn 0.3s ease-out;
 
     .messageOperation {
         background: white;
@@ -245,6 +246,7 @@
     background: #f8fafc;
     border-radius: 8px;
     padding: 20px;
+    animation: slideIn 0.3s ease-out;
 
     @media (max-width: 576px) {
         padding: 16px;
@@ -382,18 +384,16 @@
             margin-bottom: 16px;
         }
     }
+}
 
-    // Анимация появления
-    animation: slideIn 0.3s ease-out;
-
-    @keyframes slideIn {
-        from {
-            opacity: 0;
-            transform: translateY(10px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+// Определение анимации
+@keyframes slideIn {
+    from {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
     }
 }

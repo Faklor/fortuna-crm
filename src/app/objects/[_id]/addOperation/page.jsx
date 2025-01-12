@@ -38,8 +38,7 @@ export default function Page({}){
         .catch(e=>{})
     },[pathname])
 
-   
-    
+
     return <div className='windowAddOperation'>
         <div className='messageOperation'>
             <div className='controllers'>

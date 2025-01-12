@@ -61,29 +61,57 @@ export default function Page(){
         }
     }
     async function postData(formdata){
-        return await axios.post('/api/teches/object/add', formdata,{headers: {
-            'Content-Type': 'multipart/form-data',
-            'Accept': 'application/json'
-        }})
-    }
-    async function sendData(e){
-
-        let formData = new FormData()
-        
-        formData.append('icon',icon)
-        formData.append('name',name)
-        formData.append('category',category)
-        formData.append('organization',organization)
-        formData.append('description',description)
-        
-        postData(formData)
-        .then(res=>{
-            //console.log(res.data.newTech)
-       
-            router.push('/objects')
+        return await axios.post('/api/teches/object/add', formdata, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            }
         })
-        .catch(e=>console.log(e))
-       
+    }
+    async function sendData(e) {
+        e.preventDefault();
+        
+        if (!name.trim()) {
+            alert('Пожалуйста, введите название объекта');
+            return;
+        }
+
+        if (!category || category === 'Выберите категорию') {
+            alert('Пожалуйста, выберите категорию');
+            return;
+        }
+        
+        const formData = new FormData()
+        
+        if (icon) {
+            // Проверяем размер файла (например, максимум 5MB)
+            if (icon.size > 5 * 1024 * 1024) {
+                alert('Размер файла не должен превышать 5MB');
+                return;
+            }
+            
+            // Проверяем тип файла
+            if (!icon.type.match('image/(jpeg|png|jpg)')) {
+                alert('Допустимы только изображения в форматах JPEG и PNG');
+                return;
+            }
+            
+            formData.append('icon', icon)
+        } else {
+            formData.append('icon', 'null')
+        }
+        
+        formData.append('name', name)
+        formData.append('category', category)
+        formData.append('organization', organization)
+        formData.append('description', description)
+        
+        try {
+            const response = await postData(formData)
+            router.push('/objects')
+        } catch (error) {
+            console.error('Error sending data:', error)
+            alert('Произошла ошибка при сохранении объекта')
+        }
     }
    
 

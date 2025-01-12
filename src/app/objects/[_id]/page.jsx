@@ -13,6 +13,7 @@ import HistoryParts from "./components/historyParts";
 import HistoryOperation from "./components/historyOperations";
 import BindingParts from "./components/BindingParts";
 import EditObject from './components/editObject'
+import ImageWithFallback from "./components/ImageWithFallback"
 
 export const revalidate = 1
 export const dynamicParams = true
@@ -46,18 +47,26 @@ export default async function Page({params, searchParams}){
     const visibleOrders = JSON.stringify(orders)
     const visibleOperation = JSON.stringify(operations)
 
-   
+    // Преобразуем Buffer в массив для передачи в клиентский компонент
+    const iconData = object.icon?.data ? Array.from(object.icon.data) : null
+    const iconContentType = object.icon?.contentType || null
 
     return (await searchParams).name !== 'editObj'?<div className="objInfo">
     
-        <Image src={`/imgsObj/${object.icon}`} width={400} height={360} alt={object.name} priority/>
+        <ImageWithFallback 
+            iconData={iconData}
+            iconContentType={iconContentType}
+            width={400} 
+            height={360} 
+            alt={object.name}
+        />
         
         <h2>{object.catagory.split(' ')[0] +' '+ object.name}</h2>
         <h3>{object.organization}</h3>
         <h4>{object.description}</h4>
         <ControllersObj _id={_id}/>
 
-        {object.catagory !== '🏠 Подразделения' && object.inspection?
+        {object.catagory !== '🏢 Подразделения' && object.inspection?
             <Inspection date={object.inspection.dateBegin} period={object.inspection.period}/>
             :
             '' 

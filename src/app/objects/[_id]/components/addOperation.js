@@ -51,7 +51,7 @@ export default function Page({objectID, setOperations}){
             </div>
 
             <select onChange={e=>setTypeOperation(e.target.value)}>
-                {obj.catagory !== '🏠 Подразделения'?listTypesOperations.map((type,index)=>{
+                {obj.catagory !== '🏢 Подразделения'?listTypesOperations.map((type,index)=>{
                     return <option key={index} value={type}>{type}</option>
                 })
                 :

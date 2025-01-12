@@ -7,49 +7,46 @@ import fs from 'fs/promises'
 import path from "path"
 
 
-export async function POST(req,res) {
+export async function POST(req, res) {
   await dbConnet()
 
-    try {
-    
-      const formData = await req.formData()
-      const {  name, category, organization, description, icon } = Object.fromEntries(formData)
+  try {
+    const formData = await req.formData()
+    const { name, category, organization, description } = Object.fromEntries(formData)
+    const icon = formData.get('icon')
 
-
-      if(icon !== 'null'){
-        const file = formData.get('icon')
-        
-        const uploadPath = path.join(process.cwd(), 'public/imgsObj')
-        const fileName = `${name}-${file.name}`
-        const filePath= path.join(uploadPath,fileName)
-
-        const byteLength = await file.arrayBuffer()
-        const bufferData = await Buffer.from(byteLength)
-        
-        const newTech = await Tech.create({name:name, catagory:category, organization:organization, description:description, icon:fileName})
-
-        if(newTech){
-          fs.writeFile(filePath, bufferData)
-
-          
-          return NextResponse.json({newTech})
-          //добавить удаление предыдущей icon
+    if (icon && icon !== 'null') {
+      const byteLength = await icon.arrayBuffer()
+      const bufferData = Buffer.from(byteLength)
+      
+      const newTech = await Tech.create({
+        name,
+        catagory: category,
+        organization,
+        description,
+        icon: {
+          data: bufferData,
+          contentType: icon.type,
+          fileName: icon.name
         }
-        
-      }
-      else{
-        const newTech = await Tech.create({name:name, catagory:category, organization:organization, description:description, icon:'Default.png'})
+      })
 
-        if(newTech){
-          
-          return NextResponse.json({newTech})
-        }
-      }
+      return NextResponse.json({ newTech })
+    } else {
+      const newTech = await Tech.create({
+        name,
+        catagory: category,
+        organization,
+        description,
+        icon: null
+      })
 
-    } catch (e) {
-     
-      return NextResponse.json({ error: e.message })
+      return NextResponse.json({ newTech })
     }
+  } catch (e) {
+    console.error('Error creating tech:', e)
+    return NextResponse.json({ error: e.message }, { status: 500 })
+  }
 }
   
 
