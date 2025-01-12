@@ -2,7 +2,7 @@ import mongoose from 'mongoose'
 const ObjectId = mongoose.Schema.ObjectId
 
 const notesSchema = new mongoose.Schema({
-    id:ObjectId,
+    id: ObjectId,
     title: {
         type: String,
         required: true
@@ -22,10 +22,11 @@ const notesSchema = new mongoose.Schema({
         }
     },
     image: {
-        type: String,
-        required: false
+        data: Buffer,
+        contentType: String,
+        fileName: String
     },
-    season: {  // Добавляем поле сезона
+    season: {
         type: String,
         required: true
     },

@@ -13,6 +13,8 @@ import AddNotes from './addNotes'
 import NoteModal from './noteModal'
 import CreateField from './createField'
 import ImageModal from './ImageModal'
+import { Buffer } from 'buffer';
+import Image from 'next/image';
 
 function DrawingControl({ selectedFieldData, onSubFieldCreate, subFields, isProcessingArea, onProcessingAreaCreate }) {
   const map = useMap();
@@ -686,6 +688,32 @@ function Map({ fields, currentSeason }) {
     }
   };
 
+  const getImageSource = (image) => {
+    if (!image?.data) return null;
+    
+    try {
+        // Данные уже в формате base64 из API
+        return `data:${image.contentType};base64,${image.data}`;
+    } catch (e) {
+        console.error('Error processing image:', e);
+        return null;
+    }
+  };
+
+  useEffect(() => {
+    const fetchNotes = async () => {
+        try {
+            const response = await fetch('/api/notes');
+            const data = await response.json();
+            setNotes(data);
+        } catch (error) {
+            console.error('Error fetching notes:', error);
+        }
+    };
+
+    fetchNotes();
+  }, []); 
+
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       <style jsx global>{`
@@ -803,33 +831,41 @@ function Map({ fields, currentSeason }) {
             icon={noteIcon}
           >
             <Popup>
-              <h3>{note.title}</h3>
-              <p>{note.description}</p>
-              {note.image && (
-                <img 
-                  src={note.image} 
-                  alt={note.title} 
-                  style={{ 
-                    maxWidth: '200px',
-                    cursor: 'pointer'
-                  }} 
-                  onClick={() => setSelectedImage(note.image)}
-                />
-              )}
-              <button 
-                onClick={() => handleDeleteNote(note._id)}
-                style={{
-                  marginTop: '10px',
-                  padding: '5px 10px',
-                  backgroundColor: '#ff4444',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
-              >
-                Удалить заметку
-              </button>
+              <div className="note-popup">
+                <h3>{note.title}</h3>
+                <p>{note.description}</p>
+                {note.image?.data && (
+                    <div 
+                        className="note-image-container"
+                        style={{
+                            width: '200px',
+                            height: '150px',
+                            position: 'relative',
+                            backgroundImage: `url(${getImageSource(note.image)})`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                            cursor: 'pointer',
+                            borderRadius: '4px',
+                            marginBottom: '10px'
+                        }}
+                        onClick={() => setSelectedImage(getImageSource(note.image))}
+                    />
+                )}
+                <button 
+                  onClick={() => handleDeleteNote(note._id)}
+                  style={{
+                      width: '100%',
+                      padding: '8px',
+                      backgroundColor: '#ff4444',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer'
+                  }}
+                >
+                  Удалить заметку
+                </button>
+              </div>
             </Popup>
           </Marker>
         ))}

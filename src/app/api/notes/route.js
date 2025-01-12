@@ -2,33 +2,34 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Notes from '@/models/notes';
 
-export async function GET(request) {
+export async function GET() {
     await dbConnect();
     try {
-        // Получаем сезон из URL параметров
-        const { searchParams } = new URL(request.url);
-        const season = searchParams.get('season');
-
-        // Формируем запрос
-        let query = {};
-        if (season) {
-            query.season = season;
-        }
-
-        // Получаем заметки с фильтром по сезону, если он указан
-        const notes = await Notes.find(query)
-            .sort({ createdAt: -1 })
-            .lean();
-
-        return NextResponse.json({
-            success: true,
-            notes
+        const notes = await Notes.find({});
+        
+        // Преобразуем документы в простые объекты
+        const serializedNotes = notes.map(note => {
+            const noteObj = note.toObject();
+            
+            // Если есть изображение, преобразуем его из BSON
+            if (noteObj.image?.data) {
+                return {
+                    ...noteObj,
+                    image: {
+                        ...noteObj.image,
+                        data: noteObj.image.data.buffer 
+                            ? Buffer.from(noteObj.image.data.buffer).toString('base64')
+                            : Buffer.from(noteObj.image.data).toString('base64'),
+                        contentType: noteObj.image.contentType
+                    }
+                };
+            }
+            return noteObj;
         });
+
+        return NextResponse.json(serializedNotes);
     } catch (error) {
         console.error('Error fetching notes:', error);
-        return NextResponse.json({ 
-            success: false, 
-            error: 'Failed to fetch notes' 
-        }, { status: 500 });
+        return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
