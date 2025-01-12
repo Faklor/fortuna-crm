@@ -518,7 +518,6 @@ function Map({ fields, currentSeason }) {
         formData.append('title', noteData.title);
         formData.append('description', noteData.description);
         formData.append('coordinates', JSON.stringify(noteData.coordinates));
-        
         formData.append('season', season || new Date().getFullYear().toString());
         
         if (noteData.image) {
@@ -533,10 +532,11 @@ function Map({ fields, currentSeason }) {
         const data = await response.json();
 
         if (data.success) {
-            setNotes(prevNotes => [...prevNotes, data.note]);
-            setIsAddingNote(false); // Сбрасываем состояние добавления заметки
+            // Используем полученные данные для обновления состояния
+            setNotes(data.allNotes);
+            setIsAddingNote(false);
             setSelectedPoint(null);
-            setIsCreatingNote(false); // Закрываем модальное окно
+            setIsCreatingNote(false);
             alert('Заметка успешно добавлена');
         } else {
             throw new Error(data.error || 'Ошибка при сохранении заметки');
