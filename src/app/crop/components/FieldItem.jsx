@@ -153,10 +153,10 @@ const FieldItem = memo(({ field, subFields }) => {
             <div className="crop-rotation__field-header">
                 <div className="crop-rotation__field-name">{field.name}</div>
                 <div className="crop-rotation__field-area">
-                    {field.seasons.map((season, index) => (
+                    {sortedSeasons.map((season, index) => (
                         <span key={`area-${season.year}`}>
-                            {field.area} га - {season.year}
-                            {index < field.seasons.length - 1 ? ', ' : ''}
+                            {season.area.toFixed(2)} га - {season.year}
+                            {index < sortedSeasons.length - 1 ? ', ' : ''}
                         </span>
                     ))}
                 </div>

@@ -62,11 +62,12 @@ export default function PageClient({
         const processedFields = parsedFields.map(field => {
             const fieldWorks = parsedWorks.filter(work => work.fieldId === field._id);
             const fieldSeasons = field.properties?.seasons || [];
+            const fieldArea = calculateArea(field.coordinates);
             
             return {
                 id: field._id,
                 name: field.properties?.Name || 'Без названия',
-                area: calculateArea(field.coordinates),
+                area: fieldArea,
                 coordinates: field.coordinates,
                 seasons: field.seasons.map(seasonId => {
                     const seasonInfo = fieldSeasons.find(s => s.year.toString() === seasonId.toString());
@@ -115,6 +116,7 @@ export default function PageClient({
 
                     return {
                         year: seasonId,
+                        area: fieldArea,
                         crop: seasonInfo?.crop || '',
                         variety: seasonInfo?.variety || '',
                         description: seasonInfo?.description || '',
@@ -160,7 +162,7 @@ export default function PageClient({
                 
                 acc[existingFieldIndex] = {
                     ...existingField,
-                    area: existingField.area,
+                    area: existingField.area + field.area,
                     seasons: [...existingField.seasons, ...field.seasons]
                         .sort((a, b) => b.year - a.year),
                     relatedIds: [...(existingField.relatedIds || [existingField.id]), field.id],

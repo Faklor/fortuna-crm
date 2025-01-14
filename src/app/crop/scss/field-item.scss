@@ -25,6 +25,16 @@
                 animation: highlight-header 2s ease-out;
             }
         }
+
+        &-area {
+            padding: 4px 12px;
+            background: #e5e7eb;
+            border-radius: 16px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #4b5563;
+            white-space: nowrap;
+        }
     }
 
     &__field-name {
@@ -403,6 +413,22 @@
 
         &__field-area {
             font-size: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            width: 100%;
+            white-space: normal;
+            margin:1em;
+
+            span {
+                display: block;
+                width: 100%;
+                padding: 4px 8px;
+                
+                &:not(:last-child) {
+                    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+                }
+            }
         }
 
         &__seasons-table {
@@ -414,5 +440,7 @@
                 font-size: 14px;
             }
         }
+
+       
     }
 }
