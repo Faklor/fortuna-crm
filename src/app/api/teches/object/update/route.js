@@ -7,7 +7,7 @@ export async function POST(req, res) {
 
     try {
         const formData = await req.formData()
-        const { _id, name, category, organization, description } = Object.fromEntries(formData)
+        const { _id, name, category, organization, description, captureWidth } = Object.fromEntries(formData)
         const imgTitle = formData.get('imgTitle')
 
         const updateData = {
@@ -15,6 +15,17 @@ export async function POST(req, res) {
             catagory: category,
             organization,
             description
+        }
+
+        if (category === '🚃 Прицепы') {
+            const numericCaptureWidth = parseFloat(captureWidth);
+            if (!isNaN(numericCaptureWidth)) {
+                updateData.captureWidth = numericCaptureWidth;
+            } else {
+                updateData.captureWidth = 0;
+            }
+        } else {
+            updateData.captureWidth = null;
         }
 
         if (imgTitle && imgTitle !== 'null') {
@@ -27,7 +38,6 @@ export async function POST(req, res) {
                 fileName: imgTitle.name
             }
         }
-
         const updateTech = await Tech.findOneAndUpdate(
             { _id },
             { $set: updateData },

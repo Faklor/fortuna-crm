@@ -9,6 +9,12 @@ const techSchema = new mongoose.Schema({
         fileName: String
     },
     catagory: { type: String },
+    captureWidth: { 
+        type: Number,
+        default: function() {
+            return this.catagory === '🚃 Прицепы' ? 0 : null;
+        }
+    },
     inspection: { type: Object },
     maintance: {
         type: Object, 

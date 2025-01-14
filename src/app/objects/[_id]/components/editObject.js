@@ -51,6 +51,9 @@ export default function EditPanelObj({visibleObject}){
     const [oldCatagory, setOldCatagory] = useState(obj.catagory)
     const [oldOrganization, setOldorganization] = useState(obj.organization)
     const [oldDescription, setOldDescription] = useState(obj.description)
+    const [oldCaptureWidth, setOldCaptureWidth] = useState(
+        obj.captureWidth !== null ? obj.captureWidth.toString() : ''
+    )
 
     useEffect(()=>{
         getObjects()
@@ -127,16 +130,18 @@ export default function EditPanelObj({visibleObject}){
         formData.append('category', oldCatagory)
         formData.append('organization', oldOrganization)
         formData.append('description', oldDescription)
-        //console.log(formData.get('imgTitle'))
+        
+        // Добавляем ширину захвата только для прицепов
+        if (oldCatagory === '🚃 Прицепы') {
+            formData.append('captureWidth', oldCaptureWidth || '0')
+        }
+
         postData(formData)
         .then(res=>{
-            
-            //console.log(res.data.newTech)
             router.refresh()    
             router.push(`/objects/${obj._id}`)
         })
         .catch(e=>console.log(e))
-        
     }
 
     const getImageSource = (icon) => {
@@ -189,11 +194,43 @@ export default function EditPanelObj({visibleObject}){
 
         <div className='editDefaultState'>
             <input type='text' value={oldName} onChange={(e)=>setOldName(e.target.value)} placeholder='Название (имя)'/>
-            <select onChange={(e)=>setOldCatagory(e.target.value)}>
+            <select value={oldCatagory} onChange={(e)=>setOldCatagory(e.target.value)}>
                 {filteredArray.map((item,index)=>{
                     return <option key={index} value={item}>{item}</option>
                 })}
             </select>
+
+            {/* Добавляем поле для ширины захвата */}
+            {oldCatagory === '🚃 Прицепы' && (
+                <div className="capture-width-container">
+                    <label className="capture-width-label">
+                        Ширина захвата
+                    </label>
+                    <input 
+                        type="number" 
+                        value={oldCaptureWidth} 
+                        onChange={e => {
+                            // Ограничиваем количество десятичных знаков до одного
+                            const value = e.target.value;
+                            if (value.includes('.')) {
+                                const [whole, decimal] = value.split('.');
+                                if (decimal && decimal.length > 1) {
+                                    setOldCaptureWidth(whole + '.' + decimal.slice(0, 1));
+                                    return;
+                                }
+                            }
+                            setOldCaptureWidth(value);
+                        }}
+                        className="capture-width-input"
+                        placeholder="Укажите ширину захвата"
+                        step="0.1"
+                        min="0"
+                        max="100"
+                    />
+                    <span className="capture-width-unit">м</span>
+                </div>
+            )}
+
             <input type='text' value={oldOrganization} onChange={(e)=>setOldorganization(e.target.value)} placeholder='Организация'/>
             <textarea value={oldDescription} onChange={(e)=>setOldDescription(e.target.value)} placeholder='Текст описания'/>
             

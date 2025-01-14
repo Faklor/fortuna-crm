@@ -64,6 +64,22 @@ export default async function Page({params, searchParams}){
         <h2>{object.catagory.split(' ')[0] +' '+ object.name}</h2>
         <h3>{object.organization}</h3>
         <h4>{object.description}</h4>
+
+        {object.catagory === '🚃 Прицепы' && 
+         object.captureWidth !== null && 
+         object.captureWidth !== undefined && 
+         object.captureWidth !== 0 && (
+            <div className="capture-width-info">
+                <span className="capture-width-label">
+                    <i className="fas fa-arrows-alt-h"></i>
+                    Ширина захвата:
+                </span>
+                <span className="capture-width-value">
+                    {object.captureWidth.toFixed(1)} м
+                </span>
+            </div>
+        )}
+
         <ControllersObj _id={_id}/>
 
         {object.catagory !== '🏢 Подразделения' && object.inspection?

@@ -134,6 +134,64 @@
       transform: translateY(0);
     }
   }
+
+  // Стили для input захвата
+  .capture-width-input {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 16px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    background-color: #f8fafc;
+    
+    &:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    &::placeholder {
+      color: #94a3b8;
+    }
+
+    // Стили для стрелок number input
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    /* Firefox */
+    &[type=number] {
+      -moz-appearance: textfield;
+    }
+  }
+
+  // Контейнер для поля захвата с меткой
+  .capture-width-container {
+    position: relative;
+    margin-bottom: 16px;
+
+    .capture-width-label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+      color: #64748b;
+      font-weight: 500;
+    }
+
+    .capture-width-unit {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #64748b;
+      font-size: 14px;
+      pointer-events: none;
+    }
+  }
 }
 
 // Адаптивность

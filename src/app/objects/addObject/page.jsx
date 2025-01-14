@@ -52,6 +52,7 @@ export default function Page(){
     const [category, setCategory] = useState('')
     const [description, setDescription] = useState('')
     const [organization, setOrganization] = useState('')
+    const [captureWidth, setCaptureWidth] = useState('')
 
     //functions
     function onTitleImageChange(e){
@@ -83,13 +84,11 @@ export default function Page(){
         const formData = new FormData()
         
         if (icon) {
-            // Проверяем размер файла (например, максимум 5MB)
             if (icon.size > 5 * 1024 * 1024) {
                 alert('Размер файла не должен превышать 5MB');
                 return;
             }
             
-            // Проверяем тип файла
             if (!icon.type.match('image/(jpeg|png|jpg)')) {
                 alert('Допустимы только изображения в форматах JPEG и PNG');
                 return;
@@ -105,12 +104,33 @@ export default function Page(){
         formData.append('organization', organization)
         formData.append('description', description)
         
+        if (category === '🚃 Прицепы') {
+            console.log('Capture width value:', captureWidth);
+            if (captureWidth.trim() !== '') {
+                const numericCaptureWidth = parseFloat(captureWidth);
+                console.log('Numeric capture width:', numericCaptureWidth);
+                if (!isNaN(numericCaptureWidth)) {
+                    formData.append('captureWidth', numericCaptureWidth.toString());
+                }
+            }
+        }
+        
+        console.log('Category:', category);
+        console.log('Is trailer:', category === '🚃 Прицепы');
+        for (let pair of formData.entries()) {
+            console.log(pair[0], pair[1]);
+        }
+        
         try {
             const response = await postData(formData)
             router.push('/objects')
         } catch (error) {
             console.error('Error sending data:', error)
-            alert('Произошла ошибка при сохранении объекта')
+            if (error.response?.data?.error) {
+                alert(`Ошибка: ${error.response.data.error}`)
+            } else {
+                alert('Произошла ошибка при сохранении объекта')
+            }
         }
     }
    
@@ -120,17 +140,48 @@ export default function Page(){
         <button onClick={()=>router.push('/objects')}>Отмена</button>
 
         {icon === null?
-        <Image src={`/imgsObj/Default.png`} width={300} height={300} alt='editImg'/>
+        <Image src={`/imgsObj/Default.png`} width={300} height={300} alt='editImg' priority/>
         :<Image src={timeIcon} width={300} height={300} alt='editImg'/>}
 
         <input type="file" onChange={onTitleImageChange} accept="image/png, image/jpeg"/>
 
         <input type='text' value={name} onChange={e=>setName(e.target.value)} placeholder='Название ( имя )'/>
-        <select onChange={e=>setCategory(e.target.value)}>
+        <select value={category} onChange={e=>setCategory(e.target.value)}>
             {filteredArray.map((item,index)=>{
                 return <option key={index} value={item}>{item}</option>
             })}
         </select>
+        
+        {category === '🚃 Прицепы' && (
+            <div className="capture-width-container">
+                <label className="capture-width-label">
+                    Ширина захвата
+                </label>
+                <input 
+                    type="number" 
+                    value={captureWidth} 
+                    onChange={e => {
+                        // Ограничиваем количество десятичных знаков до одного
+                        const value = e.target.value;
+                        if (value.includes('.')) {
+                            const [whole, decimal] = value.split('.');
+                            if (decimal && decimal.length > 1) {
+                                setCaptureWidth(whole + '.' + decimal.slice(0, 1));
+                                return;
+                            }
+                        }
+                        setCaptureWidth(value);
+                    }}
+                    className="capture-width-input"
+                    placeholder="Укажите ширину захвата"
+                    step="0.1"
+                    min="0"
+                    max="100"
+                />
+                <span className="capture-width-unit">м</span>
+            </div>
+        )}
+
         <input type='text' value={organization} onChange={e=>setOrganization(e.target.value)} placeholder='Организация'/>
         <textarea type='text' value={description} onChange={e=>setDescription(e.target.value)} placeholder='Описание'/>
 
