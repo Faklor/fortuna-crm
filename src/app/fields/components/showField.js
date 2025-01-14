@@ -1,7 +1,7 @@
 'use client'
 import '../scss/showFields.scss'
 import axios from 'axios'
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { area, polygon } from '@turf/turf'
 import * as turf from '@turf/turf'
 import CreateWork from './createWork'
@@ -76,6 +76,7 @@ export default function ShowField({
     const [archiveWorks, setArchiveWorks] = useState([]);
     const searchParams = useSearchParams();
     const urlSeason = searchParams.get('season');
+    const showFieldRef = useRef(null);
 
     const calculateAreaInHectares = (coordinates) => {
         try {
@@ -632,11 +633,12 @@ export default function ShowField({
 
     useEffect(() => {
         // Когда модальное окно открыто, блокируем прокрутку showField
-        const showFieldElement = document.querySelector('.show-field');
+        const showFieldElement = showFieldRef.current;
+        
         if (showFieldElement) {
             if (isCreateWorkModalOpen) {
                 showFieldElement.style.overflow = 'hidden';
-                showFieldElement.style.paddingRight = '17px'; // Компенсация скроллбара
+                showFieldElement.style.paddingRight = '17px';
             } else {
                 showFieldElement.style.overflow = '';
                 showFieldElement.style.paddingRight = '';
@@ -644,7 +646,6 @@ export default function ShowField({
         }
 
         return () => {
-            // Очистка при размонтировании
             if (showFieldElement) {
                 showFieldElement.style.overflow = '';
                 showFieldElement.style.paddingRight = '';
@@ -654,6 +655,7 @@ export default function ShowField({
 
     return field && field.properties ? (
         <div 
+            ref={showFieldRef}
             className={`show-field ${isExpanded ? 'expanded' : ''}`}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
