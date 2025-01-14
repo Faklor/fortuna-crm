@@ -75,7 +75,10 @@ function CreateWork({
                   type === 'subfield' ? 0 : 
                   (processingArea?.area || 0),
             processingArea: type === 'custom' ? processingArea : null,
-            selectedSubFieldId: type === 'subfield' ? prev.selectedSubFieldId : ''
+            selectedSubFieldId: type === 'subfield' ? prev.selectedSubFieldId : '',
+            areaSelectionType: type === 'full' ? 'full' : 
+                              type === 'custom' ? 'custom' : 
+                              prev.areaSelectionType
         }));
         
         if (type !== 'custom') {
@@ -136,7 +139,8 @@ function CreateWork({
                 ...prev,
                 selectedSubFieldId: subFieldId,
                 area: area,
-                processingArea: processingAreaData
+                processingArea: processingAreaData,
+                areaSelectionType: selectedSubField.properties?.Name || 'Без названия'
             }));
         }
     };

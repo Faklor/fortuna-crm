@@ -28,12 +28,12 @@ export async function POST(req) {
                 );
             }
 
-            // Определяем тип выбора области
+            // Если это подполе, сохраняем его ID как areaSelectionType
             let areaSelectionType;
             if (workData.useFullField) {
                 areaSelectionType = 'full';
             } else if (workData.useSubField) {
-                areaSelectionType = 'subfield';
+                areaSelectionType = workData.selectedSubFieldId; // Сохраняем ID подполя
             } else {
                 areaSelectionType = 'custom';
             }

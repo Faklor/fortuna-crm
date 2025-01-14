@@ -70,7 +70,6 @@ const worksSchema = new mongoose.Schema({
     area: { type: Number, required: true },
     areaSelectionType: {
         type: String,
-        enum: ['full', 'subfield', 'custom'],
         default: 'custom'
     },
     createdAt: {

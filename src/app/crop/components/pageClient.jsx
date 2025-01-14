@@ -188,6 +188,10 @@ export default function PageClient({
                         <FieldItem 
                             key={`field-${field.relatedIds.join('-')}-${fieldIndex}`}
                             field={field}
+                            subFields={safeJSONParse(subFields).map(sub => ({
+                                _id: sub._id,
+                                name: sub.properties?.Name || 'Без названия'
+                            }))}
                         />
                     ))}
                 </ul>

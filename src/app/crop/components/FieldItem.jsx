@@ -3,7 +3,8 @@ import { workTypeTranslations, workStatusTranslations } from './translations'
 import { memo, useMemo } from 'react'
 
 // Выносим подкомпоненты для оптимизации ререндеров
-const WorkDetails = memo(({ work }) => (
+const WorkDetails = memo(({ work, subFields }) => (
+    console.log('subFields', subFields),
     
     <div className="crop-rotation__work-info"> 
         {work.status && (
@@ -15,8 +16,9 @@ const WorkDetails = memo(({ work }) => (
         {work.area && <div className="crop-rotation__work-area-type">
             <span className="crop-rotation__work-item">
                 {work.areaSelectionType === 'full' && 'Обработка всего поля'}
-                {work.areaSelectionType === 'subfield' && 'Обработка подполя'}
                 {work.areaSelectionType === 'custom' && 'Выборочная обработка'}
+                {work.areaSelectionType !== 'full' && work.areaSelectionType !== 'custom' && 
+                    `Обработка подполя ${subFields?.find(sf => sf._id === work.areaSelectionType)?.name || 'Без названия'}`}
                 {`: ${work.area.toFixed(2)} га`}
             </span>
         </div>}   
@@ -79,7 +81,7 @@ const SubField = memo(({ subField }) => (
     </div>
 ));
 
-const WorksGroup = memo(({ works, workType, seasonYear }) => {
+const WorksGroup = memo(({ works, workType, seasonYear, subFields }) => {
     // Порядок типов работ для сортировки
     const workTypeOrder = {
         'plowing': 1,        // Вспашка
@@ -128,7 +130,7 @@ const WorksGroup = memo(({ works, workType, seasonYear }) => {
                         <div className="crop-rotation__work-name">
                             {work.name || workTypeTranslations[work.type] || 'Без названия'}
                         </div>
-                        <WorkDetails work={work} />
+                        <WorkDetails work={work} subFields={subFields} />
                     </div>
                 ))}
             </div>
@@ -136,7 +138,7 @@ const WorksGroup = memo(({ works, workType, seasonYear }) => {
     );
 });
 
-const FieldItem = memo(({ field }) => {
+const FieldItem = memo(({ field, subFields }) => {
     const sortedSeasons = useMemo(() => 
         [...field.seasons].sort((a, b) => b.year - a.year),
         [field.seasons]
@@ -226,6 +228,7 @@ const FieldItem = memo(({ field }) => {
                                                             works={worksOfType}
                                                             workType={workType}
                                                             seasonYear={season.year}
+                                                            subFields={subFields}
                                                         />
                                                     ) : null;
                                                 })}
