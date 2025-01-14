@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import '../scss/createWork.scss';
 import * as turf from '@turf/turf';
 import axios from 'axios';
@@ -184,6 +184,37 @@ function CreateWork({
         }
     };
 
+    // Сортировка работников по алфавиту
+    const sortedWorkers = useMemo(() => {
+        if (!Array.isArray(workers)) return [];
+        
+        return [...workers].sort((a, b) => {
+            const nameA = (a.name || a.properties?.Name || 'Без имени').toLowerCase();
+            const nameB = (b.name || b.properties?.Name || 'Без имени').toLowerCase();
+            return nameA.localeCompare(nameB);
+        });
+    }, [workers]);
+
+    // Сортировка техники по категории и имени
+    const sortedEquipment = useMemo(() => {
+        if (!Array.isArray(equipment)) return [];
+        
+        return [...equipment].sort((a, b) => {
+            // Сначала сортируем по категории
+            const categoryA = (a.catagory || '').toLowerCase();
+            const categoryB = (b.catagory || '').toLowerCase();
+            
+            if (categoryA !== categoryB) {
+                return categoryA.localeCompare(categoryB);
+            }
+            
+            // Если категории одинаковые, сортируем по имени
+            const nameA = (a.name || '').toLowerCase();
+            const nameB = (b.name || '').toLowerCase();
+            return nameA.localeCompare(nameB);
+        });
+    }, [equipment]);
+
     return (
         <>
         <div className="create-work-overlay" />
@@ -311,7 +342,7 @@ function CreateWork({
                                 workers: Array.from(e.target.selectedOptions, option => option.value)
                             })}
                         >
-                            {Array.isArray(workers) && workers.map(worker => (
+                            {sortedWorkers.map(worker => (
                                 <option key={worker._id} value={worker._id}>
                                     {worker.name || worker.properties?.Name || 'Без имени'}
                                 </option>
@@ -320,7 +351,7 @@ function CreateWork({
                     </div>
 
                     <div className="form-group equipment-group multiple-select-hint">
-                        <label>Техника:</label>
+                        <label>Объекты:</label>
                         <select
                             multiple
                             value={workData.equipment || []}
@@ -329,9 +360,9 @@ function CreateWork({
                                 equipment: Array.from(e.target.selectedOptions, option => option.value)
                             })}
                         >
-                            {Array.isArray(equipment) && equipment.map(tech => (
+                            {sortedEquipment.map(tech => (
                                 <option key={tech._id} value={tech._id}>
-                                    {tech.catagory ? `${tech.catagory}` : ''} {tech.name}
+                                    {tech.catagory ? `${tech.catagory.split(' ')[0]}` : ''} {tech.name}
                                 </option>
                             ))}
                         </select>
