@@ -1,0 +1,350 @@
+.crop-rotation {
+    &__field {
+        margin-bottom: 24px;
+        background: transparent;
+        border-radius: 12px;
+        overflow: hidden;
+
+        &.active {
+            animation: highlight 2s ease-out;
+        }
+
+        &-header {
+            padding: 16px 20px;
+            margin-bottom: 16px;
+            background: #354759;
+            //background: #509fee;
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px #0000001a;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            &.active {
+                animation: highlight-header 2s ease-out;
+            }
+        }
+    }
+
+    &__field-name {
+        font-size: 18px;
+        font-weight: 600;
+        color: #fff;
+    }
+
+    &__field-area {
+        padding: 4px 12px;
+        background: #e5e7eb;
+        border-radius: 16px;
+        font-size: 14px;
+        font-weight: 500;
+        color: #4b5563;
+    }
+
+    &__seasons-table {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+
+            th {
+                background: #f8fafc;
+                padding: 12px 16px;
+                font-weight: 600;
+                color: #1f2937;
+                border-bottom: 2px solid #e5e7eb;
+                text-align: left;
+            }
+
+            td {
+                padding: 12px 16px;
+                border-bottom: 1px solid #e5e7eb;
+                vertical-align: top;
+            }
+
+            tr:last-child td {
+                border-bottom: none;
+            }
+
+            tbody tr:nth-child(even) {
+                background: #f9fafb;
+            }
+
+            tbody tr:hover {
+                background: #f3f4f6;
+            }
+        }
+    }
+
+    &__no-seasons {
+        padding: 16px;
+        text-align: center;
+        color: #6b7280;
+        font-style: italic;
+    }
+
+    // Стили для подполей
+    &__subfields {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    &__subfield {
+        background: #f8f9fa;
+        border-radius: 6px;
+        padding: 8px;
+        margin-bottom: 8px;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+
+        &-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        &-name {
+            font-weight: 500;
+            color: #495057;
+        }
+
+        &-area {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+
+        &-season {
+            font-size: 0.9em;
+            color: #495057;
+            padding-top: 4px;
+            margin-top: 4px;
+            border-top: 1px solid #dee2e6;
+        }
+
+        &-crop,
+        &-variety,
+        &-date {
+            margin-bottom: 2px;
+
+            &:last-child {
+                margin-bottom: 0;
+            }
+        }
+    }
+
+    // Стили для работ
+    &__works-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 12px;
+        padding: 8px;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    &__works-group {
+        background: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        transition: box-shadow 0.2s;
+
+        &:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+    }
+
+    &__works-type {
+        padding: 12px 16px;
+        font-weight: 500;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+    }
+
+    &__works-count {
+        background: #e5e7eb;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.9em;
+        color: #4b5563;
+    }
+
+    &__works-list {
+        padding: 8px;
+    }
+
+    &__work {
+        padding: 12px;
+        border-radius: 6px;
+        margin-bottom: 8px;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
+
+    &__work-name {
+        font-weight: 500;
+        margin-bottom: 8px;
+    }
+
+    &__work-info {
+        font-size: 0.9em;
+        color: #4b5563;
+
+        > div {
+            margin-bottom: 4px;
+
+            &:last-child {
+                margin-bottom: 0;
+            }
+        }
+    }
+
+    &__work-section-title {
+        font-weight: 500;
+        margin-bottom: 4px;
+    }
+
+    &__work-items {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+
+    &__work-item {
+        background: #f3f4f6;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.9em;
+    }
+
+    &__work-area-type {
+        margin-top: 4px;
+    }
+
+    // Цвета для статусов работ
+    .status {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.9em;
+        margin-bottom: 4px;
+
+        &.planned {
+            background-color: #E3F2FD;
+            color: #1565C0;
+        }
+
+        &.in_progress {
+            background-color: #FFF3E0;
+            color: #E65100;
+        }
+
+        &.completed {
+            background-color: #E8F5E9;
+            color: #2E7D32;
+        }
+
+        &.canceled {
+            background-color: #FFEBEE;
+            color: #C62828;
+        }
+    }
+
+    // Цвета для типов работ
+    &__works-group[data-type="harvesting"] { background-color: #FFF3E0; }
+    &__works-group[data-type="seeding"] { background-color: #E8F5E9; }
+    &__works-group[data-type="fertilizing"] { background-color: #FFF8E1; }
+    &__works-group[data-type="spraying"] { background-color: #E3F2FD; }
+    &__works-group[data-type="plowing"] { background-color: #EFEBE9; }
+    &__works-group[data-type="harrowing"] { background-color: #F1F8E9; }
+    &__works-group[data-type="deep_loosening"] { background-color: #FFEBEE; }
+    &__works-group[data-type="disking"] { background-color: #EDE7F6; }
+    &__works-group[data-type="cultivation"] { background-color: #E8F5E9; }
+    &__works-group[data-type="peeling"] { background-color: #F3E5F5; }
+    &__works-group[data-type="rolling"] { background-color: #ECEFF1; }
+    &__works-group[data-type="chiseling"] { background-color: #FCE4EC; }
+}
+
+@keyframes highlight {
+    0% {
+        background-color: rgba(250, 29, 29, 1);
+    }
+    50% {
+        background-color: rgba(235, 74, 74, 0.5);
+    }
+    100% {
+        background-color: transparent;
+    }
+}
+
+@keyframes highlight-header {
+    0% {
+        background: #2196F3;
+        color: white;
+    }
+    50% {
+        background: #2196F3;
+        color: white;
+    }
+    100% {
+        background: #509fee;
+        color: white;
+    }
+}
+
+// Медиа-запросы
+@media (max-width: 1200px) {
+    .crop-rotation {
+        &__works-grid {
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        }
+
+        &__seasons-table {
+            table {
+                min-width: 900px;
+            }
+        }
+    }
+}
+
+@media (max-width: 768px) {
+    .crop-rotation {
+        &__field {
+            margin-bottom: 16px;
+        }
+
+        &__field-header {
+            padding: 12px;
+        }
+
+        &__field-name {
+            font-size: 18px;
+        }
+
+        &__field-area {
+            font-size: 14px;
+        }
+
+        &__seasons-table {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            
+            td, th {
+                padding: 8px 12px;
+                font-size: 14px;
+            }
+        }
+    }
+}

@@ -1,10 +1,10 @@
 'use client'
 import { workTypeTranslations, workStatusTranslations } from './translations'
 import { memo, useMemo } from 'react'
+import '../scss/field-item.scss'
 
 // Выносим подкомпоненты для оптимизации ререндеров
 const WorkDetails = memo(({ work, subFields }) => (
-    console.log('subFields', subFields),
     
     <div className="crop-rotation__work-info"> 
         {work.status && (
@@ -99,13 +99,17 @@ const WorksGroup = memo(({ works, workType, seasonYear, subFields }) => {
     };
 
     const sortedWorks = useMemo(() => 
-        works.sort((a, b) => {
+        [...works].sort((a, b) => {
             // Сначала сортируем по типу работы
             const typeOrderDiff = (workTypeOrder[a.type] || 99) - (workTypeOrder[b.type] || 99);
             if (typeOrderDiff !== 0) return typeOrderDiff;
             
-            // Затем по дате
-            return new Date(b.plannedDate) - new Date(a.plannedDate);
+            // Преобразуем строки дат в массивы [день, месяц, год]
+            const dateA = a.plannedDate.split('.').reverse().join('-');
+            const dateB = b.plannedDate.split('.').reverse().join('-');
+            
+            // Сравниваем даты (от будущей к прошлой)
+            return new Date(dateB) - new Date(dateA);
         }),
         [works]
     );
@@ -145,7 +149,7 @@ const FieldItem = memo(({ field, subFields }) => {
     );
 
     return (
-        <li className="crop-rotation__field">
+        <li className="crop-rotation__field" data-field-name={field.name}>
             <div className="crop-rotation__field-header">
                 <div className="crop-rotation__field-name">{field.name}</div>
                 <div className="crop-rotation__field-area">
@@ -166,7 +170,12 @@ const FieldItem = memo(({ field, subFields }) => {
                                 <th>Сезон</th>
                                 <th>Данные культуры</th>
                                 <th>Подполя</th>
-                                <th>Работы</th>
+                                <th>Работы по полю</th>
+                                {sortedSeasons[0].subFields?.map(subField => (
+                                    <th key={`subfield-works-${subField.id}`}>
+                                        Работы по подполю {subField.name}
+                                    </th>
+                                ))}
                             </tr>
                         </thead>
                         <tbody>
@@ -220,7 +229,10 @@ const FieldItem = memo(({ field, subFields }) => {
                                             <div className="crop-rotation__works-grid">
                                                 {Object.keys(workTypeTranslations).map(workType => {
                                                     const worksOfType = season.works
-                                                        .filter(work => work.type === workType);
+                                                        .filter(work => 
+                                                            work.type === workType && 
+                                                            (work.areaSelectionType === 'full' || work.areaSelectionType === 'custom')
+                                                        );
                                                     
                                                     return worksOfType.length ? (
                                                         <WorksGroup 
@@ -239,6 +251,35 @@ const FieldItem = memo(({ field, subFields }) => {
                                             </span>
                                         )}
                                     </td>
+                                    {season.subFields?.map(subField => (
+                                        <td key={`subfield-works-${subField.id}`}>
+                                            {season.works?.length > 0 ? (
+                                                <div className="crop-rotation__works-grid">
+                                                    {Object.keys(workTypeTranslations).map(workType => {
+                                                        const worksOfType = season.works
+                                                            .filter(work => 
+                                                                work.type === workType && 
+                                                                work.areaSelectionType === subField.id
+                                                            );
+                                                        
+                                                        return worksOfType.length ? (
+                                                            <WorksGroup 
+                                                                key={`${workType}-${season.year}-${subField.id}`}
+                                                                works={worksOfType}
+                                                                workType={workType}
+                                                                seasonYear={season.year}
+                                                                subFields={subFields}
+                                                            />
+                                                        ) : null;
+                                                    })}
+                                                </div>
+                                            ) : (
+                                                <span className="crop-rotation__no-works">
+                                                    Нет работ
+                                                </span>
+                                            )}
+                                        </td>
+                                    ))}
                                 </tr>
                             ))}
                         </tbody>

@@ -48,6 +48,15 @@
             &:active {
                 background: #e9ecef;
             }
+
+            &.active {
+                background-color: #E3F2FD;
+                border-color: #2196F3;
+            }
+
+            &:hover {
+                background-color: #F5F5F5;
+            }
         }
 
         &-name {

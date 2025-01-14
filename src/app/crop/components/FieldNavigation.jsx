@@ -1,12 +1,24 @@
 'use client'
-import { memo } from 'react'
+import { memo, useState } from 'react'
 import '../scss/fieldNavigation.scss'
 
 const FieldNavigation = memo(({ fields, onFieldSelect }) => {
+    const [activeField, setActiveField] = useState(null);
+
     const scrollToField = (fieldName) => {
         const element = document.querySelector(`[data-field-name="${fieldName}"]`);
         if (element) {
             element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            setActiveField(fieldName);
+            
+            // Находим заголовок поля и добавляем к нему класс active
+            const header = element.querySelector('.crop-rotation__field-header');
+            if (header) {
+                header.classList.add('active');
+                setTimeout(() => {
+                    header.classList.remove('active');
+                }, 2000);
+            }
         }
         if (onFieldSelect) onFieldSelect(fieldName);
     };
@@ -20,7 +32,7 @@ const FieldNavigation = memo(({ fields, onFieldSelect }) => {
                 {fields.map((field, index) => (
                     <button
                         key={`nav-${field.id}-${index}`}
-                        className="crop-rotation__navigation-item"
+                        className={`crop-rotation__navigation-item ${activeField === field.name ? 'active' : ''}`}
                         onClick={() => scrollToField(field.name)}
                     >
                         <span className="crop-rotation__navigation-name">
