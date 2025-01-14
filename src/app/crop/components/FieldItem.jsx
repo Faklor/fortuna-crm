@@ -14,7 +14,7 @@ const WorkDetails = memo(({ work, subFields }) => (
         )}
         {work.plannedDate && <div>Дата: {work.plannedDate}</div>}
         {work.area && <div className="crop-rotation__work-area-type">
-            <span className="crop-rotation__work-item">
+            <span className="crop-rotation__work-item area-type">
                 {work.areaSelectionType === 'full' && 'Обработка всего поля'}
                 {work.areaSelectionType === 'custom' && 'Выборочная обработка'}
                 {work.areaSelectionType !== 'full' && work.areaSelectionType !== 'custom' && 
@@ -28,7 +28,7 @@ const WorkDetails = memo(({ work, subFields }) => (
                 <div className="crop-rotation__work-section-title">Работники:</div>
                 <div className="crop-rotation__work-items">
                     {work.workers.map(worker => (
-                        <span key={worker._id} className="crop-rotation__work-item">
+                        <span key={worker._id} className="crop-rotation__work-item worker">
                             {worker.name || worker.properties?.Name || 'Без имени'}
                         </span>
                     ))}
@@ -40,7 +40,7 @@ const WorkDetails = memo(({ work, subFields }) => (
                 <div className="crop-rotation__work-section-title">Техника:</div>
                 <div className="crop-rotation__work-items">
                     {work.equipment.map((tech, techIndex) => (
-                        <span key={techIndex} className="crop-rotation__work-item">
+                        <span key={techIndex} className="crop-rotation__work-item equipment">
                             {tech.displayName || tech.name}
                         </span>
                     ))}
