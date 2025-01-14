@@ -15,6 +15,7 @@ import CreateField from './createField'
 import ImageModal from './ImageModal'
 import { Buffer } from 'buffer';
 import Image from 'next/image';
+import ActionMenu from './ActionMenu'
 
 function DrawingControl({ selectedFieldData, onSubFieldCreate, subFields, isProcessingArea, onProcessingAreaCreate }) {
   const map = useMap();
@@ -947,12 +948,12 @@ function Map({ fields, currentSeason }) {
         />
       )}
 
-      {/* Компонент добавления заметок */}
+      {/* Компонент добавления заметок
       <AddNotes 
         onAddNote={(status) => setIsAddingNote(status)}
         isCreatingNote={isCreatingNote}
         onCancelNote={handleCloseModal}
-      />
+      /> */}
 
       {/* Модальное окно для добавления информации о заметке */}
       {selectedPoint && isCreatingNote && (
@@ -964,13 +965,17 @@ function Map({ fields, currentSeason }) {
       )}
 
       {/* Добавляем компонент создания поля */}
-      <CreateField 
+      <ActionMenu 
         onCreateField={(status) => setIsDrawingField(status)}
-        isCreating={isCreatingField}
-        onCancel={() => {
-          setIsDrawingField(false);
-          setIsCreatingField(false);
+        isCreatingField={isCreatingField}
+        onCancelField={() => {
+            setIsDrawingField(false);
+            setIsCreatingField(false);
         }}
+        onAddNote={(status) => setIsAddingNote(status)}
+        isCreatingNote={isCreatingNote}
+        onCancelNote={handleCloseModal}
+        season={season}
       />
 
       {/* Модальное окно для просмотра изображения */}

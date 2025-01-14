@@ -110,7 +110,7 @@ export default function PageClient({visibleArr}){
                 </div>
             </div>
         </div>
-        <ShapefileUploader season={searchParams.get('season')}/>
+        {/* <ShapefileUploader season={searchParams.get('season')}/> */}
         <Map 
             fields={fields} 
             currentSeason={searchParams.get('season')}
