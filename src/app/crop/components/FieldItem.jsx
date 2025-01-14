@@ -4,7 +4,7 @@ import { memo, useMemo } from 'react'
 
 // Выносим подкомпоненты для оптимизации ререндеров
 const WorkDetails = memo(({ work }) => (
-    console.log('Work details:', work),
+    
     <div className="crop-rotation__work-info"> 
         {work.status && (
             <div className={`status ${work.status}`}>
