@@ -84,20 +84,42 @@ export default function PageClient({
 
                     const fieldSubFields = parsedSubFields
                         .filter(sub => sub.properties?.parentId === field._id)
-                        .map(sub => ({
-                            id: sub._id,
-                            name: sub.properties?.Name || 'Без названия',
-                            area: calculateArea(sub.coordinates),
-                            seasonInfo: sub.properties?.seasons?.[0] || {}
-                        }));
+                        .map(sub => {
+                            const coords = sub.coordinates;
+                            let polygonCoords = Array.isArray(coords[0][0]) ? coords[0] : coords;
+                            
+                            // Проверяем и меняем местами координаты если нужно
+                            if (Math.abs(polygonCoords[0][0]) < 90) {
+                                polygonCoords = polygonCoords.map(coord => [coord[1], coord[0]]);
+                            }
+
+                            // Замыкаем полигон если нужно
+                            const firstPoint = polygonCoords[0];
+                            const lastPoint = polygonCoords[polygonCoords.length - 1];
+                            if (JSON.stringify(firstPoint) !== JSON.stringify(lastPoint)) {
+                                polygonCoords.push(firstPoint);
+                            }
+
+                            // Создаем полигон и считаем площадь
+                            const geojsonPolygon = turf.polygon([polygonCoords]);
+                            const areaInSquareMeters = turf.area(geojsonPolygon);
+                            const areaInHectares = Math.round((areaInSquareMeters / 10000) * 100) / 100;
+
+                            return {
+                                id: sub._id,
+                                name: sub.properties?.Name || 'Без названия',
+                                area: areaInHectares,
+                                seasonInfo: sub.properties?.seasons?.[0] || {}
+                            };
+                        });
 
                     return {
                         year: seasonId,
-                        crop: seasonInfo?.crop || 'Ничего',
-                        variety: seasonInfo?.variety || 'Не указан',
-                        description: seasonInfo?.description || 'Не указано',
-                        sowingDate: seasonInfo?.sowingDate || 'Не указана',
-                        harvestDate: seasonInfo?.harvestDate || 'Не указана',
+                        crop: seasonInfo?.crop || '',
+                        variety: seasonInfo?.variety || '',
+                        description: seasonInfo?.description || '',
+                        sowingDate: seasonInfo?.sowingDate || '',
+                        harvestDate: seasonInfo?.harvestDate || '',
                         works: seasonWorks.map(work => ({
                             id: work._id,
                             name: work.name,

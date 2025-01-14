@@ -17,10 +17,9 @@ export async function GET(request) {
         const fields = await Fields.find().lean();
         const fieldsMap = new Map(fields.map(f => [f._id.toString(), f]));
 
-        // Получаем только запланированные работы
+        // Получаем запланированные работы всех типов
         const works = await Work.find({
-            status: 'planned',
-            type: 'plowing'
+            status: 'planned'
         }).lean();
 
         // Получаем все ID работников и техники

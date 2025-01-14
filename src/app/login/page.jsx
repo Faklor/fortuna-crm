@@ -30,11 +30,11 @@ export default function LoginPage() {
       setShowAnimation(true);
       setTimeout(() => {
         animRef.current.style.transform = 'scale(1)';
-      }, 100);
+      }, 1);
 
       setTimeout(() => {
         router.push('/tasks');
-      }, 5000);
+      }, 3000);
     }
   };
 

@@ -44,7 +44,7 @@ const SubField = memo(({ subField }) => (
     <div key={subField.id} className="crop-rotation__subfield">
         <div className="crop-rotation__subfield-header">
             <div className="crop-rotation__subfield-name">{subField.name}</div>
-            <div className="crop-rotation__subfield-area">{subField.area.toFixed(2)} га</div>
+            <div className="crop-rotation__subfield-area">{subField.area} га</div>
         </div>
         {subField.seasonInfo?.crop && (
             <div className="crop-rotation__subfield-season">
@@ -163,23 +163,31 @@ const FieldItem = memo(({ field }) => {
                                     <td>{season.year || 'Не указан'}</td>
                                     <td>
                                         <div className="crop-rotation__crop-info">
-                                            <div className="crop-rotation__crop-main">
-                                                Культура: {season.crop || 'Не указана'}
-                                            </div>
-                                            {season.variety && (
-                                                <div className="crop-rotation__crop-detail">
-                                                    Сорт: {season.variety}
+                                        {season.crop ? (
+                                            <>
+                                                <div className="crop-rotation__crop-main">
+                                                    Культура: {season.crop}
                                                 </div>
-                                            )}
-                                            {season.description && (
-                                                <div className="crop-rotation__crop-detail">
-                                                    Описание: {season.description}
+                                                {season.variety && (
+                                                    <div className="crop-rotation__crop-detail">
+                                                        Сорт: {season.variety}
+                                                    </div>
+                                                )}
+                                                {season.description && (
+                                                    <div className="crop-rotation__crop-detail">
+                                                        Описание: {season.description}
+                                                    </div>
+                                                )}
+                                                <div className="crop-rotation__crop-dates">
+                                                    {season.sowingDate && <div>Посев: {season.sowingDate}</div>}
+                                                    {season.harvestDate && <div>Уборка: {season.harvestDate}</div>}
                                                 </div>
-                                            )}
-                                            <div className="crop-rotation__crop-dates">
-                                                <div>Посев: {season.sowingDate || 'Не указана'}</div>
-                                                <div>Уборка: {season.harvestDate || 'Не указана'}</div>
-                                            </div>
+                                            </>
+                                        ) : (
+                                            <span className="crop-rotation__no-crop">
+                                                Нет данных
+                                            </span>
+                                        )}
                                         </div>
                                     </td>
                                     <td>
