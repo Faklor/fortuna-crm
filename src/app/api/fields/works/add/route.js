@@ -28,6 +28,16 @@ export async function POST(req) {
                 );
             }
 
+            // Определяем тип выбора области
+            let areaSelectionType;
+            if (workData.useFullField) {
+                areaSelectionType = 'full';
+            } else if (workData.useSubField) {
+                areaSelectionType = 'subfield';
+            } else {
+                areaSelectionType = 'custom';
+            }
+
             // Подготавливаем данные в зависимости от типа обработки
             let processingAreaData;
             let areaInHectares;
@@ -53,6 +63,9 @@ export async function POST(req) {
                 processingArea: processingAreaData,
                 area: areaInHectares,
                 useFullField: workData.useFullField,
+                useSubField: workData.useSubField,
+                selectedSubFieldId: workData.selectedSubFieldId,
+                areaSelectionType: areaSelectionType,
                 status: workData.status || 'planned',
                 workers: workData.workers || [],
                 equipment: workData.equipment || []

@@ -4,6 +4,7 @@ import { memo, useMemo } from 'react'
 
 // Выносим подкомпоненты для оптимизации ререндеров
 const WorkDetails = memo(({ work }) => (
+    console.log('Work details:', work),
     <div className="crop-rotation__work-info"> 
         {work.status && (
             <div className={`status ${work.status}`}>
@@ -11,7 +12,14 @@ const WorkDetails = memo(({ work }) => (
             </div>
         )}
         {work.plannedDate && <div>Дата: {work.plannedDate}</div>}
-        {work.area && <div>Площадь: {work.area.toFixed(2)} га</div>}
+        {work.area && <div className="crop-rotation__work-area-type">
+            <span className="crop-rotation__work-item">
+                {work.areaSelectionType === 'full' && 'Обработка всего поля'}
+                {work.areaSelectionType === 'subfield' && 'Обработка подполя'}
+                {work.areaSelectionType === 'custom' && 'Выборочная обработка'}
+                {`: ${work.area.toFixed(2)} га`}
+            </span>
+        </div>}   
         {work.description && <div>Описание: {work.description}</div>}
         {work.workers?.length > 0 && (
             <div className="crop-rotation__work-workers">

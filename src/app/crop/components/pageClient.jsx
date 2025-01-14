@@ -128,6 +128,8 @@ export default function PageClient({
                             plannedDate: new Date(work.plannedDate).toLocaleDateString('ru-RU'),
                             description: work.description,
                             area: work.area,
+                            areaSelectionType: work.areaSelectionType,
+                            processingArea: work.processingArea,
                             workers: work.workers?.map(workerId => 
                                 parsedWorkers.find(w => w._id === workerId)
                             ).filter(Boolean) || [],

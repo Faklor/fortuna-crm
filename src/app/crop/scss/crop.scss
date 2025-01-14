@@ -110,6 +110,35 @@
         font-style: italic;
         font-size: 13px;
     }
+
+    &__work-area-type {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-top: 8px;
+
+        .area-type-label {
+            display: inline-block;
+            background-color: #f0f0f0;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #666;
+            margin-right: 4px;
+        }
+    }
+
+    &__work-item {
+        display: inline-block;
+        background-color: #eb9595;
+        border: 1px solid #ec7a7a;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        color: #ffffff;
+        margin-right: 4px;
+        margin-bottom: 4px;
+    }
 }
 
 // Если нужны дополнительные стили для контейнера вне .crop-rotation

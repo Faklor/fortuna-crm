@@ -1,9 +1,10 @@
 'use client'
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo} from 'react';
 import '../scss/createWork.scss';
 import * as turf from '@turf/turf';
 import axios from 'axios';
 import { WORK_TYPES } from '../constants/workTypes';
+
 
 // Определяем функцию вне компонента
 const handleProcessingAreaUpdate = (setWorkData, coordinates) => {
@@ -172,9 +173,12 @@ function CreateWork({
                 processingArea: {
                     type: 'Polygon',
                     coordinates: workData.useFullField ? [[]] : 
-                               workData.processingArea.coordinates
+                                workData.processingArea.coordinates
                 },
-                area: workData.useFullField ? fieldArea : workData.area
+                area: workData.useFullField ? fieldArea : workData.area,
+                areaSelectionType: workData.useFullField ? 'full' : 
+                                 workData.useSubField ? 'subfield' : 
+                                 'custom'
             };
 
             onSave(dataToSave);
