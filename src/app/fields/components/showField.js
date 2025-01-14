@@ -1047,7 +1047,14 @@ export default function ShowField({
 
             <button 
                 className="create-work-btn"
-                onClick={() => setIsCreateWorkModalOpen(true)}
+                onClick={() => {
+                    // Прокручиваем к началу страницы
+                    document.querySelector('.show-field').scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
+                    });
+                    setIsCreateWorkModalOpen(true);
+                }}
             >
                 Создать работу
             </button>
@@ -1072,6 +1079,7 @@ export default function ShowField({
                     {sortedWorks.map(work => (
                         <div 
                             key={work._id} 
+                            data-type={work.type}
                             className={`work-item ${selectedWork?._id === work._id ? 'selected' : ''}`}
                             onClick={(e) => handleWorkClick(work, e)}
                         >
