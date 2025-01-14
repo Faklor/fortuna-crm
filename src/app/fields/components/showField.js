@@ -630,6 +630,28 @@ export default function ShowField({
         }
     };
 
+    useEffect(() => {
+        // Когда модальное окно открыто, блокируем прокрутку showField
+        const showFieldElement = document.querySelector('.show-field');
+        if (showFieldElement) {
+            if (isCreateWorkModalOpen) {
+                showFieldElement.style.overflow = 'hidden';
+                showFieldElement.style.paddingRight = '17px'; // Компенсация скроллбара
+            } else {
+                showFieldElement.style.overflow = '';
+                showFieldElement.style.paddingRight = '';
+            }
+        }
+
+        return () => {
+            // Очистка при размонтировании
+            if (showFieldElement) {
+                showFieldElement.style.overflow = '';
+                showFieldElement.style.paddingRight = '';
+            }
+        };
+    }, [isCreateWorkModalOpen]);
+
     return field && field.properties ? (
         <div 
             className={`show-field ${isExpanded ? 'expanded' : ''}`}

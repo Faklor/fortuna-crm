@@ -62,6 +62,7 @@ function CreateWork({
             }
         };
         loadData();
+        
     }, []);
 
     const handleAreaSelectionChange = (type) => {
@@ -184,6 +185,8 @@ function CreateWork({
     };
 
     return (
+        <>
+        <div className="create-work-overlay" />
         <div className="create-work-modal">
             <div className="create-work-content">
                 <h2>Создание работы</h2>
@@ -341,6 +344,7 @@ function CreateWork({
                 </form>
             </div>
         </div>
+        </>
     );
 }
 

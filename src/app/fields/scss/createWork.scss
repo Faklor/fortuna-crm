@@ -1,49 +1,53 @@
 .create-work-modal {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   background: white;
+  width: 95%;
+  max-width: 800px;
+  max-height: 90vh;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  z-index: 121;
+  padding: 24px;
   display: flex;
-  justify-content: flex-start;
-  align-items: flex-start;
-  z-index: 120;
-  padding: 0;
-  height: 100%;
-  width: 100%;
-  overflow-y: auto;
+  flex-direction: column;
+  overflow: hidden;
 
   @media (max-width: 768px) {
     padding: 10px;
     align-items: flex-start;
     overflow-y: auto;
   }
-}
 
-.create-work-content {
-  
-  background: white;
-  padding: 20px;
-  width: 100%;
-  max-width: none;
-  height: 100%;
-  max-height: none;
-  overflow-y: auto;
+  .create-work-content {
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 80px;
 
-  @media (max-width: 768px) {
+    background: white;
+    padding: 20px;
     width: 100%;
-    padding: 15px;
-    margin-top: 0;
-  }
-
-  h2 {
-    margin-bottom: 20px;
-    font-size: 24px;
+    max-width: none;
+    height: 100%;
+    max-height: calc(90vh - 48px);
+    overflow-y: auto;
 
     @media (max-width: 768px) {
-      font-size: 20px;
-      margin-bottom: 15px;
+      width: 100%;
+      padding: 15px;
+      margin-top: 0;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+      font-size: 24px;
+
+      @media (max-width: 768px) {
+        font-size: 20px;
+        margin-bottom: 15px;
+      }
     }
   }
 }
@@ -198,37 +202,27 @@
 }
 
 .button-group {
-  position: sticky;
+  position: absolute;
   bottom: 0;
+  left: 0;
+  right: 0;
   background: white;
-  padding: 15px 0;
-  margin-top: 20px;
+  padding: 15px 24px;
+  margin-top: 0;
   border-top: 1px solid #eee;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
+
   button {
-    width: 100%;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-    padding: 8px 16px;
-    margin:0.5em 0.3em;
-    &:hover {
-      background-color: #3b8a3f;
+    width: auto;
+    min-width: 120px;
+    margin: 0;
+    
+    @media (max-width: 768px) {
+      width: 50%;
     }
-    &:nth-child(2) {
-      background-color: #FA5C62;
-      &:hover {
-        background-color: #da585c;
-      }
-    }
-  }
-
-
-  @media (max-width: 768px) {
-    padding: 10px 0;
-    margin-top: 15px;
   }
 }
 
@@ -341,4 +335,10 @@
       border-color: #ce93d8;
     }
   }
+}
+
+.show-field {
+    &.modal-open {
+        overflow: hidden !important;
+    }
 } 
