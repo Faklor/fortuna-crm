@@ -131,9 +131,18 @@ export default function PageClient({
                             workers: work.workers?.map(workerId => 
                                 parsedWorkers.find(w => w._id === workerId)
                             ).filter(Boolean) || [],
-                            equipment: work.equipment?.map(techId => 
-                                parsedTech.find(t => t._id === techId)
-                            ).filter(Boolean) || []
+                            equipment: work.equipment?.map(techId => {
+                                const tech = parsedTech.find(t => t._id === techId);
+                                if (tech) {
+                                    return {
+                                        ...tech,
+                                        displayName: tech.catagory === '🚃 Прицепы' && tech.captureWidth ? 
+                                            `${tech.name} (${tech.captureWidth.toFixed(1)}м)` : 
+                                            tech.name
+                                    };
+                                }
+                                return null;
+                            }).filter(Boolean) || []
                         })),
                         subFields: fieldSubFields
                     };

@@ -29,9 +29,9 @@ const WorkDetails = memo(({ work }) => (
             <div className="crop-rotation__work-equipment">
                 <div className="crop-rotation__work-section-title">Техника:</div>
                 <div className="crop-rotation__work-items">
-                    {work.equipment.map(tech => (
-                        <span key={tech._id} className="crop-rotation__work-item">
-                            {tech.name || tech.properties?.Name || 'Без названия'}
+                    {work.equipment.map((tech, techIndex) => (
+                        <span key={techIndex} className="crop-rotation__work-item">
+                            {tech.displayName || tech.name}
                         </span>
                     ))}
                 </div>
