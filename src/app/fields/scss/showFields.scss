@@ -542,7 +542,36 @@
         }
       }
     }
-  }
+}
+
+.work-item {
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+    cursor: pointer;
+
+    // Стили для типов работ
+    &[data-type="organic_fertilizing"] { background: linear-gradient(to left, rgba(141, 110, 99, 0.1), transparent); }
+    &[data-type="mineral_fertilizing"] { background: linear-gradient(to left, rgba(171, 71, 188, 0.1), transparent); }
+    &[data-type="harrowing"] { background: linear-gradient(to left, rgba(124, 179, 66, 0.1), transparent); }
+    &[data-type="deep_loosening"] { background: linear-gradient(to left, rgba(93, 64, 55, 0.1), transparent); }
+    &[data-type="disking"] { background: linear-gradient(to left, rgba(255, 112, 67, 0.1), transparent); }
+    &[data-type="cultivation"] { background: linear-gradient(to left, rgba(102, 187, 106, 0.1), transparent); }
+    &[data-type="peeling"] { background: linear-gradient(to left, rgba(255, 167, 38, 0.1), transparent); }
+    &[data-type="plowing"] { background: linear-gradient(to left, rgba(121, 85, 72, 0.1), transparent); }
+    &[data-type="rolling"] { background: linear-gradient(to left, rgba(120, 144, 156, 0.1), transparent); }
+    &[data-type="seeding"] { background: linear-gradient(to left, rgba(38, 198, 218, 0.1), transparent); }
+    &[data-type="planting"] { background: linear-gradient(to left, rgba(38, 166, 154, 0.1), transparent); }
+    &[data-type="chemical_treatment"] { background: linear-gradient(to left, rgba(236, 64, 122, 0.1), transparent); }
+    &[data-type="spraying"] { background: linear-gradient(to left, rgba(66, 165, 245, 0.1), transparent); }
+    &[data-type="harvesting"] { background: linear-gradient(to left, rgba(255, 179, 0, 0.1), transparent); }
+    &[data-type="chiseling"] { background: linear-gradient(to left, rgba(141, 110, 99, 0.1), transparent); }
+    &[data-type="stone_separation"] { background: linear-gradient(to left, rgba(144, 164, 174, 0.1), transparent); }
+    &[data-type="ridge_cutting"] { background: linear-gradient(to left, rgba(255, 112, 67, 0.1), transparent); }
+}
 
 
   
