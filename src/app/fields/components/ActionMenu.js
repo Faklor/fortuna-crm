@@ -11,7 +11,9 @@ export default function ActionMenu({
     onAddNote,
     isCreatingNote,
     onCancelNote,
-    season
+    season,
+    dialog,
+    setDialog
 }) {
     const [isOpen, setIsOpen] = useState(false);
     const menuRef = useRef(null);
@@ -44,21 +46,40 @@ export default function ActionMenu({
             );
             
             if (validFeatures.length === 0) {
-                throw new Error('Shapefile не содержит валидных геометрических данных');
+                setDialog({
+                    isOpen: true,
+                    type: 'alert',
+                    title: 'Ошибка',
+                    message: 'Shapefile не содержит валидных геометрических данных',
+                    onConfirm: () => setDialog(prev => ({ ...prev, isOpen: false }))
+                });
+                return;
             }
-
-            //console.log(`Found ${validFeatures.length} valid features out of ${geojson.features.length} total`);
             
             await axios.post('/api/fields/upload-shapefile', { 
                 season: season, 
                 features: validFeatures 
             });
             
-            alert(`Файл успешно загружен! Обработано ${validFeatures.length} объектов`);
-            window.location.reload(); // Перезагружаем страницу для отображения новых полей
+            setDialog({
+                isOpen: true,
+                type: 'alert',
+                title: 'Успешно',
+                message: `Файл успешно загружен! Обработано ${validFeatures.length} объектов`,
+                onConfirm: () => {
+                    setDialog(prev => ({ ...prev, isOpen: false }));
+                    window.location.reload(); // Перезагружаем страницу для отображения новых полей
+                }
+            });
         } catch (error) {
             console.error('Error:', error);
-            alert('Ошибка при загрузке файла');
+            setDialog({
+                isOpen: true,
+                type: 'alert',
+                title: 'Ошибка',
+                message: 'Ошибка при загрузке файла',
+                onConfirm: () => setDialog(prev => ({ ...prev, isOpen: false }))
+            });
         }
         setIsOpen(false); 
     };

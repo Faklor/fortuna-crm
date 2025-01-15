@@ -17,8 +17,17 @@ import { Buffer } from 'buffer';
 import Image from 'next/image';
 import ActionMenu from './ActionMenu'
 import CoordinatesDisplay from './CoordinatesDisplay'
+import DialogModal from './DialogModal'
 
-function DrawingControl({ selectedFieldData, onSubFieldCreate, subFields, isProcessingArea, onProcessingAreaCreate }) {
+function DrawingControl({ 
+  selectedFieldData, 
+  onSubFieldCreate, 
+  subFields, 
+  isProcessingArea, 
+  onProcessingAreaCreate,
+  dialog,
+  setDialog
+}) {
   const map = useMap();
   let snappedPoint = null;
   // Функция очистки индикатора магнита
@@ -225,8 +234,16 @@ function DrawingControl({ selectedFieldData, onSubFieldCreate, subFields, isProc
               });
               
               setTimeout(() => {
-                alert('Полигон должен находиться внутри границ родительского поля');
-                e.layer.remove();
+                setDialog({
+                  isOpen: true,
+                  type: 'alert',
+                  title: 'Ошибка',
+                  message: 'Полигон должен находиться внутри границ родительского поля',
+                  onConfirm: () => {
+                    setDialog({ ...dialog, isOpen: false });
+                    e.layer.remove();
+                  }
+                });
               }, 100);
               return;
             }
@@ -249,8 +266,16 @@ function DrawingControl({ selectedFieldData, onSubFieldCreate, subFields, isProc
                 });
                 
                 setTimeout(() => {
-                  alert('Подполя не должны пересекаться между собой');
-                  e.layer.remove();
+                  setDialog({
+                    isOpen: true,
+                    type: 'alert',
+                    title: 'Уведомление',
+                    message: 'Подполя не должны пересекаться между собой',
+                    onConfirm: () => {
+                      setDialog({ ...dialog, isOpen: false });
+                      e.layer.remove();
+                    }
+                  });
                 }, 100);
                 return;
               }
@@ -343,6 +368,14 @@ function Map({ fields, currentSeason }) {
   const [isDrawingField, setIsDrawingField] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [isCreateWorkModalOpen, setIsCreateWorkModalOpen] = useState(false);
+  const [dialog, setDialog] = useState({
+    isOpen: false,
+    type: 'alert',
+    title: '',
+    message: '',
+    onConfirm: () => {},
+    defaultValue: ''
+  });
 
   useEffect(() => {
     // Здесь можно добавить логику загрузки полей с учетом сезона
@@ -415,51 +448,77 @@ function Map({ fields, currentSeason }) {
 
   const handleSubFieldCreate = async (coordinates) => {
     try {
-        // Убедимся, что полигон замкнут
-        if (coordinates[0][0] !== coordinates[coordinates.length - 1][0] || 
-            coordinates[0][1] !== coordinates[coordinates.length - 1][1]) {
-            coordinates.push(coordinates[0]);
-        }
+    //   // Убедимся, что полигон замкнут
+    //   if (coordinates[0][0] !== coordinates[coordinates.length - 1][0] || 
+    //     coordinates[0][1] !== coordinates[coordinates.length - 1][1]) {
+    //     coordinates.push(coordinates[0]);
+    // }
 
-        // Запрашиваем название подполя через prompt
-        const subFieldName = window.prompt('Введите название подполя:', `Подполе ${subFields.length + 1}`);
-        
-        // Если пользователь нажал "Отмена", используем дефолтное название
-        const finalName = subFieldName === null ? `Подполе ${subFields.length + 1}` : subFieldName.trim();
+    // // Запрашиваем название подполя через prompt
+    // const subFieldName = window.prompt('Введите название подполя:', `Подполе ${subFields.length + 1}`);
+    
+    // // Если пользователь нажал "Отмена", используем дефолтное название
+    // const finalName = subFieldName === null ? `Подполе ${subFields.length + 1}` : subFieldName.trim();
 
-        const response = await axios.post('/api/fields/subFields/create', {
-            parentId: selectedField,
-            coordinates: coordinates,
-            properties: {
-                Name: finalName,
-                parentId: selectedField
+    // const response = await axios.post('/api/fields/subFields/create', {
+    //     parentId: selectedField,
+    //     coordinates: coordinates,
+    //     properties: {
+    //         Name: finalName,
+    //         parentId: selectedField
+    //     }
+    // });
+        setDialog({
+            isOpen: true,
+            type: 'prompt',
+            title: 'Создание подполя',
+            message: 'Введите название подполя:',
+            defaultValue: `Подполе ${subFields.length + 1}`,
+            onConfirm: async (subFieldName) => {
+                setDialog({ ...dialog, isOpen: false });
+                const finalName = subFieldName.trim() || `Подполе ${subFields.length + 1}`;
+                
+                const response = await axios.post('/api/fields/subFields/create', {
+                    parentId: selectedField,
+                    coordinates: coordinates,
+                    properties: {
+                        Name: finalName,
+                        parentId: selectedField
+                    }
+                });
+
+                if (response.data.success) {
+                    const subFieldsResponse = await axios.get('/api/fields/subFields/get');
+                    
+                    if (subFieldsResponse.data.success) {
+                        await new Promise(resolve => {
+                            setSubFields(subFieldsResponse.data.subFields);
+                            setSubFieldsVersion(prev => prev + 1);
+                            resolve();
+                        });
+                        
+                        setIsDrawingMode(false);
+                        
+                        setTimeout(() => {
+                            setKey(prevKey => prevKey + 1);
+                            setIsDrawingMode(true);
+                        }, 100);
+                        setSubFields(prev => [...prev, response.data.data]);
+                        setSubFieldsVersion(prev => prev + 1);
+                        setIsDrawingMode(false);
+                    }
+                }
             }
         });
-
-        if (response.data.success) {
-            const subFieldsResponse = await axios.get('/api/fields/subFields/get');
-            
-            if (subFieldsResponse.data.success) {
-                await new Promise(resolve => {
-                    setSubFields(subFieldsResponse.data.subFields);
-                    setSubFieldsVersion(prev => prev + 1);
-                    resolve();
-                });
-                
-                setIsDrawingMode(false);
-                
-                setTimeout(() => {
-                    setKey(prevKey => prevKey + 1);
-                    setIsDrawingMode(true);
-                }, 100);
-                setSubFields(prev => [...prev, response.data.data]);
-                setSubFieldsVersion(prev => prev + 1);
-                setIsDrawingMode(false);
-            }
-        }
     } catch (error) {
         console.error('Error creating subfield:', error);
-        alert('Ошибка при создании подполя');
+        setDialog({
+            isOpen: true,
+            type: 'alert',
+            title: 'Ошибка',
+            message: 'Ошибка при создании подполя',
+            onConfirm: () => setDialog({ ...dialog, isOpen: false })
+        });
     }
   };
 
@@ -536,18 +595,30 @@ function Map({ fields, currentSeason }) {
         const data = await response.json();
 
         if (data.success) {
-            // Используем полученные данные для обновления состояния
             setNotes(data.allNotes);
             setIsAddingNote(false);
             setSelectedPoint(null);
             setIsCreatingNote(false);
-            alert('Заметка успешно добавлена');
+            
+            setDialog({
+                isOpen: true,
+                type: 'alert',
+                title: 'Успешно',
+                message: 'Заметка успешно добавлена',
+                onConfirm: () => setDialog(prev => ({ ...prev, isOpen: false }))
+            });
         } else {
             throw new Error(data.error || 'Ошибка при сохранении заметки');
         }
     } catch (error) {
         console.error('Detailed error:', error);
-        alert(`Ошибка при сохранении заметки: ${error.message}`);
+        setDialog({
+            isOpen: true,
+            type: 'alert',
+            title: 'Ошибка',
+            message: `Ошибка при сохранении заметки: ${error.message}`,
+            onConfirm: () => setDialog(prev => ({ ...prev, isOpen: false }))
+        });
     }
   };
 
@@ -581,30 +652,50 @@ function Map({ fields, currentSeason }) {
     popupAnchor: [0, -10]
   });
 
+  // Также обновим обработчик удаления заметки
   const handleDeleteNote = async (noteId) => {
-    if (window.confirm('Вы уверены, что хотите удалить эту заметку?')) {
-        try {
-            const response = await fetch('/api/notes/delete', {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ noteId })
-            });
+    setDialog({
+        isOpen: true,
+        type: 'confirm',
+        title: 'Подтверждение',
+        message: 'Вы уверены, что хотите удалить эту заметку?',
+        onConfirm: async () => {
+            try {
+                const response = await fetch('/api/notes/delete', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ noteId })
+                });
 
-            const data = await response.json();
+                const data = await response.json();
 
-            if (data.success) {
-                // Удаляем заметку из локального состояния
-                setNotes(prevNotes => prevNotes.filter(note => note._id !== noteId));
-            } else {
-                throw new Error(data.error || 'Ошибка при удалении заметки');
+                if (data.success) {
+                    setNotes(prevNotes => prevNotes.filter(note => note._id !== noteId));
+                    setDialog({
+                        isOpen: true,
+                        type: 'alert',
+                        title: 'Успешно',
+                        message: 'Заметка успешно удалена',
+                        onConfirm: () => setDialog(prev => ({ ...prev, isOpen: false }))
+                    });
+                } else {
+                    throw new Error(data.error || 'Ошибка при удалении заметки');
+                }
+            } catch (error) {
+                console.error('Error deleting note:', error);
+                setDialog({
+                    isOpen: true,
+                    type: 'alert',
+                    title: 'Ошибка',
+                    message: 'Ошибка при удалении заметки',
+                    onConfirm: () => setDialog(prev => ({ ...prev, isOpen: false }))
+                });
             }
-        } catch (error) {
-            console.error('Error deleting note:', error);
-            alert('Ошибка при удалении заметки');
-        }
-    }
+        },
+        onClose: () => setDialog(prev => ({ ...prev, isOpen: false }))
+    });
   };
 
   const handleProcessingAreaCreate = (coordinates) => {
@@ -662,33 +753,47 @@ function Map({ fields, currentSeason }) {
   // Обработчик создания нового поля
   const handleFieldCreate = async (coordinates) => {
     try {
-        const fieldName = window.prompt('Введите название поля:', `Поле ${new Date().toLocaleDateString()}`);
-        
-        if (!fieldName) return;
+        setDialog({
+            isOpen: true,
+            type: 'prompt',
+            title: 'Создание поля',
+            message: 'Введите название поля:',
+            defaultValue: `Поле ${new Date().toLocaleDateString()}`,
+            onConfirm: async (fieldName) => {
+                setDialog({ ...dialog, isOpen: false });
+                if (!fieldName) return;
+                
+                const response = await fetch('/api/fields/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name: fieldName,
+                        coordinates: coordinates,
+                        season: season || new Date().getFullYear().toString() // Используем выбранный сезон из URL
+                    })
+                });
 
-        const response = await fetch('/api/fields/create', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                name: fieldName,
-                coordinates: coordinates,
-                season: season || new Date().getFullYear().toString() // Используем выбранный сезон из URL
-            })
+                const data = await response.json();
+
+                if (data.success) {
+                    // Обновляем список полей или перезагружаем страницу
+                    window.location.reload();
+                } else {
+                    throw new Error(data.error || 'Failed to create field');
+                }
+            }
         });
-
-        const data = await response.json();
-
-        if (data.success) {
-            // Обновляем список полей или перезагружаем страницу
-            window.location.reload();
-        } else {
-            throw new Error(data.error || 'Failed to create field');
-        }
     } catch (error) {
         console.error('Error:', error);
-        alert('Ошибка при создании поля');
+        setDialog({
+            isOpen: true,
+            type: 'alert',
+            title: 'Ошибка',
+            message: 'Ошибка при создании поля',
+            onConfirm: () => setDialog({ ...dialog, isOpen: false })
+        });
     }
   };
 
@@ -812,6 +917,8 @@ function Map({ fields, currentSeason }) {
             subFields={subFields}
             isProcessingArea={isDrawingProcessingArea}
             onProcessingAreaCreate={handleProcessingAreaCreate}
+            dialog={dialog}
+            setDialog={setDialog}
           />
         )}
 
@@ -949,6 +1056,8 @@ function Map({ fields, currentSeason }) {
           fieldWorks={fieldWorks}
           isCreateWorkModalOpen={isCreateWorkModalOpen}
           setIsCreateWorkModalOpen={setIsCreateWorkModalOpen}
+          dialog={dialog}
+          setDialog={setDialog}
         />
       )}
 
@@ -980,6 +1089,8 @@ function Map({ fields, currentSeason }) {
         isCreatingNote={isCreatingNote}
         onCancelNote={handleCloseModal}
         season={season}
+        dialog={dialog}
+        setDialog={setDialog}
       />
 
       {/* Модальное окно для просмотра изображения */}
@@ -989,6 +1100,16 @@ function Map({ fields, currentSeason }) {
           onClose={() => setSelectedImage(null)} 
         />
       )}
+
+      <DialogModal
+        isOpen={dialog.isOpen}
+        type={dialog.type}
+        title={dialog.title}
+        message={dialog.message}
+        onConfirm={dialog.onConfirm}
+        onClose={() => setDialog({ ...dialog, isOpen: false })}
+        defaultValue={dialog.defaultValue}
+      />
     </div>
   );
 }

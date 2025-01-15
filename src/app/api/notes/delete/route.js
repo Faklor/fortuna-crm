@@ -20,15 +20,15 @@ export async function DELETE(request) {
         }
 
         // Если есть изображение, удаляем его
-        if (note.image) {
-            try {
-                const imagePath = path.join(process.cwd(), 'public', note.image);
-                await unlink(imagePath);
-            } catch (error) {
-                console.error('Error deleting image file:', error);
-                // Продолжаем удаление заметки даже если не удалось удалить файл
-            }
-        }
+        // if (note.image) {
+        //     try {
+        //         const imagePath = path.join(process.cwd(), 'public', note.image);
+        //         await unlink(imagePath);
+        //     } catch (error) {
+        //         console.error('Error deleting image file:', error);
+        //         // Продолжаем удаление заметки даже если не удалось удалить файл
+        //     }
+        // }
 
         // Удаляем заметку из БД
         await Notes.findByIdAndDelete(noteId);

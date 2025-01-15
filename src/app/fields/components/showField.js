@@ -32,7 +32,9 @@ export default function ShowField({
     onWorkStatusUpdate,
     onWorkSelect,
     isCreateWorkModalOpen,
-    setIsCreateWorkModalOpen
+    setIsCreateWorkModalOpen,
+    dialog,
+    setDialog
 }) {
     
     const [field, setField] = useState(null)
@@ -232,23 +234,42 @@ export default function ShowField({
     };
 
     const handleDeleteSubField = async (subFieldId) => {
-        // Добавляем подтверждение
-        if (!window.confirm('Вы уверены, что хотите удалить это подполе?')) {
-            return; // Если пользователь нажал "Отмена"
-        }
+        setDialog({
+            isOpen: true,
+            type: 'confirm',
+            title: 'Подтверждение',
+            message: 'Вы уверены, что хотите удалить это подполе?',
+            onConfirm: async () => {
+                try {
+                    const response = await axios.delete('/api/fields/subFields/delete', {
+                        data: { _id: subFieldId }
+                    });
 
-        try {
-            await axios.delete(`/api/fields/subFields/delete`, {
-                data: { _id: subFieldId }
-            });
-            
-            // Обновляем состояние в родительском компоненте
-            setSubFields(prev => prev.filter(field => field._id !== subFieldId));
-            
-        } catch (error) {
-            console.error('Ошибка при удалении подполя:', error);
-            // Здесь можно добавить обработку ошибки, например показ уведомления
-        }
+                    if (response.data.success) {
+                        setSubFields(prevSubFields => 
+                            prevSubFields.filter(sf => sf._id !== subFieldId)
+                        );
+                        setDialog({
+                            isOpen: true,
+                            type: 'alert',
+                            title: 'Успешно',
+                            message: 'Подполе успешно удалено',
+                            onConfirm: () => setDialog(prev => ({ ...prev, isOpen: false }))
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error deleting subfield:', error);
+                    setDialog({
+                        isOpen: true,
+                        type: 'alert',
+                        title: 'Ошибка',
+                        message: 'Ошибка при удалении подполя',
+                        onConfirm: () => setDialog(prev => ({ ...prev, isOpen: false }))
+                    });
+                }
+            },
+            onClose: () => setDialog(prev => ({ ...prev, isOpen: false }))
+        });
     };
 
     const handlePropertyChange = (key, value) => {
@@ -609,26 +630,46 @@ export default function ShowField({
         }
     };
 
-    // Добавляем функцию удаления поля
+    // Обработчик удаления основного поля
     const handleDeleteField = async () => {
-        // Показываем подтверждение перед удалением
-        if (window.confirm('Вы уверены, что хотите удалить это поле? Это действие нельзя отменить.')) {
-            try {
-                const response = await axios.delete(`/api/fields/delete/${selectedField}`);
-                
-                if (response.data.success) {
-                    // Закрываем окно просмотра поля
-                    setShowFieldVisible(false);
-                    // Перезагружаем страницу для обновления списка полей
-                    window.location.reload();
-                } else {
-                    throw new Error(response.data.error || 'Ошибка при удалении поля');
+        setDialog({
+            isOpen: true,
+            type: 'confirm',
+            title: 'Подтверждение',
+            message: 'Вы уверены, что хотите удалить это поле?',
+            onConfirm: async () => {
+                try {
+                    // Изменяем URL запроса, чтобы id был в пути
+                    const response = await axios.delete(`/api/fields/delete/${selectedField}`);
+
+                    if (response.data.success) {
+                        setDialog({
+                            isOpen: true,
+                            type: 'alert',
+                            title: 'Успешно',
+                            message: 'Поле успешно удалено',
+                            onConfirm: () => {
+                                setDialog(prev => ({ ...prev, isOpen: false }));
+                                setShowFieldVisible(false);
+                                window.location.reload();
+                            }
+                        });
+                    } else {
+                        throw new Error(response.data.error || 'Ошибка при удалении поля');
+                    }
+                } catch (error) {
+                    console.error('Error deleting field:', error);
+                    setDialog({
+                        isOpen: true,
+                        type: 'alert',
+                        title: 'Ошибка',
+                        message: error.response?.data?.error || error.message || 'Ошибка при удалении поля',
+                        onConfirm: () => setDialog(prev => ({ ...prev, isOpen: false }))
+                    });
                 }
-            } catch (error) {
-                console.error('Error deleting field:', error);
-                alert('Ошибка при удалении поля');
-            }
-        }
+            },
+            onClose: () => setDialog(prev => ({ ...prev, isOpen: false }))
+        });
     };
 
     useEffect(() => {

@@ -52,7 +52,16 @@ export default async function Page({params, searchParams}){
     const iconContentType = object.icon?.contentType || null
 
     return (await searchParams).name !== 'editObj'?<div className="objInfo">
-    
+        <Link href="/objects" className="back-button">
+            <Image 
+                src="/components/back.svg" 
+                width={24} 
+                height={24} 
+                alt="Назад"
+            />
+            <span>Назад</span>
+        </Link>
+        
         <ImageWithFallback 
             iconData={iconData}
             iconContentType={iconContentType}
