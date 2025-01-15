@@ -11,6 +11,7 @@
 // }
 
 .select_season {
+    margin-top: 4.2em;
     z-index: 120;
     justify-self: center;
     
@@ -26,6 +27,7 @@
 
     // Добавляем медиа-запрос для мобильных устройств
     @media (max-width: 768px) {
+        margin-top: 4.6em;
         padding: 4px 8px;
         font-size: 14px;
         
