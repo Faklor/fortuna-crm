@@ -16,6 +16,7 @@ import ImageModal from './ImageModal'
 import { Buffer } from 'buffer';
 import Image from 'next/image';
 import ActionMenu from './ActionMenu'
+import CoordinatesDisplay from './CoordinatesDisplay'
 
 function DrawingControl({ selectedFieldData, onSubFieldCreate, subFields, isProcessingArea, onProcessingAreaCreate }) {
   const map = useMap();
@@ -746,6 +747,9 @@ function Map({ fields, currentSeason }) {
         onClick={handleMapClick}
       >
         {getMapLayer()}
+        
+        {/* Добавляем компонент отображения координат */}
+        <CoordinatesDisplay />
 
         {/* Отображение основных полей */}
         {fields?.map((field, index) => (
