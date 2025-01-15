@@ -1,18 +1,78 @@
-body {
-    .container {
-        width: 460px;
-    }
-}
+// body {
+//     .container {
+//         width: 460px;
+//     }
+// }
 
-.warehouse{
+.warehouse {
     margin-top: 4em;
     display: grid;
+    gap: 20px;
+    height: calc(100vh - 4em); // Высота экрана минус отступ сверху
     
-
-    .controlls{
+    // Мобильная версия (по умолчанию)
+    grid-template-areas:
+        "sidebar"
+        "content";
+    
+    .sidebar {
+        grid-area: sidebar;
         display: flex;
+        flex-direction: column;
+        gap: 20px;
+        .controlls{
+            margin: 1em 0;
+        }
     }
-    .content{
-        //overflow: auto;
+    
+    .content {
+        grid-area: content;
+        overflow-y: auto; // Добавляем прокрутку
+        padding-right: 10px; // Отступ для скроллбара
+        
+    }
+    h2{
+        text-align: center;
+        color: #54556A;
+    }
+    
+    // Десктопная версия
+    @media (min-width: 768px) {
+        grid-template-columns: 1fr 300px;
+        grid-template-areas: "content sidebar";
+        
+        .sidebar {
+            position: sticky;
+            top: 20px; // Отступ от верха при прокрутке
+            height: calc(100vh - 4em - 20px); // Высота экрана минус отступы
+            overflow-y: auto; // Добавляем прокрутку если контент не помещается
+        }
+        
+        .content {
+            max-height: calc(300vh - 4em); // Максимальная высота контента
+            overflow-y: auto; // Прокрутка для контента
+            margin: 1em 0;
+        }
+    }
+    
+    // Стилизация скроллбара
+    .content, .sidebar {
+        &::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        &::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+        
+        &::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 3px;
+            
+            &:hover {
+                background: #555;
+            }
+        }
     }
 }

@@ -1,6 +1,56 @@
-.parts{
-    overflow: auto;
+.parts {
+    display: grid;
+    gap: 15px;
     height: 100%;
-    margin:0 1em;
+    padding: 0 1em;
+    scroll-behavior: smooth;
     
+    // Мобильная версия (по умолчанию)
+    grid-template-columns: 1fr;
+    .part{
+        width: 40%;
+        grid-template-columns: 10% 1fr 20%;
+    }
+    
+    // Десктопная версия
+    @media (min-width: 768px) {
+        grid-template-columns: repeat(2, 1fr); // 2 колонки
+        
+        gap: 10px;
+        padding: 0;
+        .part{
+            width: 100%;
+
+            grid-template-columns: 8% 1fr 20%;
+        }
+        
+        
+        // Если контейнер достаточно широкий, можно добавить 3 колонки
+        @media (min-width: 1200px) {
+            // grid-template-columns: repeat(3, 1fr);
+            // .part{
+            //     width: 100%;
+            //     grid-template-columns: 12% 1fr 30%;
+            // }
+        }
+    }
+
+    // Дополнительные стили для плавного скролла
+    &::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    &::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 3px;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 3px;
+        
+        &:hover {
+            background: #555;
+        }
+    }
 }

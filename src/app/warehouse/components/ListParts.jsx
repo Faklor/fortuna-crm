@@ -14,25 +14,35 @@ export default function WareHouse({parts, workers, objects}){
     const [visibleParts, setVisibleParts] = useState(JSON.parse(parts))
     const [visibleObjects, setVisibleObjects] = useState(JSON.parse(objects))
     const [visibleWorkers, setVisibleWorkers] = useState(JSON.parse(workers))
-
     const router = useRouter()
 
     // Сортировка массива при инициализации и при обновлении parts
     useEffect(() => {
         const sortedParts = JSON.parse(parts).sort((a, b) => {
-            // Игнорируем регистр при сортировке
             return a.name.localeCompare(b.name, 'ru', { sensitivity: 'base' });
         });
         setVisibleParts(sortedParts);
     }, [parts]);
 
     return <>
-        <SlyderCategory parts={JSON.parse(parts)} setVisibleParts={setVisibleParts}/>
-        <div className='controlls'>
-            <Search parts={JSON.parse(parts)} setVisibleParts={setVisibleParts}/>
-            <button className="addPartBt">
-                <Image src={'/components/add.svg'} width={40} height={40} alt='addPartButton' onClick={()=>router.push('/warehouse/addPart')} priority/>
-            </button>
+        <div className='sidebar'>
+
+            <div className='controlls'>
+                <Search parts={JSON.parse(parts)} setVisibleParts={setVisibleParts}/>
+                <button className="addPartBt">
+                    <Image 
+                        src={'/components/add.svg'} 
+                        width={40} 
+                        height={40} 
+                        alt='addPartButton' 
+                        onClick={()=>router.push('/warehouse/addPart')} 
+                        priority
+                    />
+                </button>
+            </div>
+            <h2>Категории</h2>
+            <SlyderCategory parts={JSON.parse(parts)} setVisibleParts={setVisibleParts}/>
+            
         </div>
         <div className='content'>
             <Parts 

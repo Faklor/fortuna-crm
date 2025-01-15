@@ -87,7 +87,7 @@ export default function UpdatePart({
                 // dispatch(updateCountPartAllClient(JSON.parse(res.data).data))
                 // socket.send(res.data)
 
-                // setVisibleEditPanel(false)
+                 setVisibleEditPanel(false)
             })
             .catch(e=>{
                 console.log(e)

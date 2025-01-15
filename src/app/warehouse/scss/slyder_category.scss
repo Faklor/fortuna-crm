@@ -50,4 +50,58 @@
         background-color: #fff;
         
     }
+
+    // Десктопная версия
+    @media (min-width: 768px) {
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+        overflow-x: hidden;
+        gap: 1em;
+        max-height: 80vh; // Ограничиваем высоту для прокрутки
+        padding: 0.5em;
+
+        .category {
+            width: 100%;
+            margin: 0;
+            padding: 1em;
+            display: flex;
+            align-items: center;
+            gap: 1em;
+            
+            &:nth-child(1) {
+                margin-left: 0;
+            }
+
+            img {
+                width: 35px;
+                height: 35px;
+            }
+
+            p {
+                margin: 0;
+                text-align: left;
+            }
+        }
+    }
+
+    // Стилизация скроллбара
+    &::-webkit-scrollbar {
+        width: 6px;
+        height: 6px; // Для горизонтального скроллбара на мобильных
+    }
+    
+    &::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 3px;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 3px;
+        
+        &:hover {
+            background: #555;
+        }
+    }
 }
