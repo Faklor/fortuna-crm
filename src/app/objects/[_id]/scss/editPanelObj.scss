@@ -4,6 +4,7 @@
     margin: 0 auto;
     background: white;
     animation: fadeIn 0.3s ease-out;
+    overflow-y: auto;
     
     // Кнопка "Назад"
     button:first-child {

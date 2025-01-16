@@ -15,24 +15,35 @@ export default function ListObjs({objects}){
     const [visibleArr, setVisibleArr] = useState([])
 
     useEffect(() => {
-        // Парсим и сортируем объекты при первой загрузке
         const parsedObjects = JSON.parse(objects)
         const sortedObjects = parsedObjects.sort((a, b) => {
-            // Сортировка по названию (по алфавиту)
             return a.name.localeCompare(b.name, 'ru', { sensitivity: 'base' })
         })
         setVisibleArr(sortedObjects)
     }, [objects])
 
-    return <>
-        <FilterCategory objects={JSON.parse(objects)} setVisibleArr={setVisibleArr}/>
-        <SearchObj objects={JSON.parse(objects)} setVisibleArr={setVisibleArr}/>
-        <button className="btnAddObj" onClick={()=>router.push('/objects/addObject')}>
-            <Image src={'/components/add.svg'} width={30} height={30} alt="btnAddObj"/>
-            <p>Добавить объект</p>
-        </button>
-        {visibleArr.map((obj,index)=>{
-            return <ObjectTitle key={index} obj={obj}/>
-        })}
-    </>
+    return (
+        <>
+            {/* Основной контент (левая часть) */}
+            <div className="content">
+                <div className="objects-grid">
+                    {visibleArr.map((obj,index)=>{
+                        return <ObjectTitle key={index} obj={obj}/>
+                    })}
+                </div>
+            </div>
+
+            {/* Сайдбар (правая часть) */}
+            <div className="sidebar">
+                <div className="objects-content">
+                    <SearchObj objects={JSON.parse(objects)} setVisibleArr={setVisibleArr}/>
+                    <button className="btnAddObj" onClick={()=>router.push('/objects/addObject')}>
+                        <Image src={'/components/add.svg'} width={30} height={30} alt="btnAddObj"/>
+                        <p>Добавить объект</p>
+                    </button>
+                    <FilterCategory objects={JSON.parse(objects)} setVisibleArr={setVisibleArr}/>
+                </div>
+            </div>
+        </>
+    )
 }

@@ -1,115 +1,92 @@
 .objects {
   margin-top: 4em;
-
-  min-height: 100vh;
-  //background: #f5f7fa;
-  padding: 20px;
-
-  // Контейнер для содержимого
-  .objects-content {
-    max-width: 1200px;
-    margin: 0 auto;
+  display: grid;
+  gap: 20px;
+  height: calc(100vh - 4em);
+  
+  // Мобильная версия (по умолчанию)
+  grid-template-areas:
+      "sidebar"
+      "content";
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0 1em;
+  
+  .sidebar {
+    grid-area: sidebar;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-
-    // Заголовок страницы
-    .page-header {
+    gap: 20px;
+    
+    .objects-content {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-
-      h1 {
-        font-size: 24px;
-        color: #333;
-        margin: 0;
-      }
+      flex-direction: column;
+      gap: 10px;
     }
-
-    // Сетка объектов
+  }
+  
+  .content {
+    grid-area: content;
+    overflow-y: auto;
+    padding-right: 10px;
+    
     .objects-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
       gap: 20px;
-      padding: 20px 0;
-
-      .object_title {
-        background: white;
-        border-radius: 12px;
-        overflow: hidden;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-
-        &:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-
-        // Контейнер для изображения
-        .image-container {
-          position: relative;
-          width: 100%;
-          padding-top: 75%; // Соотношение сторон 4:3
-
-          img {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-
-            &.png {
-              object-fit: contain;
-              padding: 10px;
-            }
-          }
-        }
-
-        // Название объекта
-        p {
-          padding: 15px;
-          margin: 0;
-          font-size: 16px;
-          color: #333;
-          text-align: center;
-          font-weight: 500;
-        }
+    }
+  }
+  
+  // Десктопная версия
+  @media (min-width: 768px) {
+    grid-template-columns: 1fr 300px;
+    grid-template-areas: "content sidebar";
+    max-width: 1200px;
+    width: 95%;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0;
+    
+    .sidebar {
+      position: sticky;
+      top: 20px;
+      height: calc(100vh - 4em - 20px);
+      overflow-y: auto;
+      
+      .objects-content {
+        gap: 15px;
       }
     }
-
-    // Панель управления
-    .controls-panel {
-      display: flex;
-      gap: 15px;
-      flex-wrap: wrap;
-      padding: 20px;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-
-      .btnAddObj {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 10px 20px;
-        background: #4F8DE3;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: background 0.2s ease;
-
-        &:hover {
-          background: #43A047;
-        }
-
-        p {
-          margin: 0;
-          font-weight: 500;
-        }
+    
+    .content {
+      max-height: calc(100vh - 4em);
+      overflow-y: auto;
+      margin: 1em 0;
+      
+      .objects-grid {
+        gap: 15px;
+      }
+    }
+  }
+  
+  // Стилизация скроллбара
+  .content, .sidebar {
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 3px;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: #888;
+      border-radius: 3px;
+      
+      &:hover {
+        background: #555;
       }
     }
   }

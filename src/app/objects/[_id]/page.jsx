@@ -51,73 +51,73 @@ export default async function Page({params, searchParams}){
     const iconData = object.icon?.data ? Array.from(object.icon.data) : null
     const iconContentType = object.icon?.contentType || null
 
-    return (await searchParams).name !== 'editObj'?<div className="objInfo">
-        <Link href="/objects" className="back-button">
-            <Image 
-                src="/components/back.svg" 
-                width={24} 
-                height={24} 
-                alt="Назад"
-            />
-            <span>Назад</span>
-        </Link>
-        
-        <ImageWithFallback 
-            iconData={iconData}
-            iconContentType={iconContentType}
-            width={400} 
-            height={360} 
-            alt={object.name}
-        />
-        
-        <h2>{object.catagory.split(' ')[0] +' '+ object.name}</h2>
-        <h3>{object.organization}</h3>
-        <h4>{object.description}</h4>
+    return (await searchParams).name !== 'editObj' ? (
+        <div className="objInfo">
+            <div className="objInfo-container">
+                {/* Левая часть (основная информация) */}
+                <div className="column main-info">
+                    <Link href="/objects" className="back-button">
+                        <Image src="/components/back.svg" width={24} height={24} alt="Назад"/>
+                        <span>Назад</span>
+                    </Link>
+                    
+                    <ImageWithFallback 
+                        iconData={iconData}
+                        iconContentType={iconContentType}
+                        width={400} 
+                        height={360} 
+                        alt={object.name}
+                    />
+                    
+                    <h2>{object.catagory.split(' ')[0] +' '+ object.name}</h2>
+                    <h3>{object.organization}</h3>
+                    <h4>{object.description}</h4>
 
-        {object.catagory === '🚃 Прицепы' && 
-         object.captureWidth !== null && 
-         object.captureWidth !== undefined && 
-         object.captureWidth !== 0 && (
-            <div className="capture-width-info">
-                <span className="capture-width-label">
-                    <i className="fas fa-arrows-alt-h"></i>
-                    Ширина захвата:
-                </span>
-                <span className="capture-width-value">
-                    {object.captureWidth.toFixed(1)} м
-                </span>
+                    {object.catagory === '🚃 Прицепы' && 
+                     object.captureWidth !== null && 
+                     object.captureWidth !== undefined && 
+                     object.captureWidth !== 0 && (
+                        <div className="capture-width-info">
+                            <span className="capture-width-label">Ширина захвата:</span>
+                            <span className="capture-width-value">{object.captureWidth.toFixed(1)} м</span>
+                        </div>
+                    )}
+
+                    <ControllersObj _id={_id}/>
+
+                    {/* Инспекции и привязанные запчасти */}
+                    {object.catagory !== '🏢 Подразделения' && object.inspection && (
+                        <Inspection date={object.inspection.dateBegin} period={object.inspection.period}/>
+                    )}
+                    
+                    {object.bindingParts.length !== 0 && (
+                        <>
+                            <div className='title orderTtile'>
+                                <h2>Список привязанных запчастей</h2>
+                            </div>
+                            <BindingParts bindingParts={object.bindingParts}/>
+                        </>
+                    )}
+                </div>
+
+                {/* Правая часть (история) */}
+                <div className="column history">
+                    <div className='title'>    
+                        <h2>История операций</h2>
+                        <Link className="addOperation" href={{pathname:`/objects/${_id}`,query: { name: 'addOperation' }}}>
+                            <Image src={'/components/add.svg'} width={5} height={5} alt='add_Operation'/>
+                        </Link>
+                    </div>
+                    <HistoryOperation visibleOperation={visibleOperation} category={object.catagory} objectID={_id}/>
+                    
+                    <div className='title orderTtile'>
+                        <h2>История выданных запчастей</h2>
+                    </div>
+                    <HistoryParts visibleOrders={visibleOrders}/>    
+                </div>
             </div>
-        )}
-
-        <ControllersObj _id={_id}/>
-
-        {object.catagory !== '🏢 Подразделения' && object.inspection?
-            <Inspection date={object.inspection.dateBegin} period={object.inspection.period}/>
-            :
-            '' 
-        }
-        {object.bindingParts.length !== 0?<div className='title orderTtile'>
-                <h2>Список привязанных запчастей</h2>
-                {/* <AddPartInObject/> */}
-        </div>:''}
-        <BindingParts bindingParts={object.bindingParts}/>
- 
-        <div className='title'>    
-            <h2>История операций</h2>
-            
-            <Link className="addOperation" href={{pathname:`/objects/${_id}`,query: { name: 'addOperation' }}}>
-                <Image src={'/components/add.svg'} width={5} height={5} alt='add_Operation'/>
-            </Link>
-           
         </div>
-        <HistoryOperation visibleOperation={visibleOperation} category={object.catagory} objectID={_id}/>
-        
-        <div className='title orderTtile'>
-            <h2>История выданных запчастей</h2>
-            {/* <AddPartInObject/> */}
-        </div>
-        <HistoryParts visibleOrders={visibleOrders}/>    
-    </div>
-    :
-    <EditObject visibleObject={visibleObject}/>
+    ) : (
+        <EditObject visibleObject={visibleObject}/>
+    )
 }

@@ -15,8 +15,6 @@ export default function ListTasks({
     visibleHistoryReq,
     visibleOrders
 }){
-
-    //react
     const [parts, setParts] = useState(JSON.parse(visibleParts))
     const [workers, setWorkers] = useState(JSON.parse(visibleWorkers))
     const [objects, setObjects] = useState(JSON.parse(visibleObjects))
@@ -24,20 +22,30 @@ export default function ListTasks({
     const [historyReq, setHistoryReq] = useState(JSON.parse(visibleHistoryReq))
     const [orders, setOrders] = useState(JSON.parse(visibleOrders)) 
 
-    //react-visible
-    
+    return (
+        <div className="tasks">
+            <div className="tasks-container">
+                {/* Левая часть */}
+                <div className="content">
+                    
+                    <NoticesInspection className="section notices-section" objects={objects}/>
+                    <SeasonalWorks className="section seasonal-section"/>
+                    
+                </div>
 
-    return <>
-       
-        <SeasonalWorks />
-        <NoticesInspection objects={objects}/>
-        <Requisition 
-            requisition={requisition}
-            setRequisition={setRequisition} 
-            workers={workers} 
-            objects={objects}
-            parts={parts}
-        />
-        <HistoryReqs />
-    </>
+                {/* Правая часть */}
+                <div className="sidebar">
+                    <Requisition 
+                        className="section requisition-section"
+                        requisition={requisition}
+                        setRequisition={setRequisition} 
+                        workers={workers} 
+                        objects={objects}
+                        parts={parts}
+                    />
+                    <HistoryReqs className="section history-section"/>
+                </div>
+            </div>
+        </div>
+    )
 }

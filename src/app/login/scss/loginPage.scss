@@ -2,6 +2,7 @@
 
 
 .login-page{
+    
     position: fixed;
     z-index: 110;
     background-color: #fff;
@@ -10,7 +11,7 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    margin-top: 1em;
+    margin-top: 5em;
     img{
         width: 100%;
         height: auto;

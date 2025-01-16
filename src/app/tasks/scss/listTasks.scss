@@ -1,118 +1,110 @@
-body {
-  .container {
-      width: 460px;
-  }
-}
+// body {
+//   .container {
+//       width: 460px;
+//   }
+// }
 .tasks{
-  margin-top: 4em;
+  margin-top: 2em;
+  width: 100%;
+  height: calc(100vh - 4em);
 }
 
 .tasks-container {
- 
-  
   display: grid;
   gap: 20px;
-  padding: 20px 0;
-  grid-template-columns: repeat(12, 1fr);
-  grid-template-areas: 
-    ". . seasonal seasonal seasonal seasonal seasonal seasonal seasonal seasonal . ."
-    "notices notices notices notices notices notices notices notices notices notices notices notices"
-    "reqs reqs reqs reqs reqs reqs reqs reqs reqs reqs reqs reqs"
-    "history history history history history history history history history history history history";
-
+  height: 100%;
+  padding: 1em;
+  
+  // Мобильная версия (по умолчанию)
+  grid-template-areas:
+    "content"
+    "sidebar";
+  
   // Общие стили для секций
   .section {
     background: white;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     overflow: hidden;
+    height: calc(50% - 10px);
+    min-height: 300px;
+  }
+
+  .content, .sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow-y: auto;
     height: 100%;
-  }
-
-  // Сезонные работы (по центру)
-  .seasonal-section {
-    grid-area: seasonal;
-    margin: 0;
-  }
-
-  // Заявки
-  .requisition-section {
-    grid-area: reqs;
-    margin: 0;
-  }
-
-  // Технический осмотр
-  .notices-section {
-    grid-area: notices;
     
+    // Стилизация скроллбара
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
     
-    .title {
-      padding: 20px;
-      border-bottom: 1px solid #eee;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-
-      h2 {
-        margin: 0;
-        font-size: 20px;
-        color: #333;
-      }
-
-      .count {
-        background: #f1f3f5;
-        padding: 4px 8px;
-        border-radius: 6px;
-        font-size: 14px;
-        color: #666;
+    &::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 3px;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: #888;
+      border-radius: 3px;
+      
+      &:hover {
+        background: #555;
       }
     }
   }
 
-  // История заявок
-  .history-section {
-    grid-area: history;
+  .content {
+    grid-area: content;
+  }
+
+  .sidebar {
+    grid-area: sidebar;
+  }
+
+  // Десктопная версия
+  @media (min-width: 768px) {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas: "content sidebar";
+    max-width: 1200px;
+    margin: 0 auto;
+    
+    .sidebar, .content {
+      position: sticky;
+      top: 20px;
+      height: calc(100vh - 4em - 40px);
+      
+      .section {
+        flex: 1;
+        height: calc(50% - 10px);
+      }
+    }
   }
 }
 
-// Адаптивная сетка
-@media (max-width: 1200px) {
-  .tasks-container {
-    grid-template-areas: 
-      ". seasonal seasonal seasonal seasonal seasonal seasonal seasonal seasonal seasonal seasonal ."
-      "reqs reqs reqs reqs reqs reqs reqs reqs reqs reqs reqs reqs"
-      "notices notices notices notices notices notices notices notices notices notices notices notices"
-      "history history history history history history history history history history history history";
-  }
-}
-
-@media (max-width: 992px) {
-  .tasks-container {
-    grid-template-areas: 
-      "seasonal seasonal seasonal seasonal seasonal seasonal seasonal seasonal seasonal seasonal seasonal seasonal"
-      "reqs reqs reqs reqs reqs reqs reqs reqs reqs reqs reqs reqs"
-      "notices notices notices notices notices notices notices notices notices notices notices notices"
-      "history history history history history history history history history history history history";
-  }
-}
-
+// Адаптивность
 @media (max-width: 768px) {
   .tasks-container {
     gap: 10px;
-    padding: 10px 0;
+    padding: 10px;
 
     .section {
-      border-radius: 8px;
+      height: auto;
+      min-height: 250px;
     }
   }
 }
 
 @media (max-width: 576px) {
   .tasks-container {
-    gap: 10px;
+    padding: 5px;
     
     .section {
-      border-radius: 6px;
+      border-radius: 8px;
+      min-height: 200px;
     }
   }
 } 
