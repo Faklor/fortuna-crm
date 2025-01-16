@@ -1,6 +1,6 @@
 .part {
     display: grid;
-    grid-template-columns: 10% 1fr 25%;
+    grid-template-columns: 15% 1fr 35%;
     background-color: #4F8DE3;
     border-radius: 10px;
     box-shadow: 1px 1px 4px 0px rgba(0, 0, 0, 0.25);
@@ -10,6 +10,7 @@
     // Мобильная версия (по умолчанию)
     width: 100%;
     margin: 0.5em 0;
+    max-width: 380px;
 
 
     
@@ -34,7 +35,7 @@
         font-weight: bold;
         word-wrap: break-word;
         overflow-wrap: break-word;
-        max-width: 200px;
+        max-width: 150px;
         padding: 0.5em;
         margin: 0;
     }
@@ -48,7 +49,7 @@
     
     .count{
         input{
-            width: 100px;
+            width: 60px;
         }
     }
     
@@ -56,6 +57,7 @@
     @media (min-width: 768px) {
         width: 100%;
         margin: 0.5em 0;
+        max-width: 1400px;
         grid-template-columns: 7% 1fr 20%;
         
         &:hover {
@@ -67,6 +69,11 @@
             font-size: 14px;
             max-width: 600px;
 
+        }
+        .count{
+            input{
+                width: 100px;
+            }
         }
     }
 }

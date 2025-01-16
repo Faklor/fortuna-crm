@@ -6,7 +6,7 @@
     
     // Контейнер для десктопной сетки
     .objInfo-container {
-        max-width: 1400px;
+       
         margin: 0 auto;
         
         // Мобильная версия (по умолчанию)
@@ -45,6 +45,7 @@
         
         // Десктопная версия
         @media (min-width: 1024px) {
+            max-width: 1400px;
             display: grid;
             grid-template-columns: 2fr 1fr; // Левая колонка в 2 раза шире
             gap: 30px;
@@ -65,6 +66,13 @@
                 grid-column: 2; // Размещаем во второй колонке
                 grid-row: 1 / span 2; // Растягиваем на всю высоту
             }
+        }
+
+        @media (max-width: 768px) {
+            //padding: 0.5em;
+            grid-template-columns: 1fr;
+            max-width: 400px;
+
         }
     }
 
@@ -209,6 +217,22 @@
                 height: 24px;
                 margin: 0;
                 padding: 0;
+            }
+        }
+    }
+}
+
+
+@media (max-width: 768px){
+    .objInfo{
+        max-width: 400px;
+        padding: 0em;
+        //width: 400px;
+        .objInfo-container{
+            padding: 0em;
+
+            .column{
+                padding: 0em;
             }
         }
     }
