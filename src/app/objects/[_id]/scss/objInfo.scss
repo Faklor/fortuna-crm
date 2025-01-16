@@ -225,8 +225,10 @@
 
 @media (max-width: 768px){
     .objInfo{
+        overflow-y: auto;
         max-width: 400px;
         padding: 0em;
+        margin: 0 auto;
         //width: 400px;
         .objInfo-container{
             padding: 0em;
