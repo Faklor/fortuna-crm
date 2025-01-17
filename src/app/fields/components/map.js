@@ -623,25 +623,27 @@ function Map({ fields, currentSeason }) {
   };
 
   // Обновляем функцию загрузки заметок
-  const loadNotes = useCallback(async () => {
+  const fetchNotes = useCallback(async () => {
     try {
-        // Добавляем сезон в URL запроса
-        const response = await fetch(`/api/notes?season=${currentSeason}`);
+        const response = await fetch(`/api/notes?season=${season}`);
         const data = await response.json();
         
-        if (data.success) {
-            // Устанавливаем только заметки для текущего сезона
+        if (data.success && Array.isArray(data.notes)) {
             setNotes(data.notes);
+        } else {
+            console.error('Unexpected response format:', data);
+            setNotes([]);
         }
     } catch (error) {
-        console.error('Error loading notes:', error);
+        console.error('Error fetching notes:', error);
+        setNotes([]);
     }
-  }, [currentSeason]); // Добавляем currentSeason в зависимости
+  }, [season]);
 
-  // Вызываем загрузку заметок при изменении сезона
+  // Используем useEffect с fetchNotes
   useEffect(() => {
-    loadNotes();
-  }, [currentSeason, loadNotes]);
+    fetchNotes();
+  }, [fetchNotes]);
 
   // Создаем кастомную иконку для заметок
   const noteIcon = L.divIcon({
@@ -797,31 +799,14 @@ function Map({ fields, currentSeason }) {
     }
   };
 
-  const getImageSource = (image) => {
-    if (!image?.data) return null;
-    
-    try {
-        // Данные уже в формате base64 из API
-        return `data:${image.contentType};base64,${image.data}`;
-    } catch (e) {
-        console.error('Error processing image:', e);
-        return null;
+  const getImageSource = (icon) => {
+    if (!icon?.fileName) {
+        return '/imgsNotes/Default.png';
     }
+    
+    // Используем новый путь для получения изображений через API роут
+    return `/api/uploads/notes/${icon.fileName}`;
   };
-
-  useEffect(() => {
-    const fetchNotes = async () => {
-        try {
-            const response = await fetch('/api/notes');
-            const data = await response.json();
-            setNotes(data);
-        } catch (error) {
-            console.error('Error fetching notes:', error);
-        }
-    };
-
-    fetchNotes();
-  }, []); 
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
@@ -938,7 +923,7 @@ function Map({ fields, currentSeason }) {
         )}
 
         {/* Отображаем заметки на карте */}
-        {notes.map(note => (
+        {Array.isArray(notes) && notes.map(note => (
           <Marker
             key={note._id}
             position={[note.coordinates.lat, note.coordinates.lng]}
@@ -948,21 +933,21 @@ function Map({ fields, currentSeason }) {
               <div className="note-popup">
                 <h3>{note.title}</h3>
                 <p>{note.description}</p>
-                {note.image?.data && (
+                {note.icon?.fileName && (
                     <div 
                         className="note-image-container"
                         style={{
                             width: '200px',
                             height: '150px',
                             position: 'relative',
-                            backgroundImage: `url(${getImageSource(note.image)})`,
+                            backgroundImage: `url(${getImageSource(note.icon)})`,
                             backgroundSize: 'cover',
                             backgroundPosition: 'center',
                             cursor: 'pointer',
                             borderRadius: '4px',
                             marginBottom: '10px'
                         }}
-                        onClick={() => setSelectedImage(getImageSource(note.image))}
+                        onClick={() => setSelectedImage(getImageSource(note.icon))}
                     />
                 )}
                 <button 

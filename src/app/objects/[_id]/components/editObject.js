@@ -144,26 +144,19 @@ export default function EditPanelObj({visibleObject}){
         .catch(e=>console.log(e))
     }
 
-    const getImageSource = (icon) => {
-        if (!icon?.data?.data) return '/imgsObj/Default.png'
-        
-        try {
-            const buffer = Buffer.from(icon.data.data)
-            const base64 = buffer.toString('base64')
-            return `data:${icon.contentType};base64,${base64}`
-        } catch (e) {
-            console.error('Error converting image:', e)
-            return '/imgsObj/Default.png'
-        }
+    const getImageSource = () => {
+        if (imgUrlCreare) return imgUrlCreare
+        if (!obj.icon?.fileName) return null
+        return `/api/uploads/${obj.icon.fileName}`
     }
 
     return <div className="editPanelObj">
         
         <button onClick={()=>router.push(`/objects/${obj._id}`)}>Назад</button>
         <div className='editImg'>
-            {imgUrlCreare === null ? 
+            {(imgUrlCreare || obj.icon?.fileName) && (
                 <Image 
-                    src={getImageSource(obj.icon)}
+                    src={getImageSource()}
                     width={500} 
                     height={500} 
                     alt='editImg' 
@@ -174,16 +167,7 @@ export default function EditPanelObj({visibleObject}){
                         console.error('Image load error')
                     }}
                 />
-                :
-                <Image 
-                    src={imgUrlCreare} 
-                    width={500} 
-                    height={500} 
-                    alt='editImg' 
-                    priority
-                    unoptimized
-                />
-            }
+            )}
             <input 
                 type="file" 
                 onChange={onTitleImageChange} 

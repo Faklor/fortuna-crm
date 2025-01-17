@@ -1,242 +1,219 @@
 .objInfo {
     width: 100%;
-    width: 1400px;
+    padding: 2rem;
     color: #354759;
-    padding: 1em;
-    
-    // Контейнер для десктопной сетки
+    overflow-y: auto;
+    grid-column: 1/3;
+
     .objInfo-container {
-       
+        display: grid;
+        width: 1000px;
         margin: 0 auto;
-        
-        // Мобильная версия (по умолчанию)
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-        
-        // Общие стили для колонок
+        grid-template-columns: 1fr 1fr ;
+        gap: 2rem;
+
+        @media (max-width: 1324px) {
+            grid-template-columns: 1fr;
+            
+            width: 600px;
+
+        }
+
         .column {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
             background: white;
-            border-radius: 12px;
-            padding: 20px;
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+            &.main-info {
+                    
+                .back-button {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    padding: 0.75rem 1rem;
+                    margin-bottom: 1rem;
+                    background: #f1f3f5;
+                    border-radius: 0.5rem;
+                    text-decoration: none;
+                    color: #495057;
+                    transition: all 0.3s ease;
             
-            // Стилизация скроллбара
-            &::-webkit-scrollbar {
-                width: 6px;
-            }
-            
-            &::-webkit-scrollbar-track {
-                background: #f1f1f1;
-                border-radius: 3px;
-            }
-            
-            &::-webkit-scrollbar-thumb {
-                background: #888;
-                border-radius: 3px;
+                    &:hover {
+                        background: #e9ecef;
+                        transform: translateX(-2px);
+                    }
+                }
+
+               
+                .object-image-wrapper {
+                    display: flex;
+                    justify-content: center;
+                    //background: #f8f9fa;
+                    border-radius: 0.5rem;
+                    padding: 1rem;
+
+                        
+                    img {
+                        height: auto;
+                            //object-fit: contain;
+                        width: 80%;
+                        //box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                        margin: 0 auto;
+                            
+                    }
+                        
+                       
+                }
+
                 
-                &:hover {
-                    background: #555;
+                text-align: center;
+
+                h2 {
+                    font-size: 1.75rem;
+                    margin-bottom: 0.5rem;
+                    color: #2c3e50;
+                }
+
+                h3 {
+                    font-size: 1.25rem;
+                    color: #FA5C62;
+                    margin-bottom: 1rem;
+                }
+
+                h4 {
+                    color: #6c757d;
+                    line-height: 1.6;
+                }
+                    
+                
+            }
+
+            &.history {
+                background: #f8f9fa;
+                width: 100%;
+
+                .title{
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    .addOperation{
+                        background: #2c3e50;
+                        border-radius: 5px;
+                        padding: 0.5rem 1rem;
+                        cursor: pointer;
+                        transition: all 0.3s ease; 
+                        border: none;
+
+                        &:hover{
+                            transform: scale(1.05);
+                        }
+
+                        img{
+                            margin: 0.5em 0 0 0;
+                            width: 30px;
+                            height: 30px;
+                        }
+                    }
+                }
+                .historyOperations{
+                    .operations-accordion{
+                        margin: 1em 0 1em 0;
+                    }
+                }
+
+                .historyParts{
+                    .no-parts{
+                        text-align: center;
+                        margin: 2em 0 0 0;
+                    }
                 }
             }
         }
-        
-        // Десктопная версия
-        @media (min-width: 1024px) {
-            max-width: 1400px;
-            display: grid;
-            grid-template-columns: 2fr 1fr; // Левая колонка в 2 раза шире
-            gap: 30px;
-            
-            .column {
-                height: calc(100vh - 6em);
-                overflow-y: auto;
-                padding-right: 10px;
-            }
-
-            // Основная информация (левая колонка)
-            .main-info, .inspections-parts {
-                grid-column: 1; // Размещаем в первой колонке
-            }
-
-            // История (правая колонка)
-            .history {
-                grid-column: 2; // Размещаем во второй колонке
-                grid-row: 1 / span 2; // Растягиваем на всю высоту
-            }
-        }
-
-        @media (max-width: 768px) {
-            //padding: 0.5em;
-            grid-template-columns: 1fr;
-            max-width: 400px;
-
-        }
     }
 
-    // Стили компонентов
-    img {
-        object-fit: cover;
-        margin: 1em auto;
-        padding: 0.3em;
-        max-width: 100%;
-        height: auto;
-    }
-
-    h2 {
-        margin: 0.5em 0;
-        font-size: 1.5em;
-        color: #354759;
-        text-align: center;
-    }
-
-    h3 {
-        color: #FA5C62;
-        margin: 0.3em 0;
-        text-align: center;
-    }
-
-    h4 {
-        margin: 0.3em 0;
-        color: #666;
-        text-align: center;
-    }
-
-    .back-button {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 16px;
-        background: #f5f5f5;
-        border-radius: 4px;
-        text-decoration: none;
-        color: #333;
-        width: fit-content;
-        transition: background-color 0.2s;
-        
-        img {
-            width: 24px;
-            height: 24px;
-            margin: 0;
-            padding: 0;
-        }
-        
-        &:hover {
-            background: #e5e5e5;
-        }
-    }
-
-    .title {
+    .section-title {
+        background: #354759;
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1.5rem;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        background: #354759;
-        padding: 1em;
-        border-radius: 8px;
-        margin: 1em 0;
-        
+
         h2 {
-            color: white;
             margin: 0;
-            font-size: 1.2em;
+            font-size: 1.25rem;
+            color: white;
         }
-        
-        a, div {
-            display: flex;
-            align-items: center;
-            justify-content: center;
+
+        .add-button {
             background: rgba(255, 255, 255, 0.1);
-            padding: 0.5em;
-            border-radius: 4px;
-            transition: 0.3s;
-            
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            transition: all 0.3s ease;
+
             &:hover {
-                transform: scale(0.95);
                 background: rgba(255, 255, 255, 0.2);
-            }
-            
-            img {
-                width: 24px;
-                height: 24px;
-                margin: 0;
-                padding: 0;
+                transform: scale(1.05);
             }
         }
     }
+
+  
 
     .capture-width-info {
+        background: #e9ecef;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin-top: 1rem;
         display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 1em;
-        background: #f5f5f5;
-        border-radius: 8px;
-        
-        .capture-width-label {
-            color: #666;
-        }
-        
-        .capture-width-value {
-            font-weight: bold;
-            color: #354759;
-        }
-    }
-
-    .controllersObj {
-        display: flex;
-        gap: 10px;
         justify-content: center;
-        margin: 1em 0;
-        
-        button {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0.8em;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: 0.3s;
-            
-            &:hover {
-                transform: scale(0.95);
-            }
-            
-            &:nth-child(1) {
-                background: #4F8DE3;
-            }
-            
-            &:nth-child(2) {
-                background: #FA5C62;
-            }
-            
-            img {
-                width: 24px;
-                height: 24px;
-                margin: 0;
-                padding: 0;
-            }
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+
+        .capture-width-label {
+            color: #6c757d;
+        }
+
+        .capture-width-value {
+            font-weight: 600;
+            color: #2c3e50;
         }
     }
-}
+
+    @media (max-width: 768px) {
+        //padding: 1rem;
+        padding: 0;
 
 
-@media (max-width: 768px){
-    .objInfo{
-        overflow-y: auto;
-        max-width: 400px;
-        padding: 0em;
-        margin: 0 auto;
-        //width: 400px;
-        .objInfo-container{
-            padding: 0em;
-
-            .column{
-                padding: 0em;
+        .objInfo-container {
+            //gap: 1rem;
+            width: 100%;
+            margin: 0 auto;
+            .column {
+                &.main-info{
+                    padding: 0;
+                    .object-image-wrapper {
+                        padding: 0;
+                        img{
+                            width: 50%;
+                        }
+                    }
+                }
+                
+                &.history{
+                    padding: 0;
+                    .title{
+                        .addOperation{
+                            //padding: 0.5rem 1rem;
+                        }
+                    }
+                }
             }
         }
+
     }
 }
 

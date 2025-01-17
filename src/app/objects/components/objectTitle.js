@@ -5,17 +5,13 @@ import '../scss/objectTitle.scss'
 
 export default function ObjectTitle({obj}){
     const router = useRouter()
-
-    // Преобразуем Buffer в base64 строку для отображения изображения
+    //console.log(obj)
+    // Получаем источник изображения
     const getImageSource = (icon) => {
-        if (!icon?.data) return '/imgsObj/Default.png'
-        
-        // Преобразуем массив байтов в base64
-        const buffer = Buffer.from(icon.data.data)
-        const base64 = buffer.toString('base64')
-        return `data:${icon.contentType};base64,${base64}`
+        if (!icon?.fileName) return '/imgsObj/Default.png'
+        return `/api/uploads/${icon.fileName}`
     }
-
+    //console.log(getImageSource(obj.icon))
     // Определяем класс для изображения
     const imageClass = obj.icon?.contentType?.includes('png') ? 'png' : 'jpg'
 
@@ -29,6 +25,7 @@ export default function ObjectTitle({obj}){
                     alt={`img-obj-title-${obj._id}`} 
                     className={imageClass}
                     priority
+                    unoptimized // Отключаем оптимизацию Next.js для динамических изображений
                 />
             </div>
             <div className="object-info">

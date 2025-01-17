@@ -4,9 +4,14 @@ const techSchema = new mongoose.Schema({
     id: { type: Number },
     name: { type: String },
     icon: {
-        data: Buffer,
-        contentType: String,
-        fileName: String
+        fileName: {
+            type: String,
+            default: 'Default.png'
+        },
+        contentType: {
+            type: String,
+            default: 'image/png'
+        }
     },
     catagory: { type: String },
     captureWidth: { 

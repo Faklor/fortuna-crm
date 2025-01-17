@@ -1,1 +1,26 @@
- 
+ .controllersObj{
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    button{
+
+        border-radius: 5px;
+        padding: 0.5rem 1rem;
+        border: none;
+        box-shadow: 0px 4px 4px 0px rgba(0,0,0,0.25);
+        cursor: pointer;
+        transition: all 0.3s ease;
+
+        &:hover{
+            transform: scale(1.05);
+        }
+
+        &:nth-child(1){
+            background-color: #4F8DE3;
+        }
+        &:nth-child(2){
+            background-color: #ff4f4f;
+        }
+    }
+    
+ }

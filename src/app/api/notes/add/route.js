@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Notes from '@/models/notes';
+import fs from 'fs/promises';
+import path from 'path';
 
 export async function POST(request) {
     await dbConnect();
@@ -27,51 +29,36 @@ export async function POST(request) {
             season
         };
 
+        const newNote = await Notes.create(noteData);
+
         if (image && image.size > 0) {
             const byteLength = await image.arrayBuffer();
             const buffer = Buffer.from(byteLength);
             
-            noteData.image = {
-                data: buffer,
-                contentType: image.type,
-                fileName: image.name
-            };
+            const uploadsDir = path.join(process.cwd(), 'uploads', 'imgsNotes');
+            await fs.mkdir(uploadsDir, { recursive: true });
+            
+            const fileExtension = image.name.split('.').pop().toLowerCase();
+            const fileName = `${newNote._id}.${fileExtension}`;
+            const filePath = path.join(uploadsDir, fileName);
+            
+            await fs.writeFile(filePath, buffer);
+            
+            await Notes.findByIdAndUpdate(newNote._id, {
+                icon: {
+                    fileName: fileName,
+                    contentType: image.type
+                }
+            });
         }
 
-        const newNote = await Notes.create(noteData);
-        
-        const savedNote = await Notes.findById(newNote._id);
-        const serializedNote = savedNote.toObject();
-
-        if (serializedNote.image?.data) {
-            const base64Data = Buffer.from(serializedNote.image.data).toString('base64');
-            serializedNote.image = {
-                ...serializedNote.image,
-                data: base64Data
-            };
-        }
-
-        const allNotes = await Notes.find({});
-        const serializedNotes = allNotes.map(note => {
-            const noteObj = note.toObject();
-            if (noteObj.image?.data?.$binary) {
-                return {
-                    ...noteObj,
-                    image: {
-                        ...noteObj.image,
-                        data: noteObj.image.data.$binary.base64,
-                        contentType: noteObj.image.contentType
-                    }
-                };
-            }
-            return noteObj;
-        });
+        const allNotes = await Notes.find({ season });
 
         return NextResponse.json({
             success: true,
             message: 'Note added successfully',
-            note: serializedNote,
-            allNotes: serializedNotes
+            note: newNote,
+            allNotes: allNotes
         });
     } catch (error) {
         console.error('Detailed error:', error);

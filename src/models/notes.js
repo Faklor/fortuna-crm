@@ -21,10 +21,13 @@ const notesSchema = new mongoose.Schema({
             required: true
         }
     },
-    image: {
-        data: Buffer,
-        contentType: String,
-        fileName: String
+    icon: {
+        fileName: {
+            type: String,
+        },
+        contentType: {
+            type: String,
+        }
     },
     season: {
         type: String,

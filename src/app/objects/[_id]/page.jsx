@@ -39,6 +39,20 @@ export default async function Page({params, searchParams}){
     const {_id} = await params
     //db
     const object = await Tech.findOne({_id})
+
+    // Если объект не найден, можно показать сообщение об ошибке
+    if (!object) {
+        return (
+            <div className="error-container">
+                <h1>Объект не найден</h1>
+                <Link href="/objects" className="back-button">
+                    <Image src="/components/back.svg" width={24} height={24} alt="Назад"/>
+                    <span>Вернуться к списку объектов</span>
+                </Link>
+            </div>
+        )
+    }
+
     const orders = await Orders.find({objectID:_id})
     const operations = await Operations.find({objectID:_id})
     //default
@@ -47,9 +61,11 @@ export default async function Page({params, searchParams}){
     const visibleOrders = JSON.stringify(orders)
     const visibleOperation = JSON.stringify(operations)
 
-    // Преобразуем Buffer в массив для передачи в клиентский компонент
-    const iconData = object.icon?.data ? Array.from(object.icon.data) : null
-    const iconContentType = object.icon?.contentType || null
+    // Преобразуем icon в простой объект, только если объект существует
+    const iconData = object?.icon ? {
+        fileName: object.icon.fileName,
+        contentType: object.icon.contentType
+    } : null
 
     return (await searchParams).name !== 'editObj' ? (
         <div className="objInfo">
@@ -61,13 +77,15 @@ export default async function Page({params, searchParams}){
                         <span>Назад</span>
                     </Link>
                     
-                    <ImageWithFallback 
-                        iconData={iconData}
-                        iconContentType={iconContentType}
-                        width={400} 
-                        height={360} 
-                        alt={object.name}
-                    />
+                    <div className="object-image-wrapper">
+                        <ImageWithFallback 
+                            icon={iconData}
+                            width={400} 
+                            height={360} 
+                            alt={object.name || 'Object image'}
+                            style={{ objectFit: 'contain' }}
+                        />
+                    </div>
                     
                     <h2>{object.catagory.split(' ')[0] +' '+ object.name}</h2>
                     <h3>{object.organization}</h3>

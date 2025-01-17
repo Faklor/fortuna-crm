@@ -5,6 +5,7 @@
     background: white;
     animation: fadeIn 0.3s ease-out;
     overflow-y: auto;
+    grid-column: 1/3;
     
     // Кнопка "Назад"
     button:first-child {

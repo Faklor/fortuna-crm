@@ -105,18 +105,17 @@ export default function Page(){
         formData.append('description', description)
         
         if (category === '🚃 Прицепы') {
-            console.log('Capture width value:', captureWidth);
+            
             if (captureWidth.trim() !== '') {
                 const numericCaptureWidth = parseFloat(captureWidth);
-                console.log('Numeric capture width:', numericCaptureWidth);
+                
                 if (!isNaN(numericCaptureWidth)) {
                     formData.append('captureWidth', numericCaptureWidth.toString());
                 }
             }
         }
         
-        console.log('Category:', category);
-        console.log('Is trailer:', category === '🚃 Прицепы');
+        
         for (let pair of formData.entries()) {
             console.log(pair[0], pair[1]);
         }
@@ -125,7 +124,7 @@ export default function Page(){
             const response = await postData(formData)
             router.push('/objects')
         } catch (error) {
-            console.error('Error sending data:', error)
+            
             if (error.response?.data?.error) {
                 alert(`Ошибка: ${error.response.data.error}`)
             } else {

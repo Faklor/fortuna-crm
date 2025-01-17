@@ -1,11 +1,8 @@
 import dbConnet from "@/lib/db"
 import Tech from '@/models/tech'
-import Order from '@/models/orders'
-import Operation from '@/models/operations'
-import { NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import fs from 'fs/promises'
 import path from "path"
-
 
 export async function POST(req, res) {
   await dbConnet()
@@ -18,9 +15,10 @@ export async function POST(req, res) {
     // Базовый объект для создания
     const techData = {
       name,
-      catagory: category, // Здесь мы сохраняем как catagory из-за модели
+      catagory: category,
       organization,
       description,
+      icon: 'Default.png'
     }
 
     // Добавляем захват если это прицеп
@@ -31,36 +29,51 @@ export async function POST(req, res) {
           techData.captureWidth = numericCaptureWidth;
         }
       } else {
-        // Если захват не указан, добавляем значение по умолчанию
         techData.captureWidth = 0;
       }
     }
 
-    // Добавляем иконку если она есть
+    // Создаем объект в базе данных
+    const newTech = await Tech.create(techData)
+
+    // Обработка загрузки иконки
     if (icon && icon !== 'null') {
       const byteLength = await icon.arrayBuffer()
       const bufferData = Buffer.from(byteLength)
       
-      techData.icon = {
-        data: bufferData,
-        contentType: icon.type,
-        fileName: icon.name
-      }
-    } else {
-      techData.icon = null
+      // Создаем папку uploads/imgsObjects если её нет
+      const uploadsDir = path.join(process.cwd(), 'uploads', 'imgsObjects')
+      await fs.mkdir(uploadsDir, { recursive: true })
+      
+      // Получаем расширение файла
+      const fileExtension = icon.name.split('.').pop()
+      
+      // Используем _id объекта как имя файла
+      const fileName = `${newTech._id}.${fileExtension}`
+      
+      // Сохраняем файл
+      await fs.writeFile(path.join(uploadsDir, fileName), bufferData)
+      
+      // Обновляем информацию о файле в БД
+      const updatedTech = await Tech.findByIdAndUpdate(
+        newTech._id,
+        {
+          icon: {
+            fileName: fileName,
+            contentType: icon.type
+          }
+        },
+        { new: true }
+      )
+
+      return NextResponse.json({ newTech: updatedTech })
     }
 
-
-    const newTech = await Tech.create(techData)
     return NextResponse.json({ newTech })
 
   } catch (e) {
     console.error('Error creating tech:', e)
-    console.error('Validation errors:', e.errors)
-    return NextResponse.json({ 
-      error: e.message,
-      details: e.errors 
-    }, { status: 500 })
+    return NextResponse.json({ error: e.message }, { status: 500 })
   }
 }
   
