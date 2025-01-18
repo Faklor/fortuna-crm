@@ -15,9 +15,11 @@ export default function Header(){
     const navMenu = [
         {en:'tasks',ru:'Задачи',img:'/nav/task.svg'},
         {en:'objects',ru:'Объекты',img:'/nav/object.svg'},
+        {en:'workers',ru:'Работники',img:'/nav/users.svg'},
         {en:'warehouse',ru:'Склад',img:'/nav/warehouse.svg'},
         {en:`fields`,ru:'Поля',img:'/nav/fields.svg'},
-        {en:`crop`,ru:'Севооборот',img:'/nav/crop.svg'}
+        {en:`crop`,ru:'Севооборот',img:'/nav/crop.svg'},
+        {en:`statistics`,ru:'Статистика',img:'/nav/statistics.svg'}
     ]
 
     // Устанавливаем активный пункт меню при загрузке и изменении pathname

@@ -1,0 +1,86 @@
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background-color: white;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    width: 24rem;
+
+    h2 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+}
+
+.form-group {
+    margin-bottom: 1rem;
+
+    label {
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+
+    input, select {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.375rem;
+
+        &:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+    }
+}
+
+.position-group {
+    display: flex;
+    gap: 0.5rem;
+
+    .toggle-btn {
+        padding: 0.25rem 0.75rem;
+        background-color: #f3f4f6;
+        border-radius: 0.375rem;
+
+        &:hover {
+            background-color: #e5e7eb;
+        }
+    }
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 1rem;
+
+    button {
+        padding: 0.5rem 1rem;
+        border-radius: 0.375rem;
+        font-size: 0.875rem;
+
+        &.cancel-btn {
+            background-color: #f3f4f6;
+            &:hover {
+                background-color: #e5e7eb;
+            }
+        }
+
+        &.submit-btn {
+            background-color: #3b82f6;
+            color: white;
+            &:hover {
+                background-color: #2563eb;
+            }
+        }
+    }
+}
