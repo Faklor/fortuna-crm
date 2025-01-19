@@ -12,6 +12,7 @@ const workersSchema = new mongoose.Schema({
     id: ObjectId,
     name: { type: String, required: true },
     position: { type: String, required: true },
+    organization: { type: String, required: true },
     phone: { type: String },
     email: { type: String },
     ratings: [ratingSchema], // массив оценок

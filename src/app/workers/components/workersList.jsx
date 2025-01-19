@@ -21,11 +21,13 @@ export default function WorkersList({visibleWorkers}) {
     const filteredWorkers = workers
         .filter(worker => 
             worker.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            worker.position.toLowerCase().includes(searchQuery.toLowerCase())
+            worker.position.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            worker.organization.toLowerCase().includes(searchQuery.toLowerCase())
         )
         .sort((a, b) => {
             if (sortBy === 'name') return a.name.localeCompare(b.name)
             if (sortBy === 'position') return a.position.localeCompare(b.position)
+            if (sortBy === 'organization') return a.organization.localeCompare(b.organization)
             if (sortBy === 'rating') return b.rating - a.rating
             return 0
         })
@@ -95,6 +97,7 @@ export default function WorkersList({visibleWorkers}) {
                 >
                     <option value="name">По имени</option>
                     <option value="position">По должности</option>
+                    <option value="organization">По организации</option>
                     <option value="rating">По рейтингу</option>
                 </select>
                 <select 

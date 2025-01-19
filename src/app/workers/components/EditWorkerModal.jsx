@@ -7,26 +7,29 @@ export default function EditWorkerModal({ isOpen, onClose, worker, onUpdate }) {
         name: worker?.name || '',
         position: worker?.position || '',
         phone: worker?.phone || '',
-        email: worker?.email || ''
+        email: worker?.email || '',
+        organization: worker?.organization || ''
     })
     const [existingPositions, setExistingPositions] = useState([])
+    const [existingOrganizations, setExistingOrganizations] = useState([])
     const [isCustomPosition, setIsCustomPosition] = useState(false)
+    const [isCustomOrganization, setIsCustomOrganization] = useState(false)
 
-    // Получаем список существующих должностей при открытии модального окна
     useEffect(() => {
         if (isOpen) {
             fetchPositions()
+            fetchOrganizations()
         }
     }, [isOpen])
 
-    // Обновляем formData при изменении worker
     useEffect(() => {
         if (worker) {
             setFormData({
                 name: worker.name,
                 position: worker.position,
                 phone: worker.phone || '',
-                email: worker.email || ''
+                email: worker.email || '',
+                organization: worker.organization || ''
             })
         }
     }, [worker])
@@ -37,9 +40,23 @@ export default function EditWorkerModal({ isOpen, onClose, worker, onUpdate }) {
             if (response.ok) {
                 const positions = await response.json()
                 setExistingPositions(positions)
+                setIsCustomPosition(!positions.includes(worker.position))
             }
         } catch (error) {
             console.error('Error fetching positions:', error)
+        }
+    }
+
+    const fetchOrganizations = async () => {
+        try {
+            const response = await fetch('/api/workers/organizations')
+            if (response.ok) {
+                const organizations = await response.json()
+                setExistingOrganizations(organizations)
+                setIsCustomOrganization(!organizations.includes(worker.organization))
+            }
+        } catch (error) {
+            console.error('Error fetching organizations:', error)
         }
     }
 
@@ -136,6 +153,49 @@ export default function EditWorkerModal({ isOpen, onClose, worker, onUpdate }) {
                             value={formData.email}
                             onChange={(e) => setFormData({...formData, email: e.target.value})}
                         />
+                    </div>
+                    <div className="edit-form-group">
+                        <label>Организация</label>
+                        {!isCustomOrganization ? (
+                            <div className="edit-organization-group">
+                                <select
+                                    value={formData.organization}
+                                    onChange={(e) => setFormData({...formData, organization: e.target.value})}
+                                    required
+                                >
+                                    <option value="">Выберите организацию</option>
+                                    {existingOrganizations.map(organization => (
+                                        <option key={organization} value={organization}>
+                                            {organization}
+                                        </option>
+                                    ))}
+                                </select>
+                                <button
+                                    type="button"
+                                    className="toggle-btn"
+                                    onClick={() => setIsCustomOrganization(true)}
+                                >
+                                    +
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="edit-organization-group">
+                                <input
+                                    type="text"
+                                    value={formData.organization}
+                                    onChange={(e) => setFormData({...formData, organization: e.target.value})}
+                                    placeholder="Введите новую организацию"
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    className="toggle-btn"
+                                    onClick={() => setIsCustomOrganization(false)}
+                                >
+                                    ←
+                                </button>
+                            </div>
+                        )}
                     </div>
                     <div className="edit-form-actions">
                         <button

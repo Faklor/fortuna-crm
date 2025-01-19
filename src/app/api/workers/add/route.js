@@ -11,15 +11,15 @@ export async function POST(request) {
         const worker = await Workers.create({
             name: data.name,
             position: data.position,
+            organization: data.organization,
             phone: data.phone || '',
             email: data.email || '',
-            ratings: [], // Пустой массив для будущих оценок
+            ratings: [],
             totalLikes: 0,
             totalDislikes: 0,
             rating: 0
         })
 
-        // Возвращаем созданного работника
         return NextResponse.json(worker)
     } catch (error) {
         console.error('Error creating worker:', error)

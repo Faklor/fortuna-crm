@@ -31,6 +31,7 @@ export async function PUT(request, { params }) {
             {
                 name: data.name,
                 position: data.position,
+                organization: data.organization,
                 phone: data.phone,
                 email: data.email
             },

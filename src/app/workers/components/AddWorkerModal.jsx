@@ -7,15 +7,19 @@ export default function AddWorkerModal({ isOpen, onClose, onAdd }) {
         name: '',
         position: '',
         phone: '',
-        email: ''
+        email: '',
+        organization: ''
     })
     const [existingPositions, setExistingPositions] = useState([])
+    const [existingOrganizations, setExistingOrganizations] = useState([])
     const [isCustomPosition, setIsCustomPosition] = useState(false)
+    const [isCustomOrganization, setIsCustomOrganization] = useState(false)
 
-    // Получаем список существующих должностей при открытии модального окна
+    // Получаем список существующих должностей и организаций при открытии модального окна
     useEffect(() => {
         if (isOpen) {
             fetchPositions()
+            fetchOrganizations()
         }
     }, [isOpen])
 
@@ -28,6 +32,18 @@ export default function AddWorkerModal({ isOpen, onClose, onAdd }) {
             }
         } catch (error) {
             console.error('Error fetching positions:', error)
+        }
+    }
+
+    const fetchOrganizations = async () => {
+        try {
+            const response = await fetch('/api/workers/organizations')
+            if (response.ok) {
+                const organizations = await response.json()
+                setExistingOrganizations(organizations)
+            }
+        } catch (error) {
+            console.error('Error fetching organizations:', error)
         }
     }
 
@@ -44,8 +60,9 @@ export default function AddWorkerModal({ isOpen, onClose, onAdd }) {
                 const newWorker = await response.json()
                 onAdd(newWorker)
                 onClose()
-                setFormData({ name: '', position: '', phone: '', email: '' })
+                setFormData({ name: '', position: '', phone: '', email: '', organization: '' })
                 setIsCustomPosition(false)
+                setIsCustomOrganization(false)
             }
         } catch (error) {
             console.error('Error adding worker:', error)
@@ -71,17 +88,15 @@ export default function AddWorkerModal({ isOpen, onClose, onAdd }) {
                     <div className="form-group">
                         <label>Должность</label>
                         {!isCustomPosition ? (
-                            <div className="position-group">
+                            <div className="select-group">
                                 <select
                                     value={formData.position}
                                     onChange={(e) => setFormData({...formData, position: e.target.value})}
                                     required
                                 >
                                     <option value="">Выберите должность</option>
-                                    {existingPositions.map(position => (
-                                        <option key={position} value={position}>
-                                            {position}
-                                        </option>
+                                    {existingPositions.map(pos => (
+                                        <option key={pos} value={pos}>{pos}</option>
                                     ))}
                                 </select>
                                 <button
@@ -93,7 +108,7 @@ export default function AddWorkerModal({ isOpen, onClose, onAdd }) {
                                 </button>
                             </div>
                         ) : (
-                            <div className="position-group">
+                            <div className="input-group">
                                 <input
                                     type="text"
                                     value={formData.position}
@@ -105,6 +120,47 @@ export default function AddWorkerModal({ isOpen, onClose, onAdd }) {
                                     type="button"
                                     className="toggle-btn"
                                     onClick={() => setIsCustomPosition(false)}
+                                >
+                                    ←
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                    <div className="form-group">
+                        <label>Организация</label>
+                        {!isCustomOrganization ? (
+                            <div className="select-group">
+                                <select
+                                    value={formData.organization}
+                                    onChange={(e) => setFormData({...formData, organization: e.target.value})}
+                                    required
+                                >
+                                    <option value="">Выберите организацию</option>
+                                    {existingOrganizations.map(org => (
+                                        <option key={org} value={org}>{org}</option>
+                                    ))}
+                                </select>
+                                <button
+                                    type="button"
+                                    className="toggle-btn"
+                                    onClick={() => setIsCustomOrganization(true)}
+                                >
+                                    +
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="input-group">
+                                <input
+                                    type="text"
+                                    value={formData.organization}
+                                    onChange={(e) => setFormData({...formData, organization: e.target.value})}
+                                    placeholder="Введите новую организацию"
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    className="toggle-btn"
+                                    onClick={() => setIsCustomOrganization(false)}
                                 >
                                     ←
                                 </button>
