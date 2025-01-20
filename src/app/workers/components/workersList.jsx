@@ -5,6 +5,7 @@ import WorkersTable from './WorkersTable'
 import WorkersCharts from './WorkersCharts'
 import AddWorkerModal from './AddWorkerModal'
 import EditWorkerModal from './EditWorkerModal'
+import SearchWorkers from './SearchWorkers'
 import DatePicker from 'react-datepicker'
 import { registerLocale } from 'react-datepicker'
 import ru from 'date-fns/locale/ru'
@@ -15,6 +16,7 @@ registerLocale('ru', ru)
 
 export default function WorkersList({ visibleWorkers, initialStartDate, initialEndDate }) {
     const [workers, setWorkers] = useState([])
+    const [searchQuery, setSearchQuery] = useState('')
     const [editingWorker, setEditingWorker] = useState(null)
     const [showAddForm, setShowAddForm] = useState(false)
     const [startDate, setStartDate] = useState(new Date(initialStartDate))
@@ -48,22 +50,17 @@ export default function WorkersList({ visibleWorkers, initialStartDate, initialE
         setProcessedWorkers(processed)
     }
 
-    const handlePeriodChange = (dates) => {
-        const [start, end] = dates
-        if (start) {
-            // Устанавливаем дату на первое число выбранного месяца
-            const startOfMonth = new Date(start.getFullYear(), start.getMonth(), 1)
+    const handleStartDateChange = (date) => {
+        if (date) {
+            const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1)
             setStartDate(startOfMonth)
         }
-        if (end) {
-            // Устанавливаем дату на первое число следующего месяца минус 1 день
-            const endOfMonth = new Date(end.getFullYear(), end.getMonth() + 1, 0)
+    }
+
+    const handleEndDateChange = (date) => {
+        if (date) {
+            const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0)
             setEndDate(endOfMonth)
-        }
-        if (start && end) {
-            const startOfMonth = new Date(start.getFullYear(), start.getMonth(), 1)
-            const endOfMonth = new Date(end.getFullYear(), end.getMonth() + 1, 0)
-            processWorkersData(workers, startOfMonth, endOfMonth)
         }
     }
 
@@ -143,6 +140,22 @@ export default function WorkersList({ visibleWorkers, initialStartDate, initialE
         }
     }
 
+    const handleSearch = (query) => {
+        setSearchQuery(query)
+    }
+
+    // Фильтруем работников только для отображения
+    const getFilteredWorkers = () => {
+        if (!searchQuery.trim()) return processedWorkers
+
+        const searchLower = searchQuery.toLowerCase()
+        return processedWorkers.filter(worker => 
+            worker.name.toLowerCase().includes(searchLower) ||
+            worker.position.toLowerCase().includes(searchLower) ||
+            worker.organization.toLowerCase().includes(searchLower)
+        )
+    }
+
     return (
         <div className="workers-list">
             <div className="workers-header">
@@ -150,17 +163,24 @@ export default function WorkersList({ visibleWorkers, initialStartDate, initialE
                     <h1>Список сотрудников</h1>
                     <div className="workers-controls">
                         <div className="period-selector">
-                            <span>Период:</span>
+                            <span>С:</span>
                             <DatePicker
                                 selected={startDate}
-                                onChange={handlePeriodChange}
-                                startDate={startDate}
-                                endDate={endDate}
-                                selectsRange
+                                onChange={handleStartDateChange}
                                 locale="ru"
                                 dateFormat="MMMM yyyy"
                                 showMonthYearPicker
                                 className="date-picker"
+                            />
+                            <span>По:</span>
+                            <DatePicker
+                                selected={endDate}
+                                onChange={handleEndDateChange}
+                                locale="ru"
+                                dateFormat="MMMM yyyy"
+                                showMonthYearPicker
+                                className="date-picker"
+                                minDate={startDate} // Нельзя выбрать дату раньше начальной
                             />
                         </div>
                         <button onClick={() => setShowAddForm(true)}>
@@ -168,16 +188,17 @@ export default function WorkersList({ visibleWorkers, initialStartDate, initialE
                         </button>
                     </div>
                 </div>
+                <SearchWorkers onSearch={handleSearch} />
             </div>
 
             <WorkersCharts 
-                workers={processedWorkers}
+                workers={getFilteredWorkers()}
                 periodStart={startDate}
                 periodEnd={endDate}
             />
             
             <WorkersTable 
-                workers={processedWorkers}
+                workers={getFilteredWorkers()}
                 onEdit={setEditingWorker}
                 onDelete={handleDeleteWorker}
                 onRate={handleRate}
