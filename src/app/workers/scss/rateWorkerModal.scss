@@ -1,0 +1,157 @@
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+
+    .modal-content {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        min-width: 300px;
+
+        form{
+            .modal-actions{
+                .delete-rating-btn {
+                    background-color: #f44336;
+                    color: white;
+                    border: none;
+                    padding: 8px 16px;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    transition: background-color 0.3s ease;
+                
+                    &:hover {
+                        background-color: #d32f2f;
+                    }
+                } 
+            }
+            
+        }
+    }
+}
+
+// Стили для календаря
+.custom-calendar {
+    .rated-date {
+        background-color: #ffebee !important;
+        border-radius: 4px;
+        color: #f44336 !important;
+        font-weight: bold;
+        
+        &:hover {
+            background-color: #ffcdd2 !important;
+        }
+    }
+}
+
+// Стили для DatePicker
+.react-datepicker {
+    font-family: inherit;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+
+    &__header {
+        background-color: #f5f5f5;
+        border-bottom: 1px solid #ddd;
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+    }
+
+    &__day {
+        &--selected {
+            background-color: #2196f3 !important;
+            color: white !important;
+        }
+
+        &:hover {
+            background-color: #e3f2fd;
+        }
+    }
+}
+
+.form-group {
+    margin-bottom: 20px;
+
+    label {
+        display: block;
+        margin-bottom: 8px;
+    }
+}
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+
+    button {
+        padding: 8px 16px;
+        border-radius: 4px;
+        border: none;
+        cursor: pointer;
+
+        &[type="submit"] {
+            background-color: #2196f3;
+            color: white;
+
+            &:hover {
+                background-color: #1976d2;
+            }
+        }
+
+        &[type="button"] {
+            background-color: #e0e0e0;
+
+            &:hover {
+                background-color: #bdbdbd;
+            }
+        }
+    }
+}
+
+.rate-buttons {
+    display: flex;
+    gap: 10px;
+    margin: 15px 0;
+    justify-content: center;
+
+    .rate-btn {
+        padding: 8px 16px;
+        border: 2px solid #ddd;
+        border-radius: 4px;
+        background: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+
+        &.active {
+            &:first-child {  // Для лайка
+                background: #4caf50;
+                color: white;
+                border-color: #4caf50;
+            }
+            
+            &:last-child {   // Для дизлайка
+                background: #f44336;
+                color: white;
+                border-color: #f44336;
+            }
+        }
+
+        &:hover {
+            &:first-child {
+                border-color: #4caf50;
+            }
+            
+            &:last-child {
+                border-color: #f44336;
+            }
+        }
+    }
+}
+
