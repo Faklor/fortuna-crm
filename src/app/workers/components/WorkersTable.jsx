@@ -84,6 +84,21 @@ export default function WorkersTable({ workers, onEdit, onDelete, onRate, period
         return `${start.toLocaleDateString('ru', { month: 'long', year: 'numeric' })} - ${end.toLocaleDateString('ru', { month: 'long', year: 'numeric' })}`
     }
 
+    // Функция для расчета КТУ
+    const calculateKTU = (likes, dislikes) => {
+        // Максимальное количество лайков для 50% КТУ
+        const maxLikes = 10
+        
+        // Базовый КТУ на основе лайков
+        const baseKTU = (likes / maxLikes) * 50
+        
+        // Штраф от дизлайков (каждый дизлайк снижает КТУ на 5%)
+        const penalty = dislikes * 5
+        
+        // Итоговый КТУ с учетом штрафа, округленный до одного знака после запятой
+        return Math.max(0, Math.min(50, Math.round((baseKTU - penalty) * 10) / 10))
+    }
+
     return (
         <>
             {sortedOrganizations.map(org => {
@@ -116,6 +131,7 @@ export default function WorkersTable({ workers, onEdit, onDelete, onRate, period
                                             <th>Телефон</th>
                                             <th>Email</th>
                                             <th>Рейтинг за период</th>
+                                            <th>КТУ (%)</th>
                                             <th>Действия</th>
                                         </tr>
                                     </thead>
@@ -140,6 +156,15 @@ export default function WorkersTable({ workers, onEdit, onDelete, onRate, period
                                                             Оценить
                                                         </button>
                                                     </div>
+                                                </td>
+                                                <td>
+                                                    <span className={`ktu-value ${
+                                                        worker.periodLikes === 0 ? 'ktu-min' : 
+                                                        calculateKTU(worker.periodLikes, worker.periodDislikes) >= 45 ? 'ktu-max' : 
+                                                        calculateKTU(worker.periodLikes, worker.periodDislikes) >= 25 ? 'ktu-mid' : 'ktu-low'
+                                                    }`}>
+                                                        {calculateKTU(worker.periodLikes, worker.periodDislikes)}%
+                                                    </span>
                                                 </td>
                                                 <td>
                                                     <button onClick={() => onEdit(worker)}>Редактировать</button>

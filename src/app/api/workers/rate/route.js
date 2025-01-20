@@ -77,19 +77,26 @@ export async function POST(request) {
 export async function DELETE(request) {
     try {
         await dbConnect()
-        const { workerId } = await request.json()
-       
+        const { workerId, date } = await request.json()
+        
+        // Создаем начало и конец дня для выбранной даты
+        const startDate = new Date(date)
+        startDate.setHours(0, 0, 0, 0)
+        
+        const endDate = new Date(date)
+        endDate.setHours(23, 59, 59, 999)
 
         // Находим и удаляем оценку за конкретный день
         await Ratings.findOneAndDelete({
-            workerId
-        
+            workerId,
+            date: {
+                $gte: startDate,
+                $lte: endDate
+            }
         })
 
-      
-
         return NextResponse.json({
-           message: 'Оценка удалена'
+            message: 'Оценка удалена'
         })
     } catch (error) {
         console.error('Error in rate DELETE route:', error)

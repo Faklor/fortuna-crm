@@ -71,13 +71,14 @@ export default function RateWorkerModal({ isOpen, onClose, onRate, worker, disab
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
-                    workerId: worker._id
+                    workerId: worker._id,
+                    date: selectedDate
                 })
             })
             
             if (response.ok) {
-                onClose() // Закрываем модальное окно
-                window.location.reload() // Просто перезагружаем страницу
+                onClose()
+                window.location.reload()
             }
         } catch (error) {
             console.error('Error deleting rating:', error)
