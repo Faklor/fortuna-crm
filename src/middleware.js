@@ -8,6 +8,7 @@ export const config = { matcher: [
     '/fields/:path*',
     '/crop/:path*',
     '/workers/:path*',
+    '/statistics/:path*',
     // Защищаем API маршруты, кроме auth
     '/api/((?!auth).*)/:path*'
 ]}

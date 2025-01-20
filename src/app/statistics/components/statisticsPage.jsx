@@ -1,26 +1,8 @@
 'use client'
 import { useState, useEffect } from 'react'
-import {
-    Chart as ChartJS,
-    CategoryScale,
-    LinearScale,
-    BarElement,
-    Title,
-    Tooltip,
-    Legend,
-    ArcElement
-} from 'chart.js'
-import { Bar, Pie } from 'react-chartjs-2'
-
-ChartJS.register(
-    CategoryScale,
-    LinearScale,
-    BarElement,
-    Title,
-    Tooltip,
-    Legend,
-    ArcElement
-)
+import axios from 'axios'
+import { wialonDateToTimestamp } from '@/utils/wialon'
+import '../scss/statistics.scss'
 
 export default function StatisticsPage({
     visibleParts,
@@ -31,122 +13,273 @@ export default function StatisticsPage({
     visibleOrders,
     visibleOperations
 }) {
-    // Парсим JSON данные
-    const parts = JSON.parse(visibleParts)
-    const workers = JSON.parse(visibleWorkers)
-    const objects = JSON.parse(visibleObjects)
-    const operations = JSON.parse(visibleOperations)
-    const historyReq = JSON.parse(visibleHistoryReq)
+    const [wialonData, setWialonData] = useState({
+        sid: null,
+        units: [],
+        trips: []
+    });
+    const [error, setError] = useState(null);
 
-    // Статистика по операциям
-    const operationsStats = {
-        'Ремонт': operations.filter(op => op.type === 'Ремонт').length,
-        'Технический Осмотр': operations.filter(op => op.type === 'Технический Осмотр').length,
-        'Техническое обслуживание': operations.filter(op => op.type === 'Техническое обслуживание').length,
-        'Навигация': operations.filter(op => op.type === 'Навигация').length,
-    }
+    useEffect(() => {
+        const fetchWialonData = async () => {
+            try {
+                setError(null);
+                
+                const authResponse = await axios.get('/api/wialon/auth');
+                if (!authResponse.data.success) {
+                    throw new Error('Failed to authenticate with Wialon');
+                }
+                
+                const { sid } = authResponse.data.data;
+                console.log('Wialon Authentication:', authResponse.data.data);
 
-    // Данные для графика операций
-    const operationsChartData = {
-        labels: Object.keys(operationsStats),
-        datasets: [{
-            label: 'Количество операций по типам',
-            data: Object.values(operationsStats),
-            backgroundColor: [
-                'rgba(255, 99, 132, 0.5)',
-                'rgba(54, 162, 235, 0.5)',
-                'rgba(255, 206, 86, 0.5)',
-                'rgba(75, 192, 192, 0.5)',
-            ],
-            borderColor: [
-                'rgba(255, 99, 132, 1)',
-                'rgba(54, 162, 235, 1)',
-                'rgba(255, 206, 86, 1)',
-                'rgba(75, 192, 192, 1)',
-            ],
-            borderWidth: 1,
-        }]
-    }
+                const unitsResponse = await axios.get(`/api/wialon/units?sid=${sid}`);
+                if (!unitsResponse.data.success) {
+                    throw new Error('Failed to fetch units');
+                }
+                
+                const units = unitsResponse.data.units;
+                console.log('Wialon Units:', units);
 
-    // Статистика по запчастям
-    const partsStats = historyReq.reduce((acc, req) => {
-        if (!acc[req.objectID]) {
-            acc[req.objectID] = {
-                count: 0,
-                parts: []
+                setWialonData(prev => ({
+                    ...prev,
+                    sid,
+                    units
+                }));
+
+            } catch (error) {
+                console.error('Error fetching Wialon data:', error);
+                setError(error.message);
             }
-        }
-        acc[req.objectID].count++
-        acc[req.objectID].parts.push(...req.parts)
-        return acc
-    }, {})
+        };
+
+        fetchWialonData();
+    }, []);
+
+    const renderStatistics = (units) => {
+        const onlineUnits = units.filter(unit => unit.netconn);
+        const offlineUnits = units.filter(unit => !unit.netconn);
+        
+        // Проверяем наличие водителя через датчики
+        const unitsWithDriver = units.filter(unit => {
+            const driverSensor = Object.values(unit.sens || {}).find(s => s.t === "driver");
+            if (!driverSensor) return false;
+            
+            const hasAssignedDriver = unit.prms?.avl_driver?.v && unit.prms.avl_driver.v !== "0";
+            return hasAssignedDriver;
+        });
+
+        const unitsWithoutDriver = units.filter(unit => {
+            const driverSensor = Object.values(unit.sens || {}).find(s => s.t === "driver");
+            return !driverSensor || !unit.prms?.avl_driver?.v || unit.prms.avl_driver.v === "0";
+        });
+
+        return (
+            <>
+                <div className="units-statistics">
+                    <div className="stat-item">
+                        <span>Всего ТС:</span>
+                        <span>{units.length}</span>
+                    </div>
+                    <div className="stat-item online">
+                        <span>На связи:</span>
+                        <span>{onlineUnits.length}</span>
+                    </div>
+                    <div className="stat-item offline">
+                        <span>Не на связи:</span>
+                        <span>{offlineUnits.length}</span>
+                    </div>
+                </div>
+                <div className="units-statistics">
+                    <div className="stat-item with-driver">
+                        <span>С водителем:</span>
+                        <span>{unitsWithDriver.length}</span>
+                    </div>
+                    <div className="stat-item without-driver">
+                        <span>Без водителя:</span>
+                        <span>{unitsWithoutDriver.length}</span>
+                    </div>
+                </div>
+
+                {/* Добавляем списки объектов */}
+                <div className="units-lists">
+                    <div className="units-list with-driver">
+                        <h4>Объекты с водителем:</h4>
+                        <div className="list-content">
+                            {unitsWithDriver.map(unit => (
+                                <div key={unit.id} className="list-item">
+                                    <span className={unit.netconn ? 'online' : 'offline'}>●</span>
+                                    <span className="name">{unit.nm}</span>
+                                    <span className="driver">{unit.prms?.avl_driver?.v}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="units-list without-driver">
+                        <h4>Объекты без водителя:</h4>
+                        <div className="list-content">
+                            {unitsWithoutDriver.map(unit => (
+                                <div key={unit.id} className="list-item">
+                                    <span className={unit.netconn ? 'online' : 'offline'}>●</span>
+                                    <span className="name">{unit.nm}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </>
+        );
+    };
+
+    const renderVehicleInfo = (pflds) => {
+        if (!pflds) return null;
+        const fields = {
+            brand: pflds[3]?.v || 'Н/Д',
+            model: pflds[2]?.v || 'Н/Д',
+            year: pflds[4]?.v || 'Н/Д',
+            color: pflds[5]?.v || 'Н/Д',
+            type: pflds[6]?.v || 'Н/Д',
+            engine: pflds[7]?.v || 'Н/Д',
+            capacity: pflds[8]?.v || 'Н/Д',
+            weight: pflds[9]?.v || 'Н/Д',
+            axles: pflds[10]?.v || 'Н/Д'
+        };
+        
+        return (
+            <div className="vehicle-info">
+                <h4>Характеристики ТС:</h4>
+                <div className="info-grid">
+                    <div className="info-item">
+                        <span>Марка/Модель:</span>
+                        <span>{fields.brand} {fields.model}</span>
+                    </div>
+                    <div className="info-item">
+                        <span>Год выпуска:</span>
+                        <span>{fields.year}</span>
+                    </div>
+                    <div className="info-item">
+                        <span>Тип/Цвет:</span>
+                        <span>{fields.type} / {fields.color}</span>
+                    </div>
+                    <div className="info-item">
+                        <span>Объем двигателя:</span>
+                        <span>{fields.engine} см³</span>
+                    </div>
+                    <div className="info-item">
+                        <span>Грузоподъемность:</span>
+                        <span>{fields.capacity} т</span>
+                    </div>
+                    <div className="info-item">
+                        <span>Полная масса:</span>
+                        <span>{fields.weight} т</span>
+                    </div>
+                    <div className="info-item">
+                        <span>Количество осей:</span>
+                        <span>{fields.axles}</span>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    const renderSensors = (sens) => {
+        if (!sens) return null;
+        return (
+            <div className="sensors-info">
+                <h4>Датчики:</h4>
+                <div className="info-grid">
+                    {Object.values(sens).map(sensor => (
+                        <div key={sensor.id} className="info-item">
+                            <span>{sensor.n}:</span>
+                            <span>{sensor.m ? `(${sensor.m})` : ''}</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    };
+
+    const renderLastPosition = (pos, lmsg) => {
+        if (!pos) return null;
+        return (
+            <div className="position-info">
+                <h4>Последняя позиция:</h4>
+                <div className="info-grid">
+                    <div className="info-item">
+                        <span>Координаты:</span>
+                        <span>{pos.y}, {pos.x}</span>
+                    </div>
+                    <div className="info-item">
+                        <span>Скорость:</span>
+                        <span>{pos.s} км/ч</span>
+                    </div>
+                    <div className="info-item">
+                        <span>Высота:</span>
+                        <span>{pos.z} м</span>
+                    </div>
+                    {lmsg && (
+                        <>
+                            <div className="info-item">
+                                <span>Внешнее питание:</span>
+                                <span>{lmsg.p?.pwr_ext || 'Н/Д'} В</span>
+                            </div>
+                            <div className="info-item">
+                                <span>Внутреннее питание:</span>
+                                <span>{lmsg.p?.pwr_int || 'Н/Д'} В</span>
+                            </div>
+                        </>
+                    )}
+                </div>
+            </div>
+        );
+    };
 
     return (
-        <div className="statistics-container p-4">
-            <h1 className="text-2xl font-bold mb-6">Статистика</h1>
-            
-            {/* Общая информация */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div className="stat-card p-4 bg-blue-100 rounded-lg">
-                    <h3>Всего техники</h3>
-                    <p className="text-2xl font-bold">{objects.length}</p>
-                </div>
-                <div className="stat-card p-4 bg-green-100 rounded-lg">
-                    <h3>Всего работников</h3>
-                    <p className="text-2xl font-bold">{workers.length}</p>
-                </div>
-                <div className="stat-card p-4 bg-yellow-100 rounded-lg">
-                    <h3>Всего запчастей</h3>
-                    <p className="text-2xl font-bold">{parts.length}</p>
-                </div>
-                <div className="stat-card p-4 bg-red-100 rounded-lg">
-                    <h3>Всего операций</h3>
-                    <p className="text-2xl font-bold">{operations.length}</p>
-                </div>
-            </div>
+        <div className="statistics">
+            <div className="statistics-container">
+                <h1>Мониторинг транспорта</h1>
+                
+                {error && (
+                    <div className="error-message">
+                        <p>{error}</p>
+                    </div>
+                )}
 
-            {/* График операций */}
-            <div className="mb-8">
-                <h2 className="text-xl font-bold mb-4">Распределение операций</h2>
-                <div className="h-[400px]">
-                    <Bar 
-                        data={operationsChartData}
-                        options={{
-                            responsive: true,
-                            maintainAspectRatio: false,
-                        }}
-                    />
-                </div>
-            </div>
+                {wialonData.units.length > 0 && (
+                    <>
+                        {renderStatistics(wialonData.units)}
+                        <div className="units-grid">
+                            {wialonData.units.map((unit) => (
+                                <div key={unit.id} className="stat-card">
+                                    <div className="card-header">
+                                        <h3>{unit.nm}</h3>
+                                        <span className={`status ${unit.netconn ? 'online' : 'offline'}`}>
+                                            {unit.netconn ? 'На связи' : 'Не на связи'}
+                                        </span>
+                                    </div>
+                                    
+                                    {renderVehicleInfo(unit.pflds)}
+                                    {renderLastPosition(unit.pos, unit.lmsg)}
+                                    {renderSensors(unit.sens)}
+                                    
+                                    <div className="card-footer">
+                                        <span>ID: {unit.id}</span>
+                                        <span>Последнее обновление: {
+                                            unit.mu ? new Date(unit.mu * 1000).toLocaleString() : 'Н/Д'
+                                        }</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </>
+                )}
 
-            {/* Таблица топ-5 объектов по количеству операций */}
-            <div className="mb-8">
-                <h2 className="text-xl font-bold mb-4">Топ-5 объектов по обслуживанию</h2>
-                <table className="w-full border-collapse border">
-                    <thead>
-                        <tr className="bg-gray-100">
-                            <th className="border p-2">Объект</th>
-                            <th className="border p-2">Количество операций</th>
-                            <th className="border p-2">Количество запчастей</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {Object.entries(partsStats)
-                            .sort((a, b) => b[1].count - a[1].count)
-                            .slice(0, 5)
-                            .map(([objectId, stats]) => {
-                                const object = objects.find(obj => obj._id === objectId)
-                                return (
-                                    <tr key={objectId}>
-                                        <td className="border p-2">{object?.name || 'Неизвестный объект'}</td>
-                                        <td className="border p-2">{stats.count}</td>
-                                        <td className="border p-2">{stats.parts.length}</td>
-                                    </tr>
-                                )
-                            })}
-                    </tbody>
-                </table>
+                {!wialonData.units.length && !error && (
+                    <div className="loading">
+                        Загрузка данных...
+                    </div>
+                )}
             </div>
         </div>
-    )
+    );
 }
