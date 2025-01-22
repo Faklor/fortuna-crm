@@ -1,0 +1,111 @@
+.wialon-control {
+    position: fixed;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 300px;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 15px;
+    box-shadow: -2px 0 4px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    z-index: 120;
+    margin-top: 4em;
+
+    h3 {
+        margin: 0 0 15px 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: #333;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .date-selector {
+        margin-bottom: 15px;
+        padding: 0 0 15px 0;
+        border-bottom: 1px solid #eee;
+
+        .date-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #333;
+            background: #f5f5f5;
+            cursor: pointer;
+            transition: all 0.2s ease;
+
+            &:hover {
+                border-color: #4F8DE3;
+            }
+
+            &:focus {
+                outline: none;
+                border-color: #4F8DE3;
+                background: #fff;
+                box-shadow: 0 0 0 2px rgba(79, 141, 227, 0.1);
+            }
+        }
+    }
+
+    .units-list {
+        flex: 1;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding-right: 5px;
+
+        /* Стилизация скроллбара */
+        &::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        &::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 3px;
+        }
+
+        &::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    }
+
+    .unit-item {
+        padding: 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background: #f5f5f5;
+        border: 1px solid transparent;
+
+        &:hover {
+            background: #e8e8e8;
+            transform: translateX(-3px);
+        }
+
+        &.selected {
+            background: #4F8DE3;
+            color: white;
+            border-color: #3670b5;
+        }
+    }
+
+    .loading {
+        text-align: center;
+        padding: 10px;
+        color: #666;
+        font-style: italic;
+        background: #f9f9f9;
+        border-radius: 4px;
+        margin-top: 10px;
+    }
+} 

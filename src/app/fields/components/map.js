@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import { MapContainer, TileLayer, Polygon, FeatureGroup, useMap, WMSTileLayer, Marker, Popup } from 'react-leaflet'
+import { MapContainer, TileLayer, Polygon, FeatureGroup, useMap, WMSTileLayer, Marker, Popup, Polyline } from 'react-leaflet'
 import { EditControl } from 'react-leaflet-draw'
 import ShowField from './showField'
 import axios from 'axios'
@@ -18,6 +18,7 @@ import Image from 'next/image';
 import ActionMenu from './ActionMenu'
 import CoordinatesDisplay from './CoordinatesDisplay'
 import DialogModal from './DialogModal'
+import WialonControl from './WialonControl'
 
 function DrawingControl({ 
   selectedFieldData, 
@@ -376,6 +377,8 @@ function Map({ fields, currentSeason }) {
     onConfirm: () => {},
     defaultValue: ''
   });
+  const [wialonTracks, setWialonTracks] = useState(null);
+  const [showWialonControl, setShowWialonControl] = useState(false);
 
   useEffect(() => {
     // Здесь можно добавить логику загрузки полей с учетом сезона
@@ -808,6 +811,11 @@ function Map({ fields, currentSeason }) {
     return `/api/uploads/notes/${icon.fileName}`;
   };
 
+  // Добавим обработчик для треков
+  const handleWialonTrackSelect = (tracks) => {
+    setWialonTracks(tracks);
+  };
+
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       <style jsx global>{`
@@ -1012,6 +1020,18 @@ function Map({ fields, currentSeason }) {
             />
           </FeatureGroup>
         )}
+
+        {/* Добавляем отображение треков Wialon */}
+        {wialonTracks && (
+          <Polyline
+            positions={wialonTracks.map(point => [point.lat, point.lon])}
+            pathOptions={{
+              color: '#4F8DE3',
+              weight: 3,
+              opacity: 0.8
+            }}
+          />
+        )}
       </MapContainer>
 
       {/* Компонент ShowField */}
@@ -1076,6 +1096,8 @@ function Map({ fields, currentSeason }) {
         season={season}
         dialog={dialog}
         setDialog={setDialog}
+        onShowWialonControl={(status) => setShowWialonControl(status)}
+        showWialonControl={showWialonControl}
       />
 
       {/* Модальное окно для просмотра изображения */}
@@ -1083,6 +1105,13 @@ function Map({ fields, currentSeason }) {
         <ImageModal 
           imageUrl={selectedImage} 
           onClose={() => setSelectedImage(null)} 
+        />
+      )}
+
+      {showWialonControl && (
+        <WialonControl 
+            onSelectTrack={handleWialonTrackSelect} 
+            onClose={() => setShowWialonControl(false)}
         />
       )}
 

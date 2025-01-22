@@ -13,7 +13,9 @@ export default function ActionMenu({
     onCancelNote,
     season,
     dialog,
-    setDialog
+    setDialog,
+    onShowWialonControl,
+    showWialonControl,
 }) {
     const [isOpen, setIsOpen] = useState(false);
     const menuRef = useRef(null);
@@ -85,70 +87,101 @@ export default function ActionMenu({
     };
 
     return (
-        <div className="action-menu" ref={menuRef}>
-            <button 
-                className={`action-menu__toggle ${isOpen ? 'active' : ''}`}
-                onClick={() => setIsOpen(!isOpen)}
-            >
-                <span className="action-menu__toggle-icon">+</span>
-                <span className="action-menu__toggle-text">Действия</span>
-            </button>
+        <div style={{
+            position: 'absolute',
+            top: '10px',
+            right: '10px',
+            zIndex: 1000,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '10px'
+        }}>
+            <div className="action-menu" ref={menuRef}>
+                <button 
+                    className={`action-menu__toggle ${isOpen ? 'active' : ''}`}
+                    onClick={() => setIsOpen(!isOpen)}
+                >
+                    <span className="action-menu__toggle-icon">+</span>
+                    <span className="action-menu__toggle-text">Действия</span>
+                </button>
 
-            {isOpen && (
-                <div className="action-menu__dropdown">
-                    {!isCreatingField && !isCreatingNote && (
-                        <>
+                {isOpen && (
+                    <div className="action-menu__dropdown">
+                        {!isCreatingField && !isCreatingNote && (
+                            <>
+                                <button 
+                                    className="action-menu__item"
+                                    onClick={() => {
+                                        onCreateField(true);
+                                        setIsOpen(false);
+                                    }}
+                                >
+                                    <span className="icon">✏️</span>
+                                    Создать поле
+                                </button>
+
+                                <button 
+                                    className="action-menu__item"
+                                    onClick={() => {
+                                        onAddNote(true);
+                                        setIsOpen(false);
+                                    }}
+                                >
+                                    <span className="icon">📝</span>
+                                    Добавить заметку
+                                </button>
+
+                                <button 
+                                    className="action-menu__item"
+                                    onClick={() => fileInputRef.current.click()}
+                                >
+                                    <span className="icon">📁</span>
+                                    Загрузить Shapefile
+                                </button>
+
+                                <button 
+                                    className="action-menu__item"
+                                    onClick={() => {
+                                        onShowWialonControl(true);
+                                        setIsOpen(false);
+                                    }}
+                                >
+                                    <span className="icon">🚗</span>
+                                    Объекты Wialon
+                                </button>
+
+                            </>
+                        )}
+
+                        {showWialonControl && (
                             <button 
-                                className="action-menu__item"
-                                onClick={() => {
-                                    onCreateField(true);
-                                    setIsOpen(false);
-                                }}
+                                className="action-menu__item action-menu__item--cancel"
+                                onClick={() => onShowWialonControl(false)}
                             >
-                                <span className="icon">✏️</span>
-                                Создать поле
+                                Скрыть объекты Wialon
                             </button>
+                        )}
 
+                        {isCreatingField && (
                             <button 
-                                className="action-menu__item"
-                                onClick={() => {
-                                    onAddNote(true);
-                                    setIsOpen(false);
-                                }}
+                                className="action-menu__item action-menu__item--cancel"
+                                onClick={onCancelField}
                             >
-                                <span className="icon">📝</span>
-                                Добавить заметку
+                                Отменить создание поля
                             </button>
+                        )}
 
+                        {isCreatingNote && (
                             <button 
-                                className="action-menu__item"
-                                onClick={() => fileInputRef.current.click()}
+                                className="action-menu__item action-menu__item--cancel"
+                                onClick={onCancelNote}
                             >
-                                <span className="icon">📁</span>
-                                Загрузить Shapefile
+                                Отменить создание заметки
                             </button>
-                        </>
-                    )}
-
-                    {isCreatingField && (
-                        <button 
-                            className="action-menu__item action-menu__item--cancel"
-                            onClick={onCancelField}
-                        >
-                            Отменить создание поля
-                        </button>
-                    )}
-
-                    {isCreatingNote && (
-                        <button 
-                            className="action-menu__item action-menu__item--cancel"
-                            onClick={onCancelNote}
-                        >
-                            Отменить создание заметки
-                        </button>
-                    )}
-                </div>
-            )}
+                        )}
+                    </div>
+                )}
+            </div>
 
             <input
                 ref={fileInputRef}
@@ -157,6 +190,7 @@ export default function ActionMenu({
                 onChange={handleFileUpload}
                 style={{ display: 'none' }}
             />
+
         </div>
     );
 } 

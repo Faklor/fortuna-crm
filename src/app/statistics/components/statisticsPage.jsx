@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import axios from 'axios'
 import { wialonDateToTimestamp } from '@/utils/wialon'
 import '../scss/statistics.scss'
@@ -16,45 +16,237 @@ export default function StatisticsPage({
     const [wialonData, setWialonData] = useState({
         sid: null,
         units: [],
-        trips: []
+        drivers: []
     });
     const [error, setError] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [lastUpdate, setLastUpdate] = useState(null);
 
-    useEffect(() => {
-        const fetchWialonData = async () => {
-            try {
-                setError(null);
-                
+    // Выносим логику загрузки данных в отдельную функцию
+    const fetchWialonData = useCallback(async (existingSid = null) => {
+        try {
+            setIsLoading(true);
+            setError(null);
+            
+            // Используем существующий SID или получаем новый
+            let sid = existingSid;
+            if (!sid) {
                 const authResponse = await axios.get('/api/wialon/auth');
                 if (!authResponse.data.success) {
                     throw new Error('Failed to authenticate with Wialon');
                 }
-                
-                const { sid } = authResponse.data.data;
-                console.log('Wialon Authentication:', authResponse.data.data);
+                sid = authResponse.data.data.sid;
+            }
 
-                const unitsResponse = await axios.get(`/api/wialon/units?sid=${sid}`);
-                if (!unitsResponse.data.success) {
-                    throw new Error('Failed to fetch units');
-                }
-                
-                const units = unitsResponse.data.units;
-                console.log('Wialon Units:', units);
+            // Параллельные запросы для ускорения загрузки
+            const [unitsResponse, driversResponse] = await Promise.all([
+                axios.get(`/api/wialon/units?sid=${sid}`),
+                axios.get(`/api/wialon/drivers?sid=${sid}`)
+            ]);
 
-                setWialonData(prev => ({
-                    ...prev,
-                    sid,
-                    units
-                }));
+            if (!unitsResponse.data.success) {
+                throw new Error('Failed to fetch units');
+            }
 
-            } catch (error) {
-                console.error('Error fetching Wialon data:', error);
-                setError(error.message);
+            const units = unitsResponse.data.units;
+            // console.log('🚗 Wialon Units:', {
+            //     total: units.length,
+            //     online: units.filter(u => u.netconn).length,
+            //     offline: units.filter(u => !u.netconn).length,
+            //     units: units.map(u => ({
+            //         id: u.id,
+            //         name: u.nm,
+            //         status: u.netconn ? 'online' : 'offline',
+            //         lastUpdate: new Date(u.mu * 1000).toLocaleString(),
+            //         driver: u.prms?.avl_driver?.v || 'Не назначен'
+            //     }))
+            // });
+
+            const drivers = driversResponse.data.drivers;
+            // console.log('👤 Wialon Drivers:', {
+            //     total: drivers.length,
+            //     byResource: drivers.reduce((acc, driver) => {
+            //         if (!acc[driver.resourceName]) {
+            //             acc[driver.resourceName] = [];
+            //         }
+            //         acc[driver.resourceName].push({
+            //             id: driver.id,
+            //             name: driver.name,
+            //             phone: driver.phone || 'Не указан',
+            //             code: driver.code || 'Не указан',
+            //             assignedUnit: driver.assignedUnit || 'Не назначен'
+            //         });
+            //         return acc;
+            //     }, {}),
+            //     summary: {
+            //         withPhone: drivers.filter(d => d.phone).length,
+            //         withCode: drivers.filter(d => d.code).length,
+            //         withUnit: drivers.filter(d => d.assignedUnit).length
+            //     },
+            //     driversList: drivers.map(d => ({
+            //         id: d.id,
+            //         name: d.name,
+            //         resource: d.resourceName,
+            //         phone: d.phone || 'Не указан',
+            //         code: d.code || 'Не указан',
+            //         hasUnit: d.assignedUnit ? 'Да' : 'Нет'
+            //     }))
+            // });
+
+            // Дополнительная статистика по соответствию водителей и ТС
+            const unitsWithDrivers = units.filter(u => u.prms?.avl_driver?.v);
+            // console.log('🔄 Units-Drivers Match:', {
+            //     totalUnits: units.length,
+            //     unitsWithDriver: unitsWithDrivers.length,
+            //     unitsWithoutDriver: units.length - unitsWithDrivers.length,
+            //     matches: unitsWithDrivers.map(u => ({
+            //         unitName: u.nm,
+            //         driverName: u.prms.avl_driver.v,
+            //         online: u.netconn ? 'Да' : 'Нет',
+            //         lastUpdate: new Date(u.mu * 1000).toLocaleString()
+            //     }))
+            // });
+
+            setWialonData(prev => ({
+                sid,
+                units,
+                drivers: driversResponse.data.success ? driversResponse.data.drivers : []
+            }));
+
+            setLastUpdate(new Date());
+            return true;
+
+        } catch (error) {
+            console.error('❌ Error fetching Wialon data:', error);
+            // Если ошибка связана с авторизацией, сбрасываем SID
+            if (error.message.includes('auth') || error.response?.status === 401) {
+                setWialonData(prev => ({ ...prev, sid: null }));
+            }
+            setError(error.message);
+            return false;
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    // Эффект для начальной загрузки данных
+    useEffect(() => {
+        fetchWialonData();
+    }, [fetchWialonData]);
+
+    // Эффект для периодического обновления
+    useEffect(() => {
+        let intervalId;
+
+        const startPolling = async () => {
+            if (wialonData.sid) {
+                intervalId = setInterval(async () => {
+                    const success = await fetchWialonData(wialonData.sid);
+                    if (!success) {
+                        clearInterval(intervalId);
+                    }
+                }, 30000); // Обновление каждые 30 секунд
             }
         };
 
-        fetchWialonData();
-    }, []);
+        startPolling();
+
+        return () => {
+            if (intervalId) {
+                clearInterval(intervalId);
+            }
+        };
+    }, [wialonData.sid, fetchWialonData]);
+
+    // Добавляем функцию для получения треков
+    const fetchUnitTrips = async (unitId) => {
+        try {
+            // Получаем текущую дату
+            const currentDate = new Date();
+            
+            // Устанавливаем начало текущего дня (00:00:00)
+            const startDate = new Date(
+                currentDate.getFullYear(),
+                currentDate.getMonth(),
+                currentDate.getDate()
+            );
+            startDate.setHours(0, 0, 0, 0);
+
+            // Устанавливаем конец текущего дня (23:59:59)
+            const endDate = new Date(
+                currentDate.getFullYear(),
+                currentDate.getMonth(),
+                currentDate.getDate()
+            );
+            endDate.setHours(23, 59, 59, 999);
+
+            // Преобразуем в UNIX timestamp (секунды)
+            const dateFrom = Math.floor(startDate.getTime() / 1000);
+            const dateTo = Math.floor(endDate.getTime() / 1000);
+
+            // Форматируем дату в 24-часовом формате
+            const formatDate = (date) => {
+                return date.toLocaleString('ru-RU', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: false
+                });
+            };
+
+            console.log('📅 Запрашиваем координаты:', {
+                unitId,
+                dates: {
+                    from: formatDate(startDate),
+                    to: formatDate(endDate),
+                    fromTimestamp: dateFrom,
+                    toTimestamp: dateTo
+                }
+            });
+
+            const response = await axios.get('/api/wialon/trips', {
+                params: {
+                    sid: wialonData.sid,
+                    unitId: unitId,
+                    dateFrom: dateFrom,
+                    dateTo: dateTo
+                }
+            });
+            console.log('🛣️ Получены данные:', response.data, unitId, dateFrom, dateTo );
+            // if (response.data.success) {
+            //     console.log('🛣️ Получены данные:', {
+            //         unitId,
+            //         totalTracks: response.data.tracks.length,
+            //         totalMessages: response.data.totalMessages,
+            //         period: {
+            //             from: formatDate(startDate),
+            //             to: formatDate(endDate)
+            //         }
+            //     });
+            // }
+
+            return {
+                ...response.data,
+                period: {
+                    from: formatDate(startDate),
+                    to: formatDate(endDate)
+                }
+            };
+        } catch (error) {
+            console.error('Error fetching tracks:', error);
+            return null;
+        }
+    };
+
+    // Добавляем обработчик клика по карточке ТС
+    const handleUnitClick = async (unitId) => {
+        const tripsData = await fetchUnitTrips(unitId);
+        // Здесь можно добавить логику отображения треков
+        console.log(`Trips data for unit ${unitId}:`, tripsData);
+    };
 
     const renderStatistics = (units) => {
         const onlineUnits = units.filter(unit => unit.netconn);
@@ -73,6 +265,12 @@ export default function StatisticsPage({
             const driverSensor = Object.values(unit.sens || {}).find(s => s.t === "driver");
             return !driverSensor || !unit.prms?.avl_driver?.v || unit.prms.avl_driver.v === "0";
         });
+
+        // Функция для поиска имени водителя по коду
+        const findDriverNameByCode = (driverCode) => {
+            const driver = wialonData.drivers.find(d => d.code === driverCode);
+            return driver ? driver.name : driverCode;
+        };
 
         return (
             <>
@@ -110,7 +308,9 @@ export default function StatisticsPage({
                                 <div key={unit.id} className="list-item">
                                     <span className={unit.netconn ? 'online' : 'offline'}>●</span>
                                     <span className="name">{unit.nm}</span>
-                                    <span className="driver">{unit.prms?.avl_driver?.v}</span>
+                                    <span className="driver">
+                                        {findDriverNameByCode(unit.prms?.avl_driver?.v)}
+                                    </span>
                                 </div>
                             ))}
                         </div>
@@ -237,7 +437,25 @@ export default function StatisticsPage({
     return (
         <div className="statistics">
             <div className="statistics-container">
-                <h1>Мониторинг транспорта</h1>
+                <div className="header-container">
+                    <h1>Мониторинг транспорта</h1>
+                    <div className="update-info">
+                        {isLoading ? (
+                            <span className="loading-indicator">Обновление...</span>
+                        ) : (
+                            <span className="last-update">
+                                Последнее обновление: {lastUpdate ? lastUpdate.toLocaleTimeString() : 'Н/Д'}
+                            </span>
+                        )}
+                        <button 
+                            className="refresh-button"
+                            onClick={() => fetchWialonData(wialonData.sid)}
+                            disabled={isLoading}
+                        >
+                            Обновить
+                        </button>
+                    </div>
+                </div>
                 
                 {error && (
                     <div className="error-message">
@@ -250,7 +468,7 @@ export default function StatisticsPage({
                         {renderStatistics(wialonData.units)}
                         <div className="units-grid">
                             {wialonData.units.map((unit) => (
-                                <div key={unit.id} className="stat-card">
+                                <div key={unit.id} className="stat-card" onClick={() => handleUnitClick(unit.id)}>
                                     <div className="card-header">
                                         <h3>{unit.nm}</h3>
                                         <span className={`status ${unit.netconn ? 'online' : 'offline'}`}>

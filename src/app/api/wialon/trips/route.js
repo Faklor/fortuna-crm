@@ -18,37 +18,52 @@ export async function GET(request) {
             }, { status: 400 });
         }
 
-        const response = await axios.get(`${WIALON_BASE_URL}`, {
+        const response = await axios.get(WIALON_BASE_URL, {
             params: {
                 svc: 'messages/load_interval',
                 sid: sid,
                 params: JSON.stringify({
-                    itemId: parseInt(unitId),
-                    timeFrom: parseInt(dateFrom),
-                    timeTo: parseInt(dateTo),
-                    flags: 0x0000,
-                    flagsMask: 0x0000,
+                    itemId: Number(unitId),
+                    timeFrom: Number(dateFrom),
+                    timeTo: Number(dateTo),
+                    flags: 1,
+                    flagsMask: 65281,
                     loadCount: 0xFFFFFFFF
                 })
             }
         });
 
-        const data = response.data;
-
-        if (data.error) {
-            throw new Error(`Wialon API error: ${data.error}`);
+        if (response.data.error) {
+            throw new Error(`Wialon API error: ${response.data.error}`);
         }
+
+        const tracks = response.data.messages?.filter(msg => 
+            msg.pos && msg.pos.x && msg.pos.y
+        ).map(msg => ({
+            lat: msg.pos.y,
+            lon: msg.pos.x,
+            time: msg.t,
+            speed: msg.pos.s,
+            course: msg.pos.c,
+            altitude: msg.pos.z,
+            satellites: msg.pos.sc
+        })) || [];
 
         return NextResponse.json({
             success: true,
-            data: data
+            tracks,
+            totalMessages: response.data.count,
+            period: {
+                from: new Date(parseInt(dateFrom) * 1000).toLocaleString('ru-RU'),
+                to: new Date(parseInt(dateTo) * 1000).toLocaleString('ru-RU')
+            }
         });
 
     } catch (error) {
-        console.error('Error fetching trips:', error);
+        console.error('Error in trips API:', error);
         return NextResponse.json({
             success: false,
-            error: error.response?.data?.error || error.message
+            error: error.message || 'Internal server error'
         }, { status: 500 });
     }
 } 
