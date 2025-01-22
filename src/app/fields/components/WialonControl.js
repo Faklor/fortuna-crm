@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import '../scss/wialonControl.scss';
 
-export default function WialonControl({ onSelectTrack, onClose }) {
+export default function WialonControl({ onSelectTrack, onClose, fields }) {
     const [sid, setSid] = useState(null);
     const [units, setUnits] = useState([]);
     const [selectedUnit, setSelectedUnit] = useState(null);
@@ -13,6 +13,21 @@ export default function WialonControl({ onSelectTrack, onClose }) {
         const today = new Date();
         return today.toISOString().split('T')[0]; // Формат YYYY-MM-DD
     });
+
+    //console.log(fields);
+    // Добавляем функцию проверки точки в полигоне
+    const isPointInPolygon = (point, polygon) => {
+        let inside = false;
+        for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+            const xi = polygon[i][0], yi = polygon[i][1];
+            const xj = polygon[j][0], yj = polygon[j][1];
+            
+            const intersect = ((yi > point[1]) !== (yj > point[1]))
+                && (point[0] < (xj - xi) * (point[1] - yi) / (yj - yi) + xi);
+            if (intersect) inside = !inside;
+        }
+        return inside;
+    };
 
     // Авторизация в Wialon при монтировании компонента
     useEffect(() => {
@@ -59,7 +74,7 @@ export default function WialonControl({ onSelectTrack, onClose }) {
         }
     };
 
-    // Функция загрузки треков
+    // Модифицируем функцию загрузки треков
     const loadTracks = async (unitId, date) => {
         setIsLoading(true);
         try {
@@ -76,16 +91,72 @@ export default function WialonControl({ onSelectTrack, onClose }) {
                 }
             });
 
-            if (response.data.success) {
-                setTracks(response.data.tracks);
-                onSelectTrack(response.data.tracks);
+            if (response.data.success && Array.isArray(response.data.tracks)) { 
+                // Каждый элемент в tracks уже является точкой
+                const pointsWithIntersections = response.data.tracks.map(point => {
+                    // Проверяем каждое поле
+                    const intersectingFields = fields.filter(field => 
+                        isPointInPolygon(
+                            [point.lon, point.lat], 
+                            field.coordinates[0]
+                        )
+                    );
+
+                    return {
+                        ...point,
+                        intersectsField: intersectingFields.length > 0,
+                        intersectingFields
+                    };
+                });
+
+                // Проверяем, есть ли хотя бы одна точка внутри какого-либо поля
+                const hasIntersections = pointsWithIntersections.some(point => point.intersectsField);
+                
+                if (hasIntersections) {
+                    // Находим все уникальные поля, с которыми есть пересечения
+                    const allIntersectingFields = new Set();
+                    pointsWithIntersections.forEach(point => {
+                        if (point.intersectingFields) {
+                            point.intersectingFields.forEach(field => {
+                                allIntersectingFields.add(field._id);
+                            });
+                        }
+                    });
+
+                    // Выводим сообщение о пересечении
+                    setDialog({
+                        isOpen: true,
+                        type: 'alert',
+                        title: 'Обнаружено пересечение с полями',
+                        message: `Трек пересекает ${allIntersectingFields.size} поле(й)`,
+                        onConfirm: () => setDialog(prev => ({ ...prev, isOpen: false }))
+                    });
+                }
+                
+                setTracks(pointsWithIntersections);
+                onSelectTrack(pointsWithIntersections);
+            } else {
+                console.warn('No tracks data in response:', response.data);
+                setTracks([]);
+                onSelectTrack([]);
             }
         } catch (error) {
             console.error('Ошибка загрузки треков:', error);
+            setTracks([]);
+            onSelectTrack([]);
         } finally {
             setIsLoading(false);
         }
     };
+
+    // Добавляем состояние для диалогового окна
+    const [dialog, setDialog] = useState({
+        isOpen: false,
+        type: 'alert',
+        title: '',
+        message: '',
+        onConfirm: () => {}
+    });
 
     return (
         <div className="wialon-control">
@@ -127,6 +198,17 @@ export default function WialonControl({ onSelectTrack, onClose }) {
                 ))}
             </div>
             {isLoading && <div className="loading">Загрузка треков...</div>}
+
+            {/* Добавляем диалоговое окно */}
+            {dialog.isOpen && (
+                <div className="dialog-overlay">
+                    <div className="dialog-content">
+                        <h4>{dialog.title}</h4>
+                        <p>{dialog.message}</p>
+                        <button onClick={dialog.onConfirm}>OK</button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 } 

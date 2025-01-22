@@ -1021,16 +1021,58 @@ function Map({ fields, currentSeason }) {
           </FeatureGroup>
         )}
 
-        {/* Добавляем отображение треков Wialon */}
-        {wialonTracks && (
-          <Polyline
-            positions={wialonTracks.map(point => [point.lat, point.lon])}
-            pathOptions={{
-              color: '#4F8DE3',
-              weight: 3,
-              opacity: 0.8
-            }}
-          />
+        {/* Отображение треков Wialon */}
+        {wialonTracks && wialonTracks.length > 0 && (
+            <>
+                {/* Основной трек (синий) */}
+                <Polyline
+                    positions={wialonTracks.map(point => [point.lat, point.lon])}
+                    pathOptions={{
+                        color: '#4F8DE3',
+                        weight: 3,
+                        opacity: 0.8
+                    }}
+                />
+                
+                {/* Сегменты трека, пересекающие поля (красные) */}
+                {(() => {
+                    const segments = [];
+                    let currentSegment = [];
+                    
+                    wialonTracks.forEach((point, index) => {
+                        if (point.intersectsField) {
+                            currentSegment.push([point.lat, point.lon]);
+                            
+                            // Если следующая точка не пересекает поле или это последняя точка
+                            if (!wialonTracks[index + 1]?.intersectsField || index === wialonTracks.length - 1) {
+                                if (currentSegment.length > 0) {
+                                    segments.push([...currentSegment]);
+                                    currentSegment = [];
+                                }
+                            }
+                        } else {
+                            // Если предыдущая точка пересекала поле, добавляем текущую для плавности
+                            if (wialonTracks[index - 1]?.intersectsField) {
+                                currentSegment.push([point.lat, point.lon]);
+                                segments.push([...currentSegment]);
+                                currentSegment = [];
+                            }
+                        }
+                    });
+                    
+                    return segments.map((segment, index) => (
+                        <Polyline
+                            key={`intersection-segment-${index}`}
+                            positions={segment}
+                            pathOptions={{
+                                color: '#FF0000',
+                                weight: 4,
+                                opacity: 0.8
+                            }}
+                        />
+                    ));
+                })()}
+            </>
         )}
       </MapContainer>
 
@@ -1112,6 +1154,7 @@ function Map({ fields, currentSeason }) {
         <WialonControl 
             onSelectTrack={handleWialonTrackSelect} 
             onClose={() => setShowWialonControl(false)}
+            fields={fields}
         />
       )}
 
