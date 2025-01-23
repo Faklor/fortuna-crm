@@ -4,6 +4,7 @@ import '../scss/createWork.scss';
 import * as turf from '@turf/turf';
 import axios from 'axios';
 import { WORK_TYPES } from '../constants/workTypes';
+import WialonControl from './WialonControl';
 
 
 // Определяем функцию вне компонента
@@ -26,7 +27,8 @@ function CreateWork({
     setIsDrawingProcessingArea,
     selectedField,
     fieldArea,
-    subFields
+    subFields,
+    onWialonTrackSelect
 }) {
     const [workData, setWorkData] = useState({
         name: '',
@@ -40,11 +42,13 @@ function CreateWork({
         useSubField: false,
         selectedSubFieldId: '',
         workers: [],
-        equipment: []
+        equipment: [],
+        useWialon: false,
     });
 
     const [workers, setWorkers] = useState([]);
     const [equipment, setEquipment] = useState([]);
+    const [showWialonControl, setShowWialonControl] = useState(false);
 
     useEffect(() => {
         const loadData = async () => {
@@ -71,18 +75,21 @@ function CreateWork({
             ...prev,
             useFullField: type === 'full',
             useSubField: type === 'subfield',
+            useWialon: type === 'wialon',
             area: type === 'full' ? fieldArea : 
                   type === 'subfield' ? 0 : 
                   (processingArea?.area || 0),
             processingArea: type === 'custom' ? processingArea : null,
             selectedSubFieldId: type === 'subfield' ? prev.selectedSubFieldId : '',
-            areaSelectionType: type === 'full' ? 'full' : 
-                              type === 'custom' ? 'custom' : 
-                              prev.areaSelectionType
         }));
         
-        if (type !== 'custom') {
+        if (type === 'wialon') {
+            setShowWialonControl(true);
+            onWialonTrackSelect && onWialonTrackSelect([]);
+        } else {
+            setShowWialonControl(false);
             setIsDrawingProcessingArea(false);
+            onWialonTrackSelect && onWialonTrackSelect([]);
         }
     };
 
@@ -223,6 +230,37 @@ function CreateWork({
         });
     }, [equipment]);
 
+    // Модифицируем обработчик для треков Wialon
+    const handleWialonTrackSelect = (tracks) => {
+        if (!tracks || tracks.length === 0) {
+            onWialonTrackSelect && onWialonTrackSelect([]);
+            return;
+        }
+
+        onWialonTrackSelect && onWialonTrackSelect(tracks);
+
+        // Фильтруем только точки, которые пересекаются с выбранным полем
+        const fieldTracks = tracks.filter(point => 
+            point.intersectingFields?.some(field => field._id === selectedField._id)
+        );
+
+        if (fieldTracks.length > 0) {
+            // Создаем область обработки из трека
+            const processingAreaFromTrack = {
+                type: 'Polygon',
+                coordinates: [fieldTracks.map(point => [point.lon, point.lat])]
+            };
+
+            const area = calculateArea(processingAreaFromTrack);
+            
+            setWorkData(prev => ({
+                ...prev,
+                processingArea: processingAreaFromTrack,
+                area: area
+            }));
+        }
+    };
+
     return (
         <>
         <div className="create-work-overlay" />
@@ -280,7 +318,7 @@ function CreateWork({
                         <div className="area-selection-controls">
                             <button
                                 type="button"
-                                className={`area-btn ${!workData.useFullField && !workData.useSubField ? 'active' : ''}`}
+                                className={`area-btn ${!workData.useFullField && !workData.useSubField && !workData.useWialon ? 'active' : ''}`}
                                 onClick={() => handleAreaSelectionChange('custom')}
                             >
                                 Выбрать зону
@@ -299,9 +337,16 @@ function CreateWork({
                             >
                                 По подполю
                             </button>
+                            <button
+                                type="button"
+                                className={`area-btn ${workData.useWialon ? 'active' : ''}`}
+                                onClick={() => handleAreaSelectionChange('wialon')}
+                            >
+                                По Wialon
+                            </button>
                         </div>
                         
-                        {!workData.useFullField && !workData.useSubField && (
+                        {!workData.useFullField && !workData.useSubField && !workData.useWialon && (
                             <button 
                                 type="button"
                                 onClick={() => setIsDrawingProcessingArea(true)}
@@ -339,6 +384,17 @@ function CreateWork({
                             </div>
                         )}
                     </div>
+
+                    {showWialonControl && (
+                        <WialonControl 
+                            onSelectTrack={handleWialonTrackSelect}
+                            onClose={() => {
+                                setShowWialonControl(false);
+                                onWialonTrackSelect && onWialonTrackSelect([]);
+                            }}
+                            fields={[selectedField]}
+                        />
+                    )}
 
                     <div className="form-group workers-group multiple-select-hint">
                         <label>Работники:</label>

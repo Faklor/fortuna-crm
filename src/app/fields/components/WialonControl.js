@@ -92,9 +92,8 @@ export default function WialonControl({ onSelectTrack, onClose, fields }) {
             });
 
             if (response.data.success && Array.isArray(response.data.tracks)) { 
-                // Каждый элемент в tracks уже является точкой
                 const pointsWithIntersections = response.data.tracks.map(point => {
-                    // Проверяем каждое поле
+                    // Проверяем только выбранное поле
                     const intersectingFields = fields.filter(field => 
                         isPointInPolygon(
                             [point.lon, point.lat], 
@@ -109,32 +108,23 @@ export default function WialonControl({ onSelectTrack, onClose, fields }) {
                     };
                 });
 
-                // Проверяем, есть ли хотя бы одна точка внутри какого-либо поля
+                // Проверяем, есть ли хотя бы одна точка внутри поля
                 const hasIntersections = pointsWithIntersections.some(point => point.intersectsField);
                 
                 if (hasIntersections) {
-                    // Находим все уникальные поля, с которыми есть пересечения
-                    const allIntersectingFields = new Set();
-                    pointsWithIntersections.forEach(point => {
-                        if (point.intersectingFields) {
-                            point.intersectingFields.forEach(field => {
-                                allIntersectingFields.add(field._id);
-                            });
-                        }
-                    });
-
-                    // Выводим сообщение о пересечении
+                    setTracks(pointsWithIntersections);
+                    onSelectTrack(pointsWithIntersections);
+                } else {
                     setDialog({
                         isOpen: true,
                         type: 'alert',
-                        title: 'Обнаружено пересечение с полями',
-                        message: `Трек пересекает ${allIntersectingFields.size} поле(й)`,
+                        title: 'Нет пересечений',
+                        message: 'Трек не пересекает выбранное поле',
                         onConfirm: () => setDialog(prev => ({ ...prev, isOpen: false }))
                     });
+                    setTracks([]);
+                    onSelectTrack([]);
                 }
-                
-                setTracks(pointsWithIntersections);
-                onSelectTrack(pointsWithIntersections);
             } else {
                 console.warn('No tracks data in response:', response.data);
                 setTracks([]);

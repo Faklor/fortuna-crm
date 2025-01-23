@@ -377,7 +377,7 @@ function Map({ fields, currentSeason }) {
     onConfirm: () => {},
     defaultValue: ''
   });
-  const [wialonTracks, setWialonTracks] = useState(null);
+  const [wialonTracks, setWialonTracks] = useState([]);
   const [showWialonControl, setShowWialonControl] = useState(false);
 
   useEffect(() => {
@@ -811,9 +811,8 @@ function Map({ fields, currentSeason }) {
     return `/api/uploads/notes/${icon.fileName}`;
   };
 
-  // Добавим обработчик для треков
   const handleWialonTrackSelect = (tracks) => {
-    setWialonTracks(tracks);
+    setWialonTracks(tracks || []);
   };
 
   return (
@@ -1105,6 +1104,7 @@ function Map({ fields, currentSeason }) {
           setIsCreateWorkModalOpen={setIsCreateWorkModalOpen}
           dialog={dialog}
           setDialog={setDialog}
+          onWialonTrackSelect={handleWialonTrackSelect}
         />
       )}
 

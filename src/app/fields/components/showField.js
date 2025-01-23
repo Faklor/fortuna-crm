@@ -34,7 +34,8 @@ export default function ShowField({
     isCreateWorkModalOpen,
     setIsCreateWorkModalOpen,
     dialog,
-    setDialog
+    setDialog,
+    onWialonTrackSelect
 }) {
     
     const [field, setField] = useState(null)
@@ -1111,6 +1112,7 @@ export default function ShowField({
                     selectedField={field}
                     fieldArea={fieldArea}
                     subFields={subFields}
+                    onWialonTrackSelect={onWialonTrackSelect}
                 />
             )}
 
