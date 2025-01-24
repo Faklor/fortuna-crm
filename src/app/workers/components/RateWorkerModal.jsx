@@ -10,7 +10,7 @@ registerLocale('ru', ru)
 
 export default function RateWorkerModal({ isOpen, onClose, onRate, worker, disabledDates }) {
     const [selectedDate, setSelectedDate] = useState(null)
-    const [rateType, setRateType] = useState('like') // Добавляем состояние для типа оценки
+    const [ktuValue, setKtuValue] = useState(1) // Значение КТУ по умолчанию
     const [existingRating, setExistingRating] = useState(null)
 
     // При каждом открытии модального окна устанавливаем текущую дату
@@ -19,7 +19,7 @@ export default function RateWorkerModal({ isOpen, onClose, onRate, worker, disab
             const now = new Date()
             const localDate = new Date(now.getTime() - (now.getTimezoneOffset() * 60000))
             setSelectedDate(localDate)
-            setRateType('like') // Сбрасываем тип оценки при открытии
+            setKtuValue(1)
             checkExistingRating(localDate)
         }
     }, [isOpen])
@@ -51,7 +51,7 @@ export default function RateWorkerModal({ isOpen, onClose, onRate, worker, disab
                 },
                 body: JSON.stringify({
                     workerId: worker._id,
-                    type: rateType,
+                    ktu: parseFloat(ktuValue),
                     date: selectedDate
                 })
             })
@@ -61,7 +61,7 @@ export default function RateWorkerModal({ isOpen, onClose, onRate, worker, disab
                 window.location.reload() // Временно используем перезагрузку страницы
             }
         } catch (error) {
-            console.error('Error submitting rating:', error)
+            console.error('Error submitting KTU:', error)
         }
     }
 
@@ -102,7 +102,7 @@ export default function RateWorkerModal({ isOpen, onClose, onRate, worker, disab
     return (
         <div className="modal">
             <div className="modal-content">
-                <h2>Оценить сотрудника</h2>
+                <h2>Установить КТУ сотрудника</h2>
                 <p>Сотрудник: {worker?.name}</p>
                 
                 <form onSubmit={handleSubmit}>
@@ -123,27 +123,21 @@ export default function RateWorkerModal({ isOpen, onClose, onRate, worker, disab
 
                     {!existingRating ? (
                         <>
-                            <div className="rate-buttons">
-                                <button
-                                    type="button"
-                                    className={`rate-btn ${rateType === 'like' ? 'active' : ''}`}
-                                    onClick={() => setRateType('like')}
-                                >
-                                    👍 Лайк
-                                </button>
-                                <button
-                                    type="button"
-                                    className={`rate-btn ${rateType === 'dislike' ? 'active' : ''}`}
-                                    onClick={() => setRateType('dislike')}
-                                >
-                                    👎 Дизлайк
-                                </button>
+                            <div className="form-group">
+                                <label>КТУ (от 0 до 2):</label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    max="2"
+                                    step="0.1"
+                                    value={ktuValue}
+                                    onChange={(e) => setKtuValue(e.target.value)}
+                                    className="ktu-input"
+                                />
                             </div>
 
                             <div className="modal-actions">
-                                <button type="submit">
-                                    {rateType === 'like' ? 'Поставить лайк' : 'Поставить дизлайк'}
-                                </button>
+                                <button type="submit">Установить КТУ</button>
                                 <button type="button" onClick={onClose}>Отмена</button>
                             </div>
                         </>
@@ -154,7 +148,7 @@ export default function RateWorkerModal({ isOpen, onClose, onRate, worker, disab
                                 className="delete-rating-btn"
                                 onClick={handleDeleteRating}
                             >
-                                Отменить оценку
+                                Удалить КТУ
                             </button>
                             <button type="button" onClick={onClose}>Закрыть</button>
                         </div>

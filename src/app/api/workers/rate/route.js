@@ -7,66 +7,64 @@ import mongoose from 'mongoose'
 export async function POST(request) {
     try {
         await dbConnect()
-        const { workerId, type, date } = await request.json()
-  
+        const { workerId, ktu, date } = await request.json()
 
         const worker = await Workers.findById(workerId)
         if (!worker) {
             return NextResponse.json({ error: 'Worker not found' }, { status: 404 })
         }
 
-        // Создаем новую запись рейтинга
-        const newRating = await Ratings.create({
-            workerId: new mongoose.Types.ObjectId(workerId),
-            type,
-            date: new Date(date)
+        // Создаем или обновляем запись КТУ
+        const startDate = new Date(date)
+        startDate.setHours(0, 0, 0, 0)
+        const endDate = new Date(date)
+        endDate.setHours(23, 59, 59, 999)
+
+        // Проверяем существование записи за этот день
+        const existingRating = await Ratings.findOne({
+            workerId,
+            date: {
+                $gte: startDate,
+                $lte: endDate
+            }
         })
 
-        // Получаем первый и последний день текущего месяца
+        let newRating
+        if (existingRating) {
+            // Обновляем существующую запись
+            existingRating.ktu = ktu
+            newRating = await existingRating.save()
+        } else {
+            // Создаем новую запись
+            newRating = await Ratings.create({
+                workerId: new mongoose.Types.ObjectId(workerId),
+                ktu,
+                date: new Date(date)
+            })
+        }
+
+        // Получаем статистику по КТУ
         const now = new Date()
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
         const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59)
 
         // Получаем все рейтинги работника
         const allRatings = await Ratings.find({ workerId })
-
-
-        // Получаем рейтинги за текущий месяц
         const monthlyRatings = allRatings.filter(rating => {
             const ratingDate = new Date(rating.date)
             return ratingDate >= startOfMonth && ratingDate <= endOfMonth
         })
 
-        // Подсчитываем рейтинги
-        const totalLikes = allRatings.filter(r => r.type === 'like').length
-        const totalDislikes = allRatings.filter(r => r.type === 'dislike').length
-        const monthlyLikes = monthlyRatings.filter(r => r.type === 'like').length
-        const monthlyDislikes = monthlyRatings.filter(r => r.type === 'dislike').length
-
-      
-
-        // Группируем рейтинги по датам
-        const ratedDatesInfo = allRatings.reduce((acc, rating) => {
-            const dateStr = rating.date.toISOString().split('T')[0]
-            if (!acc[dateStr]) {
-                acc[dateStr] = { likes: 0, dislikes: 0 }
-            }
-            if (rating.type === 'like') {
-                acc[dateStr].likes++
-            } else {
-                acc[dateStr].dislikes++
-            }
-            return acc
-        }, {})
+        // Рассчитываем средние значения КТУ
+        const averageKtu = allRatings.reduce((acc, curr) => acc + curr.ktu, 0) / allRatings.length || 0
+        const monthlyAverageKtu = monthlyRatings.reduce((acc, curr) => acc + curr.ktu, 0) / monthlyRatings.length || 0
 
         return NextResponse.json({
-            totalLikes,
-            totalDislikes,
-            totalRating: totalLikes - totalDislikes,
-            monthlyLikes,
-            monthlyDislikes,
-            monthlyRating: monthlyLikes - monthlyDislikes,
-            ratedDatesInfo
+            currentKtu: newRating.ktu,
+            averageKtu,
+            monthlyAverageKtu,
+            ratingsCount: allRatings.length,
+            monthlyRatingsCount: monthlyRatings.length
         })
     } catch (error) {
         console.error('Error in rate route:', error)

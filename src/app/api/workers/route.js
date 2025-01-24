@@ -16,14 +16,14 @@ export async function GET() {
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
         const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59)
         
-        console.log('Date range for ratings:', {
-            startOfMonth: startOfMonth.toISOString(),
-            endOfMonth: endOfMonth.toISOString()
-        })
+        // console.log('Date range for ratings:', {
+        //     startOfMonth: startOfMonth.toISOString(),
+        //     endOfMonth: endOfMonth.toISOString()
+        // })
 
         // Получаем все рейтинги
         const allRatings = await Ratings.find({})
-        console.log('All ratings:', allRatings)
+        //console.log('All ratings:', allRatings)
 
         const workersWithRatings = await Promise.all(
             workers.map(async (worker) => {
@@ -38,29 +38,21 @@ export async function GET() {
                     return ratingDate >= startOfMonth && ratingDate <= endOfMonth
                 })
 
-                console.log(`Ratings for worker ${worker._id}:`, {
-                    allRatings: workerRatings,
-                    monthlyRatings: monthlyRatings
-                })
+                // console.log(`Ratings for worker ${worker._id}:`, {
+                //     allRatings: workerRatings,
+                //     monthlyRatings: monthlyRatings
+                // })
 
-                // Подсчитываем общие рейтинги
-                const totalLikes = workerRatings.filter(r => r.type === 'like').length
-                const totalDislikes = workerRatings.filter(r => r.type === 'dislike').length
-                const totalRating = totalLikes - totalDislikes
-
-                // Подсчитываем месячные рейтинги
-                const monthlyLikes = monthlyRatings.filter(r => r.type === 'like').length
-                const monthlyDislikes = monthlyRatings.filter(r => r.type === 'dislike').length
-                const monthlyRating = monthlyLikes - monthlyDislikes
+                // Рассчитываем средние КТУ
+                const averageKtu = workerRatings.reduce((acc, curr) => acc + curr.ktu, 0) / workerRatings.length || 0
+                const monthlyAverageKtu = monthlyRatings.reduce((acc, curr) => acc + curr.ktu, 0) / monthlyRatings.length || 0
 
                 return {
                     ...worker.toObject(),
-                    totalLikes,
-                    totalDislikes,
-                    totalRating,
-                    monthlyLikes,
-                    monthlyDislikes,
-                    monthlyRating
+                    averageKtu,
+                    monthlyAverageKtu,
+                    ratingsCount: workerRatings.length,
+                    monthlyRatingsCount: monthlyRatings.length
                 }
             })
         )

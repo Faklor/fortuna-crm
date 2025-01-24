@@ -9,10 +9,11 @@ const ratingSchema = new mongoose.Schema({
         ref: 'workers',
         required: true 
     },
-    type: { 
-        type: String, 
-        enum: ['like', 'dislike'],
-        required: true 
+    ktu: { 
+        type: Number,
+        required: true,
+        min: 0,
+        max: 2 // Предполагаем, что КТУ от 0 до 2
     },
     date: { 
         type: Date, 

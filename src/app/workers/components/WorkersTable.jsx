@@ -8,6 +8,12 @@ export default function WorkersTable({ workers, onEdit, onDelete, onRate, period
     const [processedWorkers, setProcessedWorkers] = useState([])
     const [ratingWorker, setRatingWorker] = useState(null)
 
+    // Функция расчета среднего КТУ
+    const calculateAverageKTU = (ratings) => {
+        if (!ratings || ratings.length === 0) return 0
+        return ratings.reduce((sum, rating) => sum + rating.ktu, 0) / ratings.length
+    }
+
     // Обработка работников при изменении props
     useEffect(() => {
         processWorkersData(workers)
@@ -15,24 +21,20 @@ export default function WorkersTable({ workers, onEdit, onDelete, onRate, period
 
     // Выносим обработку данных в отдельную функцию
     const processWorkersData = (workersData) => {
-        const now = new Date()
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59)
-
         const processed = workersData.map(worker => {
-            const monthlyRatings = worker.ratings?.filter(rating => {
+            // Фильтруем рейтинги за текущий период
+            const periodRatings = worker.ratings?.filter(rating => {
                 const ratingDate = new Date(rating.date)
-                return ratingDate >= startOfMonth && ratingDate <= endOfMonth
+                return ratingDate >= periodStart && ratingDate <= periodEnd
             }) || []
 
-            const monthlyLikes = monthlyRatings.filter(r => r.type === 'like').length
-            const monthlyDislikes = monthlyRatings.filter(r => r.type === 'dislike').length
+            // Рассчитываем средний КТУ за период
+            const averageKtu = calculateAverageKTU(periodRatings)
 
             return {
                 ...worker,
-                monthlyLikes,
-                monthlyDislikes,
-                monthlyRating: monthlyLikes - monthlyDislikes
+                periodRatings,
+                averageKtu
             }
         })
 
@@ -69,34 +71,12 @@ export default function WorkersTable({ workers, onEdit, onDelete, onRate, period
     // Сортируем организации по алфавиту
     const sortedOrganizations = Object.keys(groupedByOrganization).sort((a, b) => a.localeCompare(b))
 
-    const handleRate = async (workerId, type, date) => {
+    const handleRate = async (workerId, ktu, date) => {
         try {
-            await onRate(workerId, type, date)
+            await onRate(workerId, ktu, date)
         } catch (error) {
             console.error('Error in WorkersTable handleRate:', error)
         }
-    }
-
-    // Форматируем период для отображения
-    const formatPeriod = () => {
-        const start = new Date(periodStart)
-        const end = new Date(periodEnd)
-        return `${start.toLocaleDateString('ru', { month: 'long', year: 'numeric' })} - ${end.toLocaleDateString('ru', { month: 'long', year: 'numeric' })}`
-    }
-
-    // Функция для расчета КТУ
-    const calculateKTU = (likes, dislikes) => {
-        // Максимальное количество лайков для 50% КТУ
-        const maxLikes = 10
-        
-        // Базовый КТУ на основе лайков
-        const baseKTU = (likes / maxLikes) * 50
-        
-        // Штраф от дизлайков (каждый дизлайк снижает КТУ на 5%)
-        const penalty = dislikes * 5
-        
-        // Итоговый КТУ с учетом штрафа, округленный до одного знака после запятой
-        return Math.max(0, Math.min(50, Math.round((baseKTU - penalty) * 10) / 10))
     }
 
     return (
@@ -130,8 +110,7 @@ export default function WorkersTable({ workers, onEdit, onDelete, onRate, period
                                             <th>Должность</th>
                                             <th>Телефон</th>
                                             <th>Email</th>
-                                            <th>Рейтинг за период</th>
-                                            <th>КТУ (%)</th>
+                                            <th>КТУ за период</th>
                                             <th>Действия</th>
                                         </tr>
                                     </thead>
@@ -144,27 +123,21 @@ export default function WorkersTable({ workers, onEdit, onDelete, onRate, period
                                                 <td>{worker.email}</td>
                                                 <td>
                                                     <div className="rating-cell">
-                                                        <span>
-                                                            {worker.periodRating} 
-                                                            (👍 {worker.periodLikes} / 
-                                                            👎 {worker.periodDislikes})
+                                                        <span className={`ktu-value ${
+                                                            !worker.averageKtu ? 'ktu-min' : 
+                                                            worker.averageKtu >= 1.8 ? 'ktu-max' : 
+                                                            worker.averageKtu >= 1.5 ? 'ktu-high' :
+                                                            worker.averageKtu >= 1.0 ? 'ktu-mid' : 'ktu-low'
+                                                        }`}>
+                                                            КТУ: {worker.averageKtu?.toFixed(2) || 0}
                                                         </span>
                                                         <button
                                                             className="rate-button"
                                                             onClick={() => setRatingWorker(worker)}
                                                         >
-                                                            Оценить
+                                                            Установить КТУ
                                                         </button>
                                                     </div>
-                                                </td>
-                                                <td>
-                                                    <span className={`ktu-value ${
-                                                        worker.periodLikes === 0 ? 'ktu-min' : 
-                                                        calculateKTU(worker.periodLikes, worker.periodDislikes) >= 45 ? 'ktu-max' : 
-                                                        calculateKTU(worker.periodLikes, worker.periodDislikes) >= 25 ? 'ktu-mid' : 'ktu-low'
-                                                    }`}>
-                                                        {calculateKTU(worker.periodLikes, worker.periodDislikes)}%
-                                                    </span>
                                                 </td>
                                                 <td>
                                                     <button onClick={() => onEdit(worker)}>Редактировать</button>
@@ -185,7 +158,7 @@ export default function WorkersTable({ workers, onEdit, onDelete, onRate, period
                 onClose={() => setRatingWorker(null)}
                 onRate={handleRate}
                 worker={ratingWorker}
-                disabledDates={ratingWorker?.ratings?.map(rating => new Date(rating.date)) || []}
+                disabledDates={ratingWorker?.periodRatings?.map(rating => new Date(rating.date)) || []}
             />
         </>
     )

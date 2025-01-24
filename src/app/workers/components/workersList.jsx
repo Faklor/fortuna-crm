@@ -23,6 +23,12 @@ export default function WorkersList({ visibleWorkers, initialStartDate, initialE
     const [endDate, setEndDate] = useState(new Date(initialEndDate))
     const [processedWorkers, setProcessedWorkers] = useState([])
 
+    // Добавляем функцию расчета среднего КТУ
+    const calculateAverageKTU = (ratings) => {
+        if (!ratings || ratings.length === 0) return 0
+        return ratings.reduce((sum, rating) => sum + rating.ktu, 0) / ratings.length
+    }
+
     useEffect(() => {
         const parsedWorkers = JSON.parse(visibleWorkers)
         setWorkers(parsedWorkers)
@@ -31,19 +37,17 @@ export default function WorkersList({ visibleWorkers, initialStartDate, initialE
 
     const processWorkersData = (workersData, start, end) => {
         const processed = workersData.map(worker => {
-            const periodRatings = worker.ratings.filter(rating => {
+            const periodRatings = worker.ratings?.filter(rating => {
                 const ratingDate = new Date(rating.date)
                 return ratingDate >= start && ratingDate <= end
-            })
+            }) || []
 
-            const periodLikes = periodRatings.filter(r => r.type === 'like').length
-            const periodDislikes = periodRatings.filter(r => r.type === 'dislike').length
+            const averageKtu = calculateAverageKTU(periodRatings)
 
             return {
                 ...worker,
-                periodLikes,
-                periodDislikes,
-                periodRating: periodLikes - periodDislikes
+                periodRatings,
+                averageKtu
             }
         })
 
