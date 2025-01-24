@@ -192,6 +192,33 @@ function CreateWork({
                                  'custom'
             };
 
+            // Получаем информацию о работниках и технике
+            const selectedWorkers = sortedWorkers
+                .filter(w => workData.workers.includes(w._id))
+                .map(w => w.name || w.properties?.Name || 'Без имени');
+
+            const selectedEquipment = sortedEquipment
+                .filter(e => workData.equipment.includes(e._id))
+                .map(e => `${e.catagory ? `${e.catagory.split(' ')[0]} ` : ''}${e.name}`);
+
+            // Формируем сообщение для Telegram
+            const message = `
+<b>🌱 Новая работа создана</b>
+
+📅 Планируемая дата: ${workData.plannedDate}
+🏢 Поле: ${selectedField?.properties?.Name || 'Без названия'}
+📋 Название: ${workData.name}
+🔧 Тип: ${WORK_TYPES[workData.type] || workData.type}
+📏 Площадь: ${dataToSave.area} га
+
+${workData.description ? `<b>Описание:</b>\n${workData.description}\n` : ''}
+${selectedWorkers.length > 0 ? `\n<b>Работники:</b>\n${selectedWorkers.map(w => `• ${w}`).join('\n')}` : ''}
+${selectedEquipment.length > 0 ? `\n<b>Техника:</b>\n${selectedEquipment.map(e => `• ${e}`).join('\n')}` : ''}`;
+
+            // Отправляем уведомление
+            await axios.post('/api/telegram/sendNotification', { message });
+
+            // Сохраняем работу
             onSave(dataToSave);
         } catch (error) {
             console.error('Error preparing work data:', error);

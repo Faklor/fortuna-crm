@@ -28,6 +28,36 @@ export default function ActiveReq({_id, index, dateBegin, urgency, obj, parts, s
     async function deleteReq(_id){
         return await axios.post('/api/requisition/deleteReq',{_id:_id})
     }
+    async function sendCancelNotification(reqData, object, partsOption) {
+        // Определяем эмодзи и цвет в зависимости от срочности
+        let urgencyEmoji;
+        switch(reqData.urgency) {
+            case 'СРОЧНАЯ':
+                urgencyEmoji = '🔴';
+                break;
+            case 'СРЕДНЕЙ СРОЧНОСТИ':
+                urgencyEmoji = '🟡';
+                break;
+            case 'НЕ СРОЧНАЯ':
+                urgencyEmoji = '🟢';
+                break;
+            default:
+                urgencyEmoji = '⚪';
+        }
+
+        const message = `
+<b>❌ Заявка отменена</b>
+
+📅 Дата создания: ${reqData.dateBegin}
+🏢 Объект: ${object.name}
+⚡ Срочность: ${urgencyEmoji} <code>${reqData.urgency}</code>
+
+<b>Отмененные запчасти:</b>
+${partsOption.map(part => `• ${part.countReq} ${part.description} ${part._doc.name}`).join('\n')}
+`;
+
+        return await axios.post('/api/telegram/sendNotification', { message });
+    }
 
     function getColor(){
         if(urgency === 'НЕ СРОЧНАЯ'){
@@ -81,11 +111,15 @@ export default function ActiveReq({_id, index, dateBegin, urgency, obj, parts, s
             />
             <button>Редактировать<Image src={'/components/edit.svg'} width={20} height={20} alt="completeReq"/></button>
             <button onClick={()=>{
-                
                 deleteReq(_id)
                 .then(res=>{
+                    sendCancelNotification(
+                        { dateBegin, urgency },
+                        object,
+                        partsOption
+                    ).catch(e => console.log('Failed to send cancel notification:', e));
+
                     arrActive.map((item,index)=>{
-                        
                         if(item._id === _id){
                             setArrActive(arrActive.toSpliced(index,1)) 
                         }

@@ -8,6 +8,7 @@ import CreateWork from './createWork'
 import '../scss/fieldWorks.scss'
 import { useSearchParams } from 'next/navigation'
 import { WORK_TYPES } from '../constants/workTypes';
+import { WORK_STATUSES } from '../constants/workStatuses';
 
 export default function ShowField({
     setShowFieldVisible, 
@@ -540,6 +541,33 @@ export default function ShowField({
                             : work
                     )
                 );
+
+                // Находим информацию о работе
+                const work = fieldWorks.find(w => w._id === workId);
+                if (work) {
+                    // Форматируем дату
+                    const date = new Date(work.plannedDate).toLocaleDateString('ru-RU', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit'
+                    });
+
+                    // Отправляем уведомление об изменении статуса
+                    const message = `
+<b>🔄 Статус работы изменен</b>
+
+📅 Дата создания: ${date}
+🏢 Объект: ${field?.properties?.Name || 'Без названия'}
+📋 Работа: ${work.name}
+✨ Новый статус: <code>${WORK_STATUSES[newStatus].emoji} ${WORK_STATUSES[newStatus].name}</code>
+
+<b>Детали работы:</b>
+• Тип: ${getWorkTypeName(work.type)}
+• Площадь: ${work.area} га
+${work.description ? `• Описание: ${work.description}` : ''}`;
+
+                    await axios.post('/api/telegram/sendNotification', { message });
+                }
             }
         } catch (error) {
             console.error('Error updating work status:', error);
@@ -595,39 +623,45 @@ export default function ShowField({
         }
     }, [selectedField]);
 
-    // Добавьте функцию удаления работы
-    const handleDeleteWork = async (workId, e) => {
-        e.stopPropagation(); // Предотвращаем всплытие события
+    // Добавим функцию для удаления работы с уведомлением
+    const handleDeleteWork = async (workId) => {
+        try {
+            // Находим информацию о работе перед удалением
+            const work = fieldWorks.find(w => w._id === workId);
+            
+            const response = await axios.delete(`/api/fields/works/delete/${workId}`);
+            
+            if (response.data.success) {
+                // Если работа найдена, отправляем уведомление
+                if (work) {
+                    const date = new Date(work.plannedDate).toLocaleDateString('ru-RU', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit'
+                    });
 
-        if (window.confirm('Вы уверены, что хотите удалить эту работу?')) {
-            try {
-                const response = await fetch(`/api/fields/works/delete/${workId}`, {
-                    method: 'DELETE',
-                });
+                    const message = `
+<b>🗑️ Работа удалена</b>
 
-                if (!response.ok) {
-                    throw new Error('Ошибка при удалении работы');
+📅 Дата создания: ${date}
+🏢 Объект: ${field?.properties?.Name || 'Без названия'}
+📋 Работа: ${work.name}
+${WORK_STATUSES[work.status].emoji} Статус: ${WORK_STATUSES[work.status].name}
+
+<b>Детали удаленной работы:</b>
+• Тип: ${getWorkTypeName(work.type)}
+• Площадь: ${work.area} га
+${work.description ? `• Описание: ${work.description}` : ''}`;
+
+                    await axios.post('/api/telegram/sendNotification', { message });
                 }
 
-                // Обновляем список работ после удаления
-                const updatedWorks = fieldWorks.filter(work => work._id !== workId);
-                setFieldWorks(updatedWorks);
-
-                // Если удаляем выбранную работу, снимаем выделение
-                if (selectedWork?._id === workId) {
-                    setSelectedWork(null);
-                    onWorkSelect(null);
-                }
-
-                // Обновляем архив, если работа была оттуда
-                if (archiveWorks.some(work => work._id === workId)) {
-                    const updatedArchive = archiveWorks.filter(work => work._id !== workId);
-                    setArchiveWorks(updatedArchive);
-                }
-            } catch (error) {
-                console.error('Error deleting work:', error);
-                alert('Ошибка при удалении работы');
+                // Обновляем список работ
+                setFieldWorks(prevWorks => prevWorks.filter(w => w._id !== workId));
             }
+        } catch (error) {
+            console.error('Error deleting work:', error);
+            alert('Ошибка при удалении работы');
         }
     };
 
@@ -1156,7 +1190,7 @@ export default function ShowField({
                                     )}
                                     <button 
                                         className="delete-work-btn"
-                                        onClick={(e) => handleDeleteWork(work._id, e)}
+                                        onClick={(e) => handleDeleteWork(work._id)}
                                     >
                                         ✕
                                     </button>
@@ -1247,7 +1281,7 @@ export default function ShowField({
                                         <span className="work-status completed">Завершено</span>
                                         <button 
                                             className="delete-work-btn"
-                                            onClick={(e) => handleDeleteWork(work._id, e)}
+                                            onClick={(e) => handleDeleteWork(work._id)}
                                         >
                                             ✕
                                         </button>

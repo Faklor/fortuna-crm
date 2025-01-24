@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import './scss/windowAddOperation.scss'
 import axios from 'axios'
 import { usePathname, useRouter } from 'next/navigation'
+import { OPERATION_TYPES } from '../../constants/operationTypes'
 //-------------components--------------
 import Repair from './components/repair'
 import AddInspection from './components/addInspection'
@@ -16,7 +17,7 @@ export default function Page({}){
     const objectID = pathname.split('/')[2]
 
     //default
-    let listTypesOperations = ['Ремонт', 'Технический Осмотр', 'Техническое обслуживание', 'Навигация']
+    const listTypesOperations = Object.keys(OPERATION_TYPES)
     
     //react
     const [typeOperation, setTypeOperation] = useState(listTypesOperations[0])
@@ -46,30 +47,70 @@ export default function Page({}){
                 <p>Добавление выполненной операции</p>
             </div>
 
-            <select onChange={e=>setTypeOperation(e.target.value)}>
-                {listTypesOperations.map((type,index)=>{
-                    return <option key={index} value={type}>{type}</option>
-                })}
+            <select 
+                onChange={e=>setTypeOperation(e.target.value)}
+                style={{
+                    backgroundColor: OPERATION_TYPES[typeOperation].color,
+                    color: 'white',
+                    padding: '8px',
+                    borderRadius: '4px',
+                    border: 'none'
+                }}
+            >
+                {listTypesOperations.map((type, index) => (
+                    <option 
+                        key={index} 
+                        value={type}
+                        style={{
+                            backgroundColor: 'white',
+                            color: OPERATION_TYPES[type].color
+                        }}
+                    >
+                        {OPERATION_TYPES[type].emoji} {type}
+                    </option>
+                ))}
             </select>
-            {typeOperation === 'Ремонт' || typeOperation === 'Навигация'?<Repair 
-             
-            type={typeOperation} 
-            objectID={objectID} 
-            />:''}
-            {typeOperation === 'Технический Осмотр'?<AddInspection 
-            
-            period={obj.inspection.period} 
-            type={typeOperation} 
-            objectID={objectID}
-            />:''}
-            {typeOperation === 'Техническое обслуживание'?<AddMaintance 
-            
-            type={typeOperation} 
-            objectID={objectID}
-            category={obj.category}
-            periodTO={obj.maintance.periodTO}
-            />:''}
 
+            <div style={{ marginTop: '20px' }}>
+                {typeOperation === 'Ремонт' || typeOperation === 'Навигация' ? (
+                    <div style={{ 
+                        borderLeft: `4px solid ${OPERATION_TYPES[typeOperation].color}`,
+                        paddingLeft: '10px'
+                    }}>
+                        <Repair 
+                            type={typeOperation} 
+                            objectID={objectID} 
+                        />
+                    </div>
+                ) : null}
+                
+                {typeOperation === 'Технический Осмотр' ? (
+                    <div style={{ 
+                        borderLeft: `4px solid ${OPERATION_TYPES[typeOperation].color}`,
+                        paddingLeft: '10px'
+                    }}>
+                        <AddInspection 
+                            period={obj.inspection?.period} 
+                            type={typeOperation} 
+                            objectID={objectID}
+                        />
+                    </div>
+                ) : null}
+                
+                {typeOperation === 'Техническое обслуживание' ? (
+                    <div style={{ 
+                        borderLeft: `4px solid ${OPERATION_TYPES[typeOperation].color}`,
+                        paddingLeft: '10px'
+                    }}>
+                        <AddMaintance 
+                            type={typeOperation} 
+                            objectID={objectID}
+                            category={obj.category}
+                            periodTO={obj.maintance?.periodTO}
+                        />
+                    </div>
+                ) : null}
+            </div>
         </div>
     </div>
 }
