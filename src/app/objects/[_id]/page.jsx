@@ -14,6 +14,8 @@ import HistoryOperation from "./components/historyOperations";
 import BindingParts from "./components/BindingParts";
 import EditObject from './components/editObject'
 import ImageWithFallback from "./components/ImageWithFallback"
+import Workers from "@/models/workers";
+import Parts from "@/models/parts";
 
 export const revalidate = 1
 export const dynamicParams = true
@@ -38,8 +40,12 @@ export default async function Page({params, searchParams}){
     //other
     const {_id} = await params
     //db
+    
     const object = await Tech.findOne({_id})
-
+    const orders  = await Orders.find({objectID:_id}) 
+    const operations  = await Operations.find({objectID:_id})  
+    const workers = await Workers.find({}) 
+    const parts = await Parts.find({})     
     // Если объект не найден, можно показать сообщение об ошибке
     if (!object) {
         return (
@@ -53,13 +59,11 @@ export default async function Page({params, searchParams}){
         )
     }
 
-    const orders = await Orders.find({objectID:_id})
-    const operations = await Operations.find({objectID:_id})
-    //default
-    //const object = obj
     const visibleObject = JSON.stringify(object)
     const visibleOrders = JSON.stringify(orders)
     const visibleOperation = JSON.stringify(operations)
+    const visibleWorkers = JSON.stringify(workers)
+    const visibleParts = JSON.stringify(parts)
 
     // Преобразуем icon в простой объект, только если объект существует
     const iconData = object?.icon ? {
@@ -126,7 +130,13 @@ export default async function Page({params, searchParams}){
                             <Image src={'/components/add.svg'} width={5} height={5} alt='add_Operation'/>
                         </Link>
                     </div>
-                    <HistoryOperation visibleOperation={visibleOperation} category={object.catagory} objectID={_id}/>
+                    <HistoryOperation 
+                        visibleOperation={visibleOperation} 
+                        category={object.catagory} 
+                        objectID={_id}
+                        visibleWorkers={visibleWorkers}
+                        visibleParts={visibleParts}
+                    />
                     
                     <div className='title orderTtile'>
                         <h2>История выданных запчастей</h2>

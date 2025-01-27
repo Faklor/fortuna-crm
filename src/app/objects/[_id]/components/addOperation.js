@@ -8,8 +8,14 @@ import Repair from './repair'
 import AddInspection from './addInspection'
 import AddMaintance from './addMaintance'
 
-
-export default function Page({objectID, setOperations}){
+ 
+export default function Page({
+    objectID, 
+    setOperations, 
+    category,
+    workers,
+    parts
+}){
     
     //navigation
     const router = useRouter()
@@ -58,15 +64,18 @@ export default function Page({objectID, setOperations}){
                     <option value='Ремонт'>Ремонт</option>
                 }
             </select>
-            {typeOperation === 'Ремонт' || typeOperation === 'Навигация'?<Repair 
-             
-            type={typeOperation} 
-            objectID={objectID} 
-
-            setOperations={setOperations}
-            listTypesOperations={listTypesOperations}
-            setTypeOperation={setTypeOperation}
-            />:''}
+            {typeOperation === 'Ремонт' || typeOperation === 'Навигация'?
+                <Repair 
+                    type={typeOperation} 
+                    objectID={objectID} 
+                    setOperations={setOperations}
+                    listTypesOperations={listTypesOperations}
+                    setTypeOperation={setTypeOperation}
+                    category={category}
+                    workers={workers}
+                    parts={parts}
+                />
+            :''}
             {typeOperation === 'Технический Осмотр'?<AddInspection 
             
             period={obj.inspection.period} 

@@ -9,10 +9,30 @@ export async function POST(req,res){
 
 
     try{
-        const {objectID, date, type, description, period, beginDate, periodMotor} = await req.json();
+        const {
+            objectID, 
+            date, 
+            type, 
+            description, 
+            period, 
+            beginDate, 
+            periodMotor,
+            executor,
+            createdBy,
+            usedParts
+        } = await req.json();
 
         if(type === 'Ремонт'){
-            const operationAdd = await Operations.create({objectID, date, type, description})
+            const operationAdd = await Operations.create({
+                objectID, 
+                date, 
+                type, 
+                description,
+                periodMotor,
+                executor,
+                createdBy,
+                usedParts
+            })
             return NextResponse.json(operationAdd)
         }
         else if(type === 'Технический Осмотр' || type === 'Навигация'){

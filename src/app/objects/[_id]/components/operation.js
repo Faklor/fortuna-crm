@@ -15,7 +15,9 @@ export default function Operation({
     index, 
     periodMotorCheck, 
     category,
-
+    executor,
+    usedParts,
+    createdBy,
     setOperations
 }){
 
@@ -66,44 +68,69 @@ export default function Operation({
         //return '#4F8DE3'
     }
 
-    return !visibleEdit?<div className="operation">
-        <div>
-            <h3 style={{color:getColor()}}>{type}</h3>
-            
+    return !visibleEdit ? (
+        <div className="operation">
             <div>
-                
-            <button onClick={()=>{
-                setVisibleEdit(true)
-            }}>
-                <Image src={'/components/edit.svg'} width={34} height={34} alt='editOperation'/>
-            </button>
-
-            <button onClick={()=>{
-                    deleteOperation(_id)
-                    .then(res=>{
-                        setOperations((prevParts) => prevParts.filter((part) => part._id !== res.data))
-                    })
-                    .catch(e=>console.log(e))
-                }}>
-                <Image src={'/components/delete.svg'} width={34} height={34} alt='deleteOperation'/>
-            </button>
-
+                <h3 style={{color:getColor()}}>{type}</h3>
+                <div>
+                    <button onClick={() => setVisibleEdit(true)}>
+                        <Image src={'/components/edit.svg'} width={34} height={34} alt='editOperation'/>
+                    </button>
+                    <button onClick={() => {
+                        deleteOperation(_id)
+                            .then(res => {
+                                setOperations((prevParts) => prevParts.filter((part) => part._id !== res.data))
+                            })
+                            .catch(e => console.log(e))
+                    }}>
+                        <Image src={'/components/delete.svg'} width={34} height={34} alt='deleteOperation'/>
+                    </button>
+                </div>
             </div>
-        </div>
+                
+            {periodMotorCheck !== '' && <h2>{periodMotorCheck + ' ' + categoryTech}</h2>}
+            {description && <textarea ref={(el)=>refText.current[index] = el} value={description} readOnly/>}
             
-        {periodMotorCheck !== ''?<h2>{periodMotorCheck + ' ' + categoryTech}</h2>:''}    
-        {description?<textarea ref={(el)=>refText.current[index] = el} value={description} readOnly/>:''}
-    </div>
-    :
-    
-    <EditOperation 
-        _id={_id}
-        setVisibleEdit={setVisibleEdit}
-        periodMotorCheck={periodMotorCheck}
-        description={description}
-        date={date}
+            {/* Информация об исполнителе */}
+            {executor && (
+                <div className="operation-executor">
+                    <span className="executor-label">Исполнитель:</span>
+                    <span className="executor-name">{executor}</span>
+                </div>
+            )}
 
-        setOperations={setOperations}
-    />
-    
+            {/* Использованные запчасти */}
+            {usedParts && usedParts.length > 0 && (
+                <div className="operation-parts">
+                    <h4>Использованные запчасти:</h4>
+                    <ul>
+                        {usedParts.map((part, idx) => (
+                            <li key={idx}>
+                                {part.name} - {part.count} {part.unit}
+                                {part.serialNumber && <span className="part-serial"> (S/N: {part.serialNumber})</span>}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+
+            {/* Информация о создателе записи */}
+            {createdBy && (
+                <div className="operation-creator">
+                    <span>Запись создал: {createdBy}</span>
+                </div>
+            )}
+        </div>
+    ) : (
+        <EditOperation 
+            _id={_id}
+            setVisibleEdit={setVisibleEdit}
+            periodMotorCheck={periodMotorCheck}
+            description={description}
+            date={date}
+            executor={executor}
+            usedParts={usedParts}
+            setOperations={setOperations}
+        />
+    )
 }

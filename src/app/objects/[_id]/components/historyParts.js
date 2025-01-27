@@ -94,14 +94,17 @@ export default function HistoryParts({visibleOrders}){
                                                     <Image src={'/components/sum.svg'} width={20} height={20} alt='sum'/>
                                                     <p className='sum'>{el.part.sum} б.р.</p>
                                                 </div>:<></>}
+                                                {el.part.contact && 
+                                                el.part.contact.name || 
+                                                el.part.contact &&
+                                                el.part.contact.link?<p className='titleContacts'>Контакты</p>:''}
+                                                
 
-                                                {el.part.contact.name || el.part.contact.link?<p className='titleContacts'>Контакты</p>:''}
-
-                                                {el.part.contact.name?<div>
+                                                {el.part.contact && el.part.contact.name?<div>
                                                     <Image src={'/components/contactName.svg'} width={20} height={20} alt='contactName'/>
                                                     <p>{el.part.contact.name}</p>
                                                 </div>:<></>}
-                                                {el.part.contact.link?<div>
+                                                {el.part.contact && el.part.contact.link?<div>
                                                     <Image src={'/components/link.svg'} width={20} height={20} alt='contactLink'/>
                                                     <p>{el.part.contact.link}</p>
                                                 </div>:<></>}

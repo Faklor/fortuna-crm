@@ -7,12 +7,19 @@ import Operation from './operation';
 import AddOperation from './addOperation'
 
 
-export default function HistoryOperation({visibleOperation, category, objectID}){
-    
-    //default
+export default function HistoryOperation({
+    visibleOperation, 
+    category, 
+    objectID,
+    visibleWorkers,
+    visibleParts
+}){
     const [operations, setOperations] = useState(JSON.parse(visibleOperation))
+    const workers = JSON.parse(visibleWorkers)
+    const parts = JSON.parse(visibleParts)
+    
     //useRef
-    const textAreaRef = useRef([])
+    const textAreaRef = useRef([]) 
     //functions
     //console.log(operations)
     const uniqueDates = {}
@@ -26,17 +33,36 @@ export default function HistoryOperation({visibleOperation, category, objectID})
     operations.sort((a, b) => new Date(a.date) - new Date(b.date))
 
     operations.forEach(item => {
-    const { _id, date, type, description, periodMotor } = item
-    let periodMotorCheck = periodMotor?periodMotor:''
-    const operationDate = new Date(date);
-        
-    // Сравниваем даты
+        const { _id, date, type, description, periodMotor, executor, usedParts, createdBy } = item
+        let periodMotorCheck = periodMotor ? periodMotor : ''
+        const operationDate = new Date(date);
+            
         if (operationDate <= currentDate) {
-            // Дата прошедшая или равна текущей дате
             if (!uniqueDates[date]) {
-                uniqueDates[date] = { date: formatDate(date), data: [{ _id, date, type, description, periodMotorCheck }] };
+                uniqueDates[date] = { 
+                    date: formatDate(date), 
+                    data: [{
+                        _id, 
+                        date, 
+                        type, 
+                        description, 
+                        periodMotorCheck,
+                        executor,
+                        usedParts,
+                        createdBy
+                    }] 
+                };
             } else {
-                uniqueDates[date].data.push({ _id, date, type, description, periodMotorCheck });
+                uniqueDates[date].data.push({
+                    _id, 
+                    date, 
+                    type, 
+                    description, 
+                    periodMotorCheck,
+                    executor,
+                    usedParts,
+                    createdBy
+                });
             }    
         }
     })
@@ -46,7 +72,13 @@ export default function HistoryOperation({visibleOperation, category, objectID})
     
 
     return <div className="historyOperations" > 
-        <AddOperation objectID={objectID} setOperations={setOperations}/>
+        <AddOperation 
+            objectID={objectID} 
+            setOperations={setOperations}
+            category={category}
+            workers={workers}
+            parts={parts}
+        />
         {operations.length ?
             <div className="operations-accordion">
                 {sortArray.map((item,index)=>{

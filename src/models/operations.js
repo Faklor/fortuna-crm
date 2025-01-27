@@ -7,8 +7,16 @@ const operationsSchema = new mongoose.Schema({
     date:{type:String},
     type:{type:String},
     description:{type:String},
-    periodMotor:{type:Number}
-    
+    periodMotor:{type:Number},
+    executor: { type: String },
+    createdBy: { type: String },
+    usedParts: [{
+        name: String,
+        serialNumber: String,
+        manufacturer: String,
+        count: Number,
+        sum: Number
+    }]
 })
 
 export default mongoose.models.operations || mongoose.model('operations', operationsSchema)
