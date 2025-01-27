@@ -1,21 +1,41 @@
 import dbConnet from "@/lib/db"
 import Operation from '@/models/operations'
-import { NextRequest, NextResponse } from "next/server"
+import Parts from '@/models/parts'
+import Order from '@/models/orders'
+import { NextResponse } from "next/server"
 
-export async function POST(req,res){
+export async function POST(req){
     await dbConnet()
 
-
-    try{
+    try {
         const {_id} = await req.json();
         
-        const operationDelete = await Operation.deleteOne({_id})
+        // Получаем операцию перед удалением
+        const operation = await Operation.findOne({_id})
         
-
+        if (operation && operation.usedParts && operation.usedParts.length > 0) {
+            // Возвращаем запчасти на склад
+            for (const part of operation.usedParts) {
+                await Parts.findByIdAndUpdate(
+                    part._id,
+                    { $inc: { count: part.count } }
+                )
+            }
+            
+            // Удаляем записи о выдаче запчастей
+            await Order.deleteMany({
+                objectID: operation.objectID,
+                date: operation.date,
+                workerName: operation.executor
+            })
+        }
+        
+        // Удаляем саму операцию
+        await Operation.deleteOne({_id})
+        
         return NextResponse.json(_id)
     }
-    catch(e){   
-        return NextResponse.json(e.message)
+    catch(e) {   
+        return NextResponse.json({ error: e.message }, { status: 500 })
     }
-
 }

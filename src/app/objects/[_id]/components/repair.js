@@ -36,7 +36,7 @@ export default function Repair({
     const [dateOpertaion, setDateOperation]  = useState(formatDate(defaultDate))
     const [descriptionOpertaion, setDescriptionOperation] = useState('')
     const [periodMotor, setPeriodMotor] = useState('')
-    const [executor, setExecutor] = useState('')
+    const [selectedExecutors, setSelectedExecutors] = useState([])
     const [selectedParts, setSelectedParts] = useState([])
     const [partValues, setPartValues] = useState({})
     const [selectedUnits, setSelectedUnits] = useState({})
@@ -98,22 +98,37 @@ export default function Repair({
         setSelectedUnits(prev => ({ ...prev, [partId]: e.target.value }))
     }
 
+    // Обработчик изменения исполнителей
+    const handleExecutorChange = (e) => {
+        const value = e.target.value
+        if (e.target.checked) {
+            setSelectedExecutors(prev => [...prev, value])
+        } else {
+            setSelectedExecutors(prev => prev.filter(exec => exec !== value))
+        }
+    }
+
     // Функция добавления операции с запчастями
     async function addOperation(data){
+        if (selectedExecutors.length === 0) {
+            setErr('Выберите хотя бы одного исполнителя')
+            return
+        }
+
         // Подготавливаем данные о запчастях
         const usedParts = selectedParts.map(partId => {
             const part = parts.find(p => p._id === partId)
             return {
                 _id: partId,
                 name: part.name,
-                catagory: part.catagory,        // Добавляем категорию
+                catagory: part.catagory,
                 serialNumber: part.serialNumber,
-                sellNumber: part.sellNumber,     // Добавляем номер продажи
+                sellNumber: part.sellNumber,
                 manufacturer: part.manufacturer,
                 count: Number(partValues[partId]),
                 unit: selectedUnits[partId],
                 sum: part.sum,
-                contact: part.contact           // Добавляем контактную информацию
+                description: data.description
             }
         }).filter(part => part.count > 0)
 
@@ -124,7 +139,7 @@ export default function Repair({
             type,
             description: data.description,
             periodMotor: data.periodMotor,
-            executor: data.executor,
+            executors: selectedExecutors,
             createdBy: currentUser?.login || 'unknown',
             usedParts
         })
@@ -135,7 +150,8 @@ export default function Repair({
                 parts: usedParts,
                 objectID,
                 date: data.date,
-                workerName: data.executor
+                executors: selectedExecutors,
+                description: data.description
             })
         }
 
@@ -156,19 +172,22 @@ export default function Repair({
             placeholder={`Введите ${categoryUnit}`}
         />
 
-        <p>Исполнитель</p>
-        <select 
-            value={executor} 
-            onChange={e => setExecutor(e.target.value)}
-            required
-        >
-            <option value="">Выберите исполнителя</option>
-            {workers.map(worker => (
-                <option key={worker._id} value={worker.name}>
-                    {worker.name} ({worker.position})
-                </option>
-            ))}
-        </select>
+        <p>Исполнители</p>
+        <div className="executors-selection">
+            <div className="executors-list">
+                {workers.map(worker => (
+                    <label key={worker._id} className="executor-checkbox">
+                        <input
+                            type="checkbox"
+                            value={worker.name}
+                            checked={selectedExecutors.includes(worker.name)}
+                            onChange={handleExecutorChange}
+                        />
+                        <span>{worker.name} ({worker.position})</span>
+                    </label>
+                ))}
+            </div>
+        </div>
 
         <textarea 
             value={descriptionOpertaion} 
@@ -253,7 +272,6 @@ export default function Repair({
                 date: dateOpertaion,
                 description: descriptionOpertaion,
                 periodMotor: periodMotor,
-                executor: executor,
                 selectedParts: selectedParts
             })
             .then(res => {
@@ -261,7 +279,10 @@ export default function Repair({
                 router.push(`/objects/${objectID}`)
                 setTypeOperation(listTypesOperations[0])
             })
-            .catch(e => console.log(e))
+            .catch(e => {
+                console.error(e)
+                setErr(e.response?.data?.error || 'Ошибка при добавлении операции')
+            })
         }}>Добавить</button>
     </div>
 }

@@ -18,7 +18,8 @@ export default function Operation({
     executor,
     usedParts,
     createdBy,
-    setOperations
+    setOperations,
+    executors
 }){
 
     
@@ -91,11 +92,17 @@ export default function Operation({
             {periodMotorCheck !== '' && <h2>{periodMotorCheck + ' ' + categoryTech}</h2>}
             {description && <textarea ref={(el)=>refText.current[index] = el} value={description} readOnly/>}
             
-            {/* Информация об исполнителе */}
-            {executor && (
-                <div className="operation-executor">
-                    <span className="executor-label">Исполнитель:</span>
-                    <span className="executor-name">{executor}</span>
+            {/* Информация об исполнителях */}
+            {executors && executors.length > 0 && (
+                <div className="operation-executors">
+                    <span className="executors-label">Исполнители:</span>
+                    <div className="executors-list">
+                        {executors.map((executor, idx) => (
+                            <span key={idx} className="executor-name">
+                                {executor}{idx < executors.length - 1 ? ', ' : ''}
+                            </span>
+                        ))}
+                    </div>
                 </div>
             )}
 
@@ -128,7 +135,7 @@ export default function Operation({
             periodMotorCheck={periodMotorCheck}
             description={description}
             date={date}
-            executor={executor}
+            executors={executors}
             usedParts={usedParts}
             setOperations={setOperations}
         />
