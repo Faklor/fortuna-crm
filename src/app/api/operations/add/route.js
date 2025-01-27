@@ -17,7 +17,7 @@ export async function POST(req,res){
             period, 
             beginDate, 
             periodMotor,
-            executor,
+            executors,
             createdBy,
             usedParts
         } = await req.json();
@@ -29,14 +29,20 @@ export async function POST(req,res){
                 type, 
                 description,
                 periodMotor,
-                executor,
+                executors,
                 createdBy,
                 usedParts
             })
             return NextResponse.json(operationAdd)
         }
         else if(type === 'Технический Осмотр' || type === 'Навигация'){
-            const operationAdd = await Operations.create({objectID, date, type, description})
+            const operationAdd = await Operations.create({
+                objectID, 
+                date, 
+                type, 
+                description,
+                executors
+            })
             
             // Получаем информацию об объекте
             const techObject = await Tech.findById(objectID)
@@ -61,7 +67,14 @@ export async function POST(req,res){
             return NextResponse.json(operationAdd)
         }
         else if(type === 'Техническое обслуживание'){
-            const operationAdd = await Operations.create({objectID, date, type, description, periodMotor})
+            const operationAdd = await Operations.create({
+                objectID, 
+                date, 
+                type, 
+                description, 
+                periodMotor,
+                executors
+            })
             
             const editInspection =  await Tech.findByIdAndUpdate({_id:objectID},{$set:{maintance:{value:Number(periodMotor), period:period}}})
             
@@ -71,7 +84,7 @@ export async function POST(req,res){
         
     }
     catch(e){   
-        return NextResponse.json(e.message)
+        return NextResponse.json({ error: e.message }, { status: 500 })
     }
 
 }

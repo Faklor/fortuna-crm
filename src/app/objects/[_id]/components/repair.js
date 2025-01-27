@@ -43,6 +43,8 @@ export default function Repair({
     const [showPartsSelector, setShowPartsSelector] = useState(false)
     const [searchParts, setSearchParts] = useState('')
     const [err, setErr] = useState('')
+    const [customExecutor, setCustomExecutor] = useState('')
+    const [executorInputType, setExecutorInputType] = useState('list')
 
     // Получаем текущего пользователя из сессии
     const [currentUser, setCurrentUser] = useState(null)
@@ -110,8 +112,12 @@ export default function Repair({
 
     // Функция добавления операции с запчастями
     async function addOperation(data){
-        if (selectedExecutors.length === 0) {
+        if (selectedExecutors.length === 0 && executorInputType === 'list') {
             setErr('Выберите хотя бы одного исполнителя')
+            return
+        }
+        if (executorInputType === 'custom' && !customExecutor.trim()) {
+            setErr('Введите исполнителя')
             return
         }
 
@@ -127,10 +133,14 @@ export default function Repair({
                 manufacturer: part.manufacturer,
                 count: Number(partValues[partId]),
                 unit: selectedUnits[partId],
-                sum: part.sum,
-                description: data.description
+                sum: part.sum
             }
         }).filter(part => part.count > 0)
+
+        // Формируем массив исполнителей
+        const finalExecutors = executorInputType === 'list' 
+            ? selectedExecutors 
+            : [customExecutor.trim()]
 
         // Отправляем запрос на создание операции
         const operationResponse = await axios.post('/api/operations/add', {
@@ -139,7 +149,7 @@ export default function Repair({
             type,
             description: data.description,
             periodMotor: data.periodMotor,
-            executors: selectedExecutors,
+            executors: finalExecutors,
             createdBy: currentUser?.login || 'unknown',
             usedParts
         })
@@ -150,7 +160,7 @@ export default function Repair({
                 parts: usedParts,
                 objectID,
                 date: data.date,
-                executors: selectedExecutors,
+                workerName: finalExecutors[0],
                 description: data.description
             })
         }
@@ -173,21 +183,62 @@ export default function Repair({
         />
 
         <p>Исполнители</p>
-        <div className="executors-selection">
-            <div className="executors-list">
-                {workers.map(worker => (
-                    <label key={worker._id} className="executor-checkbox">
-                        <input
-                            type="checkbox"
-                            value={worker.name}
-                            checked={selectedExecutors.includes(worker.name)}
-                            onChange={handleExecutorChange}
-                        />
-                        <span>{worker.name} ({worker.position})</span>
-                    </label>
-                ))}
-            </div>
+        <div className="executor-input-type">
+            <label>
+                <input
+                    type="radio"
+                    value="list"
+                    checked={executorInputType === 'list'}
+                    onChange={(e) => {
+                        setExecutorInputType(e.target.value)
+                        setSelectedExecutors([])
+                        setCustomExecutor('')
+                    }}
+                />
+                Выбрать из списка
+            </label>
+            <label>
+                <input
+                    type="radio"
+                    value="custom"
+                    checked={executorInputType === 'custom'}
+                    onChange={(e) => {
+                        setExecutorInputType(e.target.value)
+                        setSelectedExecutors([])
+                        setCustomExecutor('')
+                    }}
+                />
+                Ввести вручную
+            </label>
         </div>
+
+        {executorInputType === 'list' ? (
+            <div className="executors-selection">
+                <div className="executors-list">
+                    {workers.map(worker => (
+                        <label key={worker._id} className="executor-checkbox">
+                            <input
+                                type="checkbox"
+                                value={worker.name}
+                                checked={selectedExecutors.includes(worker.name)}
+                                onChange={handleExecutorChange}
+                            />
+                            <span>{worker.name} ({worker.position})</span>
+                        </label>
+                    ))}
+                </div>
+            </div>
+        ) : (
+            <div className="custom-executor">
+                <input
+                    type="text"
+                    value={customExecutor}
+                    onChange={(e) => setCustomExecutor(e.target.value)}
+                    placeholder="Введите название организации или ФИО исполнителя"
+                    className="custom-executor-input"
+                />
+            </div>
+        )}
 
         <textarea 
             value={descriptionOpertaion} 
@@ -268,11 +319,25 @@ export default function Repair({
         </div>
             
         <button onClick={async()=>{
+            if (executorInputType === 'list' && selectedExecutors.length === 0) {
+                setErr('Выберите хотя бы одного исполнителя')
+                return
+            }
+            if (executorInputType === 'custom' && !customExecutor.trim()) {
+                setErr('Введите исполнителя')
+                return
+            }
+
+            const finalExecutors = executorInputType === 'list' 
+                ? selectedExecutors 
+                : [customExecutor.trim()]
+
             addOperation({
                 date: dateOpertaion,
                 description: descriptionOpertaion,
                 periodMotor: periodMotor,
-                selectedParts: selectedParts
+                selectedParts: selectedParts,
+                executors: finalExecutors
             })
             .then(res => {
                 setOperations(prev => [...prev, res.data])

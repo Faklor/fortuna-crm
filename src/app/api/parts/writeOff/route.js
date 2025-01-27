@@ -7,7 +7,7 @@ export async function POST(req) {
     await dbConnet()
 
     try {
-        const { parts, objectID, date, workerName } = await req.json()
+        const { parts, objectID, date, workerName, description } = await req.json()
 
         // Обрабатываем каждую запчасть
         for (const part of parts) {

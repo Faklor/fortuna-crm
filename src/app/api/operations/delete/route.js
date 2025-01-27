@@ -26,7 +26,7 @@ export async function POST(req){
             await Order.deleteMany({
                 objectID: operation.objectID,
                 date: operation.date,
-                workerName: operation.executor
+                workerName: operation.executors[0]
             })
         }
         
