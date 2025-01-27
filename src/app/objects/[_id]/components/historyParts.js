@@ -23,12 +23,38 @@ export default function HistoryParts({visibleOrders}){
     return new Date(dateString).toLocaleDateString('ru-RU', options)
     }
 
+    function getOperationTypeColor(type) {
+        switch(type) {
+            case 'operation':
+                return '#FA5C62' 
+            case 'manual':
+                return '#374151' 
+            case 'request':
+                return '#84E168' 
+            default:
+                return '#6b7280'
+        }
+    }
+
+    function getOperationTypeText(type) {
+        switch(type) {
+            case 'operation':
+                return 'После операции'
+            case 'manual':
+                return 'Выдача со склада'
+            case 'request':
+                return 'После заявки'
+            default:
+                return 'Выдача со склада'
+        }
+    }
+
     parts.forEach(item => {
-    const { _id, date, workerName, part, countPart, description } = item
+    const { _id, date, workerName, part, countPart, description, operationType } = item
     if (!uniqueDates[new Date(date).toLocaleDateString()]) {
-        uniqueDates[new Date(date).toLocaleDateString()] = { date: formatDate(date), data: [{ _id, workerName, part, countPart, description }] }
+        uniqueDates[new Date(date).toLocaleDateString()] = { date: formatDate(date), data: [{ _id, workerName, part, countPart, description, operationType }] }
     } else {
-        uniqueDates[new Date(date).toLocaleDateString()].data.push({ _id, workerName, part,countPart, description })
+        uniqueDates[new Date(date).toLocaleDateString()].data.push({ _id, workerName, part,countPart, description, operationType })
     }
     })
 
@@ -58,12 +84,23 @@ export default function HistoryParts({visibleOrders}){
                                 {item.data.map((el,index)=>{
                                     return <div key={index} className='infoOrder'>
                                         <div className='worker'>
-                                            <p>{el.workerName}</p>
+                                            <div className='worker-info'>
+                                                <p>{el.workerName}</p>
+                                                <span 
+                                                    className='operation-type'
+                                                    style={{ 
+                                                        backgroundColor: `${getOperationTypeColor(el.operationType)}50`, // добавляем прозрачность
+                                                        color: getOperationTypeColor(el.operationType)
+                                                    }}
+                                                >
+                                                    {getOperationTypeText(el.operationType)}
+                                                </span>
+                                            </div>
                                             <div className='controllers'>
                                                 {/* <button onClick={()=>{
                                                     setEditOrder(true)
                                                 }}><Image src={require('@/res/components/edit.svg')} width={10} height={10} alt='editOrder'/></button> */}
-                                                <button onClick={async ()=>{
+                                                {el.operationType && el.operationType === 'manual'?<button onClick={async ()=>{
                                                    
                                                     deleteOrder(el._id, el.part, el.countPart)
                                                     .then(res=>{
@@ -74,7 +111,7 @@ export default function HistoryParts({visibleOrders}){
                                                     .catch(e=>{
                                                         console.log(e)
                                                     })
-                                                }}><Image src={'/components/delete.svg'} width={10} height={10} alt='deleteOrder'/></button>
+                                                }}><Image src={'/components/delete.svg'} width={10} height={10} alt='deleteOrder'/></button>:null}
                                             </div>
                                         </div>
                                         <div className='part'>

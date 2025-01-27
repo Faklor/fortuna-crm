@@ -30,6 +30,31 @@
                 border-radius: 5px 5px 0 0;
                 padding:0.5em 1em;
                 color:#fff;
+                .worker-info {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+            
+                    p {
+                        font-weight: 500;
+                        color: #374151;
+                    }
+            
+                    .operation-type {
+                        font-size: 12px;
+                        padding: 4px 10px;
+                        border-radius: 6px;
+                        font-weight: 500;
+                        transition: all 0.2s ease;
+            
+                        &:hover {
+                            opacity: 0.9;
+                        }
+                    }
+                    span{
+                        background-color: #6b7280;
+                    }
+                }
                 p{
                     align-self: center;
                 }
@@ -178,6 +203,14 @@
     .parts-content {
         padding: 16px;
         animation: slideDown 0.3s ease-out;
+    }
+}
+
+.worker {
+    
+
+    .controllers {
+        // ... существующие стили ...
     }
 }
 

@@ -8,24 +8,41 @@ import { NextRequest, NextResponse } from "next/server"
 export async function POST(req){
     await dbConnet()
 
-
     try{
         const { _id, dateBegin, object, partsOption, dateNow, workerName} = await req.json()
 
-
-        const createHistoryItem = await HistoryReq.create({dateBegin:dateBegin,dateEnd:dateNow,status:false,urgency:'Закрыта',obj:object,parts:partsOption})
+        const createHistoryItem = await HistoryReq.create({
+            dateBegin: dateBegin,
+            dateEnd: dateNow,
+            status: false,
+            urgency: 'Закрыта',
+            obj: object,
+            parts: partsOption
+        })
 
         if(createHistoryItem){
+            // Обрабатываем каждую запчасть
+            for (const el of partsOption) {
+                // Обновляем количество на складе
+                const newCount = el._doc.count - el.countReq
+                await Parts.findOneAndUpdate(
+                    { _id: el._doc._id },
+                    { $set: { count: newCount } }
+                )
 
-            partsOption.forEach(async (el) => {
-                let newCount = el._doc.count - el.countReq
-                let findUpdate = await Parts.findOneAndUpdate({_id:el._doc._id},{$set:{count:newCount}})
-                let newOrder = await Order.create({date:dateNow, workerName:workerName, objectID:object._id, part:el._doc, countPart:Number(el.countReq), description:el.description})
-            })
+                // Создаем запись о выдаче с типом 'request'
+                await Order.create({
+                    date: dateNow,
+                    workerName: workerName,
+                    objectID: object._id,
+                    part: el._doc,
+                    countPart: Number(el.countReq),
+                    description: el.description,
+                    operationType: 'request' // указываем, что выдача произошла после заявки
+                })
+            }
 
-            
             const deleteActiveReq = await Requisition.findOneAndDelete({_id:_id})
-
             return NextResponse.json(_id)
         }       
         //console.log(_id, dateBegin, object, partsOption)
@@ -35,7 +52,9 @@ export async function POST(req){
         
     }
     catch(e){
-        return NextResponse.json(e.message) 
+        return NextResponse.json({ 
+            error: e.message,
+            details: 'Ошибка при завершении заявки'
+        }, { status: 500 })
     }
-
 }

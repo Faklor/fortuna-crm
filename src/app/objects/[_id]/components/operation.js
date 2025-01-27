@@ -15,11 +15,12 @@ export default function Operation({
     index, 
     periodMotorCheck, 
     category,
-    executor,
     usedParts,
     createdBy,
     setOperations,
-    executors
+    executors,
+    workers,
+    parts
 }){
 
     
@@ -124,7 +125,7 @@ export default function Operation({
             {/* Информация о создателе записи */}
             {createdBy && (
                 <div className="operation-creator">
-                    <span>Запись создал: {createdBy}</span>
+                    <span>Последнее взаимодействие: {createdBy}</span>
                 </div>
             )}
         </div>
@@ -138,6 +139,8 @@ export default function Operation({
             executors={executors}
             usedParts={usedParts}
             setOperations={setOperations}
+            workers={workers}
+            parts={parts}
         />
     )
 }

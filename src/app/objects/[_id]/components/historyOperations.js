@@ -33,7 +33,7 @@ export default function HistoryOperation({
     operations.sort((a, b) => new Date(a.date) - new Date(b.date))
 
     operations.forEach(item => {
-        const { _id, date, type, description, periodMotor, executor, usedParts, createdBy } = item
+        const { _id, date, type, description, periodMotor, executors, usedParts, createdBy } = item
         let periodMotorCheck = periodMotor ? periodMotor : ''
         const operationDate = new Date(date);
             
@@ -47,7 +47,7 @@ export default function HistoryOperation({
                         type, 
                         description, 
                         periodMotorCheck,
-                        executor,
+                        executors,
                         usedParts,
                         createdBy
                     }] 
@@ -59,7 +59,7 @@ export default function HistoryOperation({
                     type, 
                     description, 
                     periodMotorCheck,
-                    executor,
+                    executors,
                     usedParts,
                     createdBy
                 });
@@ -97,6 +97,8 @@ export default function HistoryOperation({
                                         index={index} 
                                         category={category} 
                                         setOperations={setOperations}
+                                        workers={workers}
+                                        parts={parts}
                                     />
                                 })}
                             </div>

@@ -25,7 +25,7 @@ export async function POST(req) {
                 { $inc: { count: -part.count } }
             )
 
-            // Создаем запись о выдаче
+            // Создаем запись о выдаче с типом 'manual' (выдача со склада)
             await Order.create({
                 date,
                 workerName,
@@ -40,7 +40,8 @@ export async function POST(req) {
                     sum: part.sum
                 },
                 countPart: part.count,
-                description: part.unit
+                description: part.unit,
+                operationType: 'operation' // указываем, что это ручная выдача со склада
             })
         }
 
