@@ -3,10 +3,13 @@
 import '../scss/workersTable.scss'
 import { useState, useEffect } from 'react'
 import RateWorkerModal from './RateWorkerModal'
+import RatingHistoryModal from './RatingHistoryModal'
 
 export default function WorkersTable({ workers, onEdit, onDelete, onRate, periodStart, periodEnd }) {
     const [processedWorkers, setProcessedWorkers] = useState([])
     const [ratingWorker, setRatingWorker] = useState(null)
+    const [showHistoryModal, setShowHistoryModal] = useState(false)
+    const [selectedWorkerHistory, setSelectedWorkerHistory] = useState(null)
 
     // Функция расчета среднего КТУ
     const calculateAverageKTU = (ratings) => {
@@ -79,6 +82,12 @@ export default function WorkersTable({ workers, onEdit, onDelete, onRate, period
         }
     }
 
+    // Обновляем обработчик для показа истории
+    const handleShowHistory = (worker) => {
+        setSelectedWorkerHistory(worker)
+        setShowHistoryModal(true)
+    }
+
     return (
         <>
             {sortedOrganizations.map(org => {
@@ -111,6 +120,7 @@ export default function WorkersTable({ workers, onEdit, onDelete, onRate, period
                                             <th>Телефон</th>
                                             <th>Email</th>
                                             <th>КТУ за период</th>
+                                            <th>Последний комментарий</th>
                                             <th>Действия</th>
                                         </tr>
                                     </thead>
@@ -124,12 +134,12 @@ export default function WorkersTable({ workers, onEdit, onDelete, onRate, period
                                                 <td>
                                                     <div className="rating-cell">
                                                         <span className={`ktu-value ${
-                                                            !worker.averageKtu ? 'ktu-min' : 
-                                                            worker.averageKtu >= 1.8 ? 'ktu-max' : 
-                                                            worker.averageKtu >= 1.5 ? 'ktu-high' :
-                                                            worker.averageKtu >= 1.0 ? 'ktu-mid' : 'ktu-low'
+                                                            !worker.averageKtu ? 'ktu-base' : 
+                                                            worker.averageKtu >= 1.1 ? 'ktu-excellent' : 
+                                                            worker.averageKtu >= 0.5 ? 'ktu-good' :
+                                                            worker.averageKtu >= 0.1 ? 'ktu-base' : 'ktu-low'
                                                         }`}>
-                                                            КТУ: {worker.averageKtu?.toFixed(2) || 0}
+                                                            КТУ: {worker.averageKtu?.toFixed(2) || 1.0}
                                                         </span>
                                                         <button
                                                             className="rate-button"
@@ -138,6 +148,31 @@ export default function WorkersTable({ workers, onEdit, onDelete, onRate, period
                                                             Установить КТУ
                                                         </button>
                                                     </div>
+                                                </td>
+                                                <td className="comment-cell">
+                                                    {worker.periodRatings && worker.periodRatings.length > 0 ? (
+                                                        <div className="rating-history">
+                                                            <div className="latest-comment">
+                                                                <span className="comment-date">
+                                                                    {new Date(worker.periodRatings[worker.periodRatings.length - 1].date)
+                                                                        .toLocaleDateString('ru')}:
+                                                                </span>
+                                                                <span className="comment-text">
+                                                                    {worker.periodRatings[worker.periodRatings.length - 1].comment}
+                                                                </span>
+                                                            </div>
+                                                            {worker.periodRatings.length > 1 && (
+                                                                <button 
+                                                                    className="show-history-button"
+                                                                    onClick={() => handleShowHistory(worker)}
+                                                                >
+                                                                    История КТУ
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        <span className="no-comments">Нет комментариев</span>
+                                                    )}
                                                 </td>
                                                 <td>
                                                     <button onClick={() => onEdit(worker)}>Редактировать</button>
@@ -159,6 +194,13 @@ export default function WorkersTable({ workers, onEdit, onDelete, onRate, period
                 onRate={handleRate}
                 worker={ratingWorker}
                 disabledDates={ratingWorker?.periodRatings?.map(rating => new Date(rating.date)) || []}
+            />
+
+            <RatingHistoryModal
+                isOpen={showHistoryModal}
+                onClose={() => setShowHistoryModal(false)}
+                ratings={selectedWorkerHistory?.periodRatings || []}
+                workerName={selectedWorkerHistory?.name}
             />
         </>
     )

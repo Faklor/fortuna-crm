@@ -8,33 +8,46 @@ import AnimatedLogo from '../components/AnimatedLogo';
 
 export default function LoginPage() {
   const router = useRouter();
-  const animRef = useRef(null);
   const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [showAnimation, setShowAnimation] = useState(false);
+  const animRef = useRef(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
 
-    const result = await signIn('credentials', {
-      login,
-      password,
-      redirect: false
-    });
+    try {
+      const result = await signIn('credentials', {
+        login,
+        password,
+        redirect: false
+      });
 
-    if (result.error) {
-      setError('Неверный логин или пароль');
-    } else {
-      setShowAnimation(true);
-      setTimeout(() => {
-        animRef.current.style.transform = 'scale(1)';
-      }, 1);
-
-      setTimeout(() => {
-        router.push('/tasks');
-      }, 3000);
+      if (result.error) {
+        setError('Неверный логин или пароль');
+        setIsLoading(false);
+      } else {
+        setShowAnimation(true);
+        // Добавляем небольшую задержку для плавного появления анимации
+        setTimeout(() => {
+          if (animRef.current) {
+            animRef.current.style.transform = 'scale(1)';
+          }
+          // Даем время на проигрывание анимации перед редиректом
+          setTimeout(() => {
+            router.push('/tasks');
+            router.refresh();
+          }, 1500); // Время анимации
+        }, 100);
+      }
+    } catch (error) {
+      console.error('Auth error:', error);
+      setError('Ошибка авторизации');
+      setIsLoading(false);
     }
   };
 
@@ -58,6 +71,7 @@ export default function LoginPage() {
             value={login}
             onChange={(e) => setLogin(e.target.value)}
             required
+            disabled={isLoading}
           />
         </div>
         <div>
@@ -68,10 +82,13 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            disabled={isLoading}
           />
         </div>
         {error && <div style={{ color: 'red' }}>{error}</div>}
-        <button type="submit">Войти</button>
+        <button type="submit" disabled={isLoading}>
+          {isLoading ? 'Вход...' : 'Войти'}
+        </button>
       </form>
     </div>
   );

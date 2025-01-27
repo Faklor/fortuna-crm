@@ -7,11 +7,25 @@ import mongoose from 'mongoose'
 export async function POST(request) {
     try {
         await dbConnect()
-        const { workerId, ktu, date } = await request.json()
+        const { workerId, ktu, date, comment } = await request.json()
+
+        // Проверяем обязательные поля
+        if (!workerId || !ktu || !date || !comment) {
+            return NextResponse.json({ 
+                error: 'Необходимо указать workerId, ktu, date и comment' 
+            }, { status: 400 })
+        }
+
+        // Проверяем диапазон КТУ
+        if (ktu < 0.7 || ktu > 1.3) {
+            return NextResponse.json({ 
+                error: 'КТУ должен быть в диапазоне от 0.7 до 1.3' 
+            }, { status: 400 })
+        }
 
         const worker = await Workers.findById(workerId)
         if (!worker) {
-            return NextResponse.json({ error: 'Worker not found' }, { status: 404 })
+            return NextResponse.json({ error: 'Работник не найден' }, { status: 404 })
         }
 
         // Создаем или обновляем запись КТУ
@@ -33,23 +47,28 @@ export async function POST(request) {
         if (existingRating) {
             // Обновляем существующую запись
             existingRating.ktu = ktu
+            existingRating.comment = comment
             newRating = await existingRating.save()
         } else {
             // Создаем новую запись
             newRating = await Ratings.create({
                 workerId: new mongoose.Types.ObjectId(workerId),
                 ktu,
-                date: new Date(date)
+                date: new Date(date),
+                comment
             })
         }
 
-        // Получаем статистику по КТУ
+        // Получаем все рейтинги работника с комментариями
+        const allRatings = await Ratings.find({ workerId })
+            .sort({ date: -1 }) // Сортируем по дате (новые первые)
+            .select('ktu date comment') // Выбираем нужные поля
+
+        // Получаем рейтинги за текущий месяц
         const now = new Date()
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
         const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59)
 
-        // Получаем все рейтинги работника
-        const allRatings = await Ratings.find({ workerId })
         const monthlyRatings = allRatings.filter(rating => {
             const ratingDate = new Date(rating.date)
             return ratingDate >= startOfMonth && ratingDate <= endOfMonth
@@ -60,11 +79,22 @@ export async function POST(request) {
         const monthlyAverageKtu = monthlyRatings.reduce((acc, curr) => acc + curr.ktu, 0) / monthlyRatings.length || 0
 
         return NextResponse.json({
-            currentKtu: newRating.ktu,
-            averageKtu,
-            monthlyAverageKtu,
-            ratingsCount: allRatings.length,
-            monthlyRatingsCount: monthlyRatings.length
+            rating: {
+                currentKtu: newRating.ktu,
+                date: newRating.date,
+                comment: newRating.comment
+            },
+            statistics: {
+                averageKtu,
+                monthlyAverageKtu,
+                ratingsCount: allRatings.length,
+                monthlyRatingsCount: monthlyRatings.length
+            },
+            history: allRatings.map(rating => ({
+                ktu: rating.ktu,
+                date: rating.date,
+                comment: rating.comment
+            }))
         })
     } catch (error) {
         console.error('Error in rate route:', error)
@@ -77,7 +107,6 @@ export async function DELETE(request) {
         await dbConnect()
         const { workerId, date } = await request.json()
         
-        // Создаем начало и конец дня для выбранной даты
         const startDate = new Date(date)
         startDate.setHours(0, 0, 0, 0)
         
@@ -85,7 +114,7 @@ export async function DELETE(request) {
         endDate.setHours(23, 59, 59, 999)
 
         // Находим и удаляем оценку за конкретный день
-        await Ratings.findOneAndDelete({
+        const deletedRating = await Ratings.findOneAndDelete({
             workerId,
             date: {
                 $gte: startDate,
@@ -93,8 +122,19 @@ export async function DELETE(request) {
             }
         })
 
+        if (!deletedRating) {
+            return NextResponse.json({ 
+                error: 'Оценка не найдена' 
+            }, { status: 404 })
+        }
+
         return NextResponse.json({
-            message: 'Оценка удалена'
+            message: 'Оценка успешно удалена',
+            deletedRating: {
+                ktu: deletedRating.ktu,
+                date: deletedRating.date,
+                comment: deletedRating.comment
+            }
         })
     } catch (error) {
         console.error('Error in rate DELETE route:', error)

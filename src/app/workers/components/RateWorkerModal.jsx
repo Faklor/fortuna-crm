@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { useSession } from 'next-auth/react'
 import DatePicker, { registerLocale } from 'react-datepicker'
 import "react-datepicker/dist/react-datepicker.css"
 import ru from 'date-fns/locale/ru'  // Импортируем русскую локаль
@@ -9,9 +10,12 @@ import '../scss/rateWorkerModal.scss'
 registerLocale('ru', ru)
 
 export default function RateWorkerModal({ isOpen, onClose, onRate, worker, disabledDates }) {
+    const { data: session } = useSession()
     const [selectedDate, setSelectedDate] = useState(null)
-    const [ktuValue, setKtuValue] = useState(1) // Значение КТУ по умолчанию
+    const [ktuValue, setKtuValue] = useState(1.0)  // Базовое значение
+    const [comment, setComment] = useState('')      // Добавляем состояние для комментария
     const [existingRating, setExistingRating] = useState(null)
+    const [ratingInfo, setRatingInfo] = useState(null)
 
     // При каждом открытии модального окна устанавливаем текущую дату
     useEffect(() => {
@@ -19,21 +23,30 @@ export default function RateWorkerModal({ isOpen, onClose, onRate, worker, disab
             const now = new Date()
             const localDate = new Date(now.getTime() - (now.getTimezoneOffset() * 60000))
             setSelectedDate(localDate)
-            setKtuValue(1)
+            setKtuValue(1.0)
             checkExistingRating(localDate)
         }
     }, [isOpen])
 
-    const checkExistingRating = (date) => {
-        // Преобразуем disabledDates в массив объектов Date
-        const disabledDateObjects = disabledDates?.map(d => new Date(d)) || []
-        
-        const exists = disabledDateObjects.find(disabledDate => {
-            return date.getFullYear() === disabledDate.getFullYear() &&
-                   date.getMonth() === disabledDate.getMonth() &&
-                   date.getDate() === disabledDate.getDate()
-        })
-        setExistingRating(exists ? true : false)
+    const checkExistingRating = async (date) => {
+        try {
+            const response = await fetch(`/api/workers/rating?workerId=${worker._id}&date=${date.toISOString()}`)
+            const data = await response.json()
+            
+            if (data.rating) {
+                setExistingRating(true)
+                setRatingInfo(data.rating)
+                setKtuValue(data.rating.ktu)
+                setComment(data.rating.comment)
+            } else {
+                setExistingRating(false)
+                setRatingInfo(null)
+                setKtuValue(1.0)
+                setComment('')
+            }
+        } catch (error) {
+            console.error('Error checking rating:', error)
+        }
     }
 
     const handleDateChange = (date) => {
@@ -44,7 +57,7 @@ export default function RateWorkerModal({ isOpen, onClose, onRate, worker, disab
     const handleSubmit = async (e) => {
         e.preventDefault()
         try {
-            const response = await fetch('/api/workers/rate', {
+            const response = await fetch('/api/workers/rating', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -52,13 +65,15 @@ export default function RateWorkerModal({ isOpen, onClose, onRate, worker, disab
                 body: JSON.stringify({
                     workerId: worker._id,
                     ktu: parseFloat(ktuValue),
-                    date: selectedDate
+                    date: selectedDate,
+                    comment: comment,
+                    createdBy: session?.user?.login || session?.user?.email
                 })
             })
 
             if (response.ok) {
                 onClose()
-                window.location.reload() // Временно используем перезагрузку страницы
+                window.location.reload()
             }
         } catch (error) {
             console.error('Error submitting KTU:', error)
@@ -105,6 +120,13 @@ export default function RateWorkerModal({ isOpen, onClose, onRate, worker, disab
                 <h2>Установить КТУ сотрудника</h2>
                 <p>Сотрудник: {worker?.name}</p>
                 
+                {existingRating && ratingInfo && (
+                    <div className="rating-info">
+                        <p>КТУ установлен пользователем: {ratingInfo.createdBy || 'Неизвестно'}</p>
+                        <p>Дата установки: {new Date(ratingInfo.date).toLocaleDateString('ru-RU')}</p>
+                    </div>
+                )}
+
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
                         <label>Выберите дату:</label>
@@ -121,26 +143,35 @@ export default function RateWorkerModal({ isOpen, onClose, onRate, worker, disab
                         />
                     </div>
 
-                    {!existingRating ? (
-                        <>
-                            <div className="form-group">
-                                <label>КТУ (от 0 до 2):</label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    max="2"
-                                    step="0.1"
-                                    value={ktuValue}
-                                    onChange={(e) => setKtuValue(e.target.value)}
-                                    className="ktu-input"
-                                />
-                            </div>
+                    <div className="form-group">
+                        <label>КТУ (от 0.1 до 1.3):</label>
+                        <input
+                            type="number"
+                            min="0.7"
+                            max="1.3"
+                            step="0.1"
+                            value={ktuValue}
+                            onChange={(e) => setKtuValue(e.target.value)}
+                            className="ktu-input"
+                        />
+                    </div>
 
-                            <div className="modal-actions">
-                                <button type="submit">Установить КТУ</button>
-                                <button type="button" onClick={onClose}>Отмена</button>
-                            </div>
-                        </>
+                    <div className="form-group">
+                        <label>Комментарий:</label>
+                        <textarea
+                            value={comment}
+                            onChange={(e) => setComment(e.target.value)}
+                            placeholder="Прокомментируйте"
+                            required
+                            className="comment-input"
+                        />
+                    </div>
+
+                    {!existingRating ? (
+                        <div className="modal-actions">
+                            <button type="submit">Установить КТУ</button>
+                            <button type="button" onClick={onClose}>Отмена</button>
+                        </div>
                     ) : (
                         <div className="modal-actions">
                             <button 

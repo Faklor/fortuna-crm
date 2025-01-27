@@ -34,6 +34,105 @@
             }
             
         }
+
+        .form-group {
+            margin-bottom: 1rem;
+
+            label {
+                display: block;
+                margin-bottom: 0.5rem;
+                font-weight: 500;
+                color: #333;
+            }
+
+            .comment-input {
+                width: 100%;
+                min-height: 100px;
+                padding: 0.75rem;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                font-size: 14px;
+                line-height: 1.5;
+                resize: vertical;
+                font-family: inherit;
+                transition: border-color 0.2s ease;
+
+                &:focus {
+                    outline: none;
+                    border-color: #2563eb;
+                    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+                }
+
+                &::placeholder {
+                    color: #9ca3af;
+                }
+
+                &:disabled {
+                    background-color: #f3f4f6;
+                    cursor: not-allowed;
+                }
+            }
+
+            // Стили для input с типом number (КТУ)
+            .ktu-input {
+                width: 100%;
+                padding: 0.5rem;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                font-size: 14px;
+                
+                &:focus {
+                    outline: none;
+                    border-color: #2563eb;
+                    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+                }
+            }
+        }
+
+        // Стили для кнопок действий
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+
+            button {
+                padding: 0.5rem 1rem;
+                border-radius: 4px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.2s ease;
+
+                &[type="submit"] {
+                    background-color: #2563eb;
+                    color: white;
+                    border: none;
+
+                    &:hover {
+                        background-color: #1d4ed8;
+                    }
+                }
+
+                &[type="button"] {
+                    background-color: #fff;
+                    color: #374151;
+                    border: 1px solid #d1d5db;
+
+                    &:hover {
+                        background-color: #f3f4f6;
+                    }
+
+                    &.delete-rating-btn {
+                        background-color: #ef4444;
+                        color: white;
+                        border: none;
+
+                        &:hover {
+                            background-color: #dc2626;
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -76,45 +175,6 @@
     }
 }
 
-.form-group {
-    margin-bottom: 20px;
-
-    label {
-        display: block;
-        margin-bottom: 8px;
-    }
-}
-
-.modal-actions {
-    display: flex;
-    gap: 10px;
-    justify-content: flex-end;
-
-    button {
-        padding: 8px 16px;
-        border-radius: 4px;
-        border: none;
-        cursor: pointer;
-
-        &[type="submit"] {
-            background-color: #2196f3;
-            color: white;
-
-            &:hover {
-                background-color: #1976d2;
-            }
-        }
-
-        &[type="button"] {
-            background-color: #e0e0e0;
-
-            &:hover {
-                background-color: #bdbdbd;
-            }
-        }
-    }
-}
-
 .rate-buttons {
     display: flex;
     gap: 10px;
@@ -152,6 +212,19 @@
                 border-color: #f44336;
             }
         }
+    }
+}
+
+.rating-info {
+    background-color: #f5f5f5;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 4px;
+    
+    p {
+        margin: 5px 0;
+        font-size: 14px;
+        color: #666;
     }
 }
 

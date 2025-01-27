@@ -24,6 +24,7 @@ export default function BlockAddPart({}){
     const [nowContact_Link, setNowContact_Link] = useState('')
     //------
     const [status, setStatus] = useState('')
+    const [showSuccess, setShowSuccess] = useState(false)
     const [categoryes, setCategoryes] = useState([])
 
     //default
@@ -38,6 +39,21 @@ export default function BlockAddPart({}){
         contact:{
             name:nowContact_Name,
             link:nowContact_Link
+        }
+    }
+
+    const clearForm = () => {
+        setNowName('')
+        setNowSerialNumber('')
+        setNowSellNumber('')
+        setNowCount('')
+        setNowSell('')
+        setNowManufacturer('')
+        setNowContact_Name('')
+        setNowContact_Link('')
+        // Сбрасываем категорию на первую в списке
+        if (categoryes.length > 0) {
+            setNowCatagory(categoryes[0])
         }
     }
     
@@ -61,7 +77,9 @@ export default function BlockAddPart({}){
             setCategoryes(filteredArray)
             setNowCatagory(filteredArray[0])
         })
-        .catch(e=>{})
+        .catch(e=>{
+            setStatus('Ошибка загрузки категорий')
+        })
     },[])
 
     
@@ -73,9 +91,41 @@ export default function BlockAddPart({}){
         return await axios.post('/api/parts/addPart',partObj)
     }
 
+    const handleSubmit = async () => {
+        try {
+            const res = await axios.post('/api/parts/addPart', partObj)
+            setStatus('Успешно добавлено!')
+            setShowSuccess(true)
+            
+            // Анимация успеха
+            setTimeout(() => {
+                setShowSuccess(false)
+                clearForm()
+            }, 2000)
+        } catch (e) {
+            setStatus('Ошибка при добавлении')
+            setTimeout(() => {
+                setStatus('')
+            }, 3000)
+        }
+    }
+
     return <div className='blockAddPart'>
         <button onClick={()=>router.push('/warehouse')}>Вернуться на склад</button>   
         <h2>Добавление запчасти</h2>
+        
+        {/* Анимация успешного добавления */}
+        {showSuccess && (
+            <div className="success-animation">
+                <div className="success-checkmark">
+                    <div className="check-icon">
+                        <span className="icon-line line-tip"></span>
+                        <span className="icon-line line-long"></span>
+                    </div>
+                </div>
+                <p>Успешно добавлено!</p>
+            </div>
+        )}
         
         <select onChange={(e)=>{setNowCatagory(e.target.value)}}>
             {categoryes.map((item,index)=>{
@@ -95,15 +145,7 @@ export default function BlockAddPart({}){
         <input type='text' value={nowContact_Name} onChange={(e)=>{setNowContact_Name(e.target.value)}} placeholder='Имя'/>
         <input type='text' value={nowContact_Link} onChange={(e)=>{setNowContact_Link(e.target.value)}} placeholder='Ссылка'/>
 
-        <button onClick={()=>{
-            addPart(partObj)
-            .then((res)=>{
-                setStatus(res.data)
-                
-            })
-            .catch(e=>setStatus('Что-то не так'))
-            //console.log(partObj)
-        }}>ДОБАВИТЬ</button>
+        <button onClick={handleSubmit}>ДОБАВИТЬ</button>
 
     </div>
 }

@@ -9,11 +9,19 @@ const ratingSchema = new mongoose.Schema({
         ref: 'workers',
         required: true 
     },
+    createdBy: {  // Меняем на строку для хранения логина
+        type: String,
+        required: true
+    },
     ktu: { 
         type: Number,
         required: true,
-        min: 0,
-        max: 2 // Предполагаем, что КТУ от 0 до 2
+        min: 0.1,    // Минимальное значение КТУ
+        max: 1.3     // Максимальное значение КТУ
+    },
+    comment: {       // Добавляем поле для комментария
+        type: String,
+        required: true
     },
     date: { 
         type: Date, 

@@ -1,0 +1,102 @@
+.accounts-page {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+
+    h1 {
+        color: #333;
+        margin-bottom: 30px;
+    }
+
+    .create-account-form {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 30px;
+
+        h2 {
+            color: #444;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+
+            label {
+                display: block;
+                margin-bottom: 5px;
+                color: #666;
+            }
+
+            input, select {
+                width: 100%;
+                padding: 8px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                font-size: 14px;
+
+                &:focus {
+                    outline: none;
+                    border-color: #0066cc;
+                }
+            }
+        }
+
+        button {
+            background: #0066cc;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+
+            &:hover {
+                background: #0052a3;
+            }
+        }
+    }
+
+    .users-list {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+        h2 {
+            color: #444;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+
+            th, td {
+                padding: 12px;
+                text-align: left;
+                border-bottom: 1px solid #ddd;
+            }
+
+            th {
+                background: #f5f5f5;
+                color: #666;
+            }
+
+            tr:hover {
+                background: #f9f9f9;
+            }
+        }
+    }
+
+    .error-message {
+        color: #dc3545;
+        margin: 10px 0;
+    }
+
+    .success-message {
+        color: #28a745;
+        margin: 10px 0;
+    }
+} 
