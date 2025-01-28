@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import anime from 'animejs'
 import '../scss/timelineOperations.scss'
 
 const TimelineOperations = ({ visibleObjects }) => {
@@ -71,6 +72,38 @@ const TimelineOperations = ({ visibleObjects }) => {
                 return '';
         }
     };
+
+    useEffect(() => {
+        if (operations.length > 0) {
+            // Анимация точек на таймлайне
+            anime({
+                targets: '.timeline-point',
+                opacity: [0, 1],
+                translateY: [20, 0],
+                delay: anime.stagger(100), // Задержка между анимациями каждой точки
+                duration: 800,
+                easing: 'easeOutElastic(1, .5)'
+            });
+
+            // Анимация линии
+            anime({
+                targets: '.timeline::after',
+                scaleX: [0, 1],
+                duration: 1000,
+                easing: 'easeOutExpo'
+            });
+
+            // Анимация контента
+            anime({
+                targets: '.timeline-content',
+                scale: [0.8, 1],
+                opacity: [0, 1],
+                delay: anime.stagger(150),
+                duration: 800,
+                easing: 'easeOutElastic(1, .5)'
+            });
+        }
+    }, [operations]);
 
     return (
         <div className="timeline-operations">
