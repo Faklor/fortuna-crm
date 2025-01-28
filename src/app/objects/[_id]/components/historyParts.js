@@ -5,7 +5,8 @@ import axios from 'axios'
 //------------components-------------
 //import EditOrder from './editOrder'
 //import Part from '../../warehouse/components/part'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
+import anime from 'animejs'
 
 export default function HistoryParts({visibleOrders}){
     
@@ -17,6 +18,7 @@ export default function HistoryParts({visibleOrders}){
     const [editOrder, setEditOrder] = useState(false)
     //default
     const uniqueDates = {}
+    const partsRef = useRef(null)
 
     function formatDate(dateString) {
     const options = { year: 'numeric', month: 'long', day: 'numeric' }
@@ -69,8 +71,26 @@ export default function HistoryParts({visibleOrders}){
         return await axios.post('/api/orders/delete', {_id:_id, part:part,count:count})
     }
 
+    useEffect(() => {
+        // Animate parts list expansion
+        const details = partsRef.current.querySelectorAll('details')
+        
+        details.forEach(detail => {
+            detail.addEventListener('toggle', (e) => {
+                if (detail.open) {
+                    anime({
+                        targets: detail.querySelector('.parts-content'),
+                        height: ['0px', detail.querySelector('.parts-content').scrollHeight + 'px'],
+                        opacity: [0, 1],
+                        duration: 400,
+                        easing: 'easeOutCubic'
+                    })
+                }
+            })
+        })
+    }, [])
 
-    return <div className="historyParts" > 
+    return <div ref={partsRef} className="historyParts" > 
         {parts.length?
             <div className="parts-accordion">
                 {sortArray.map((item,index)=>{

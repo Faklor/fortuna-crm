@@ -1,9 +1,10 @@
 'use client'
 import Image from 'next/image'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import { useRouter  } from 'next/navigation'
 import './page.scss'
+import anime from 'animejs'
 
 export default function Page(){
 
@@ -17,6 +18,7 @@ export default function Page(){
     const [objects, setObjects] = useState([])
     //const [socket, setSocket] = useState(null)
 
+    const formRef = useRef(null)
 
     if(objects.length !== 0){
         objects.forEach((item)=>{
@@ -133,9 +135,20 @@ export default function Page(){
         }
     }
    
+    useEffect(() => {
+        if (formRef.current) {
+            anime({
+                targets: '.addObject > *',
+                translateY: [20, 0],
+                opacity: [0, 1],
+                delay: anime.stagger(100),
+                easing: 'easeOutCubic',
+                duration: 600
+            })
+        }
+    }, [])
 
-
-    return <div className='addObject'>
+    return <div className='addObject' ref={formRef}>
         <button onClick={()=>router.push('/objects')}>Отмена</button>
 
         {icon === null?

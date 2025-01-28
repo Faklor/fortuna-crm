@@ -67,6 +67,43 @@
       }
     }
   }
+
+  // Add animation base styles
+  .object-card {
+    opacity: 0; // Start hidden
+    transform-origin: center;
+  }
+
+  .categoryObj {
+    transition: transform 0.3s ease;
+    will-change: transform;
+    
+    &:hover {
+      transform: translateY(-2px);
+    }
+  }
+
+  // Add animation for search input
+  .searchObj {
+    input {
+      transition: all 0.3s ease;
+      
+      &:focus {
+        transform: scale(1.02);
+      }
+    }
+  }
+
+  // Add loading state animation
+  .loading {
+    animation: pulse 1.5s infinite;
+  }
+
+  @keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+  }
 }
 
 // Адаптивность
@@ -186,3 +223,6 @@
       margin-bottom: 15px;
     }
   }
+
+
+  

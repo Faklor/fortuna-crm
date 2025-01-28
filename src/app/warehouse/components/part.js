@@ -123,7 +123,6 @@ export default function Parts({
     sellNumber={sellNumber}
     serialNumber={serialNumber}
     sum={sum}
-    storageId={storageId}
     index={index}
     catagoryes={catagoryes}
     
