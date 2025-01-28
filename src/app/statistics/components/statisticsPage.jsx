@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react'
 import axios from 'axios'
 import { wialonDateToTimestamp } from '@/utils/wialon'
 import '../scss/statistics.scss'
+import TimelineOperations from './timelineOperations'
 
 export default function StatisticsPage({
     visibleParts,
@@ -49,64 +50,9 @@ export default function StatisticsPage({
             }
 
             const units = unitsResponse.data.units;
-            // console.log('🚗 Wialon Units:', {
-            //     total: units.length,
-            //     online: units.filter(u => u.netconn).length,
-            //     offline: units.filter(u => !u.netconn).length,
-            //     units: units.map(u => ({
-            //         id: u.id,
-            //         name: u.nm,
-            //         status: u.netconn ? 'online' : 'offline',
-            //         lastUpdate: new Date(u.mu * 1000).toLocaleString(),
-            //         driver: u.prms?.avl_driver?.v || 'Не назначен'
-            //     }))
-            // });
-
             const drivers = driversResponse.data.drivers;
-            // console.log('👤 Wialon Drivers:', {
-            //     total: drivers.length,
-            //     byResource: drivers.reduce((acc, driver) => {
-            //         if (!acc[driver.resourceName]) {
-            //             acc[driver.resourceName] = [];
-            //         }
-            //         acc[driver.resourceName].push({
-            //             id: driver.id,
-            //             name: driver.name,
-            //             phone: driver.phone || 'Не указан',
-            //             code: driver.code || 'Не указан',
-            //             assignedUnit: driver.assignedUnit || 'Не назначен'
-            //         });
-            //         return acc;
-            //     }, {}),
-            //     summary: {
-            //         withPhone: drivers.filter(d => d.phone).length,
-            //         withCode: drivers.filter(d => d.code).length,
-            //         withUnit: drivers.filter(d => d.assignedUnit).length
-            //     },
-            //     driversList: drivers.map(d => ({
-            //         id: d.id,
-            //         name: d.name,
-            //         resource: d.resourceName,
-            //         phone: d.phone || 'Не указан',
-            //         code: d.code || 'Не указан',
-            //         hasUnit: d.assignedUnit ? 'Да' : 'Нет'
-            //     }))
-            // });
-
-            // Дополнительная статистика по соответствию водителей и ТС
             const unitsWithDrivers = units.filter(u => u.prms?.avl_driver?.v);
-            // console.log('🔄 Units-Drivers Match:', {
-            //     totalUnits: units.length,
-            //     unitsWithDriver: unitsWithDrivers.length,
-            //     unitsWithoutDriver: units.length - unitsWithDrivers.length,
-            //     matches: unitsWithDrivers.map(u => ({
-            //         unitName: u.nm,
-            //         driverName: u.prms.avl_driver.v,
-            //         online: u.netconn ? 'Да' : 'Нет',
-            //         lastUpdate: new Date(u.mu * 1000).toLocaleString()
-            //     }))
-            // });
-
+           
             setWialonData(prev => ({
                 sid,
                 units,
@@ -197,16 +143,6 @@ export default function StatisticsPage({
                 });
             };
 
-            console.log('📅 Запрашиваем координаты:', {
-                unitId,
-                dates: {
-                    from: formatDate(startDate),
-                    to: formatDate(endDate),
-                    fromTimestamp: dateFrom,
-                    toTimestamp: dateTo
-                }
-            });
-
             const response = await axios.get('/api/wialon/trips', {
                 params: {
                     sid: wialonData.sid,
@@ -215,18 +151,7 @@ export default function StatisticsPage({
                     dateTo: dateTo
                 }
             });
-            console.log('🛣️ Получены данные:', response.data, unitId, dateFrom, dateTo );
-            // if (response.data.success) {
-            //     console.log('🛣️ Получены данные:', {
-            //         unitId,
-            //         totalTracks: response.data.tracks.length,
-            //         totalMessages: response.data.totalMessages,
-            //         period: {
-            //             from: formatDate(startDate),
-            //             to: formatDate(endDate)
-            //         }
-            //     });
-            // }
+           
 
             return {
                 ...response.data,
@@ -244,8 +169,6 @@ export default function StatisticsPage({
     // Добавляем обработчик клика по карточке ТС
     const handleUnitClick = async (unitId) => {
         const tripsData = await fetchUnitTrips(unitId);
-        // Здесь можно добавить логику отображения треков
-        console.log(`Trips data for unit ${unitId}:`, tripsData);
     };
 
     const renderStatistics = (units) => {
@@ -438,6 +361,7 @@ export default function StatisticsPage({
         <div className="statistics">
             <div className="statistics-container">
                 <div className="header-container">
+                    
                     <h1>Мониторинг транспорта</h1>
                     <div className="update-info">
                         {isLoading ? (
@@ -462,6 +386,9 @@ export default function StatisticsPage({
                         <p>{error}</p>
                     </div>
                 )}
+
+                {/* Добавляем компонент временной линии */}
+                <TimelineOperations visibleObjects={JSON.parse(visibleObjects)} />
 
                 {wialonData.units.length > 0 && (
                     <>

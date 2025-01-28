@@ -12,6 +12,7 @@ export default function UpdatePart({
     sellNumber,
     serialNumber,
     sum,
+    storageId,
     setVisibleEditPanel, 
     catagoryes,
     setVisibleParts
@@ -25,12 +26,13 @@ export default function UpdatePart({
     //react
     const [editCatagory, setEditCatagory] = useState(catagory)
     const [editName, setEditName] = useState(name)
-    const [editManufacturer, setEditManufacturer] = useState(manufacturer)
-    const [editSellNumber, setEditSellNumber] = useState(sellNumber)
-    const [editSerialNumber, setEditSerialNumber] = useState(serialNumber)
+    const [editManufacturer, setEditManufacturer] = useState(manufacturer || '')
+    const [editSellNumber, setEditSellNumber] = useState(sellNumber || '')
+    const [editSerialNumber, setEditSerialNumber] = useState(serialNumber || '')
     const [editSum, setEditSum] = useState(sum)
-    const [editContact_Name, setEditContact_Name] = useState(contact.name)
-    const [editContact_Link, setEditContact_Link] = useState(contact.link)
+    const [editContact_Name, setEditContact_Name] = useState(contact.name || '')
+    const [editContact_Link, setEditContact_Link] = useState(contact.link || '')
+    const [editStorageId, setEditStorageId] = useState(storageId || '')
 
     //default
     const partObj = {
@@ -44,7 +46,8 @@ export default function UpdatePart({
         contact:{
             name:editContact_Name,
             link:editContact_Link
-        }
+        },
+        storageId:editStorageId
     }
 
     //functions
@@ -67,6 +70,12 @@ export default function UpdatePart({
         <input type="text" value={editSerialNumber} onChange={e=>setEditSerialNumber(e.target.value)} placeholder="Серийный номер"/>
         <input type="text" value={editSellNumber} onChange={e=>setEditSellNumber(e.target.value)} placeholder="Товарный номер"/>
         <input type="number" value={editSum} onChange={e=>setEditSum(e.target.value)} placeholder="Сумма"/>
+        <input 
+            type="text" 
+            value={editStorageId} 
+            onChange={e=>setEditStorageId(e.target.value)} 
+            placeholder="Индификатор на складе"
+        />
         <p>Контакты</p>
         <input type="text" value={editContact_Name} onChange={e=>setEditContact_Name(e.target.value)} placeholder="Имя"/>
         <input type="text" value={editContact_Link} onChange={e=>setEditContact_Link(e.target.value)} placeholder="Ссылка"/>

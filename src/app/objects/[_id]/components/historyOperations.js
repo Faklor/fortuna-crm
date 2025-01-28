@@ -14,6 +14,7 @@ export default function HistoryOperation({
     visibleWorkers,
     visibleParts
 }){
+    
     const [operations, setOperations] = useState(JSON.parse(visibleOperation))
     const workers = JSON.parse(visibleWorkers)
     const parts = JSON.parse(visibleParts)
@@ -99,6 +100,7 @@ export default function HistoryOperation({
                                         setOperations={setOperations}
                                         workers={workers}
                                         parts={parts}
+                                        objectID={objectID}
                                     />
                                 })}
                             </div>

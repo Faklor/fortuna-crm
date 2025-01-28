@@ -8,7 +8,7 @@ export async function POST(req,res){
 
 
     try{
-        const {_id,name,catagory,contact,manufacturer,sellNumber,serialNumber,sum} = await req.json()
+        const {_id,name,catagory,contact,manufacturer,sellNumber,serialNumber,sum,storageId} = await req.json()
 
         let contactObg = {
             name:contact.name,
@@ -23,7 +23,8 @@ export async function POST(req,res){
             sellNumber:sellNumber,
             manufacturer:manufacturer,
             sum:sum,
-            contact:contactObg
+            contact:contactObg,
+            storageId:storageId
         }})
         if(partEdit){
             const nowPart = await Part.find({_id:_id})

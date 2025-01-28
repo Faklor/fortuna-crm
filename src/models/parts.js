@@ -11,7 +11,8 @@ const partsSchema = new mongoose.Schema({
     count:{type:Number},
     sum:{type:Number},
     contact:{type:Object},
-    bindingObj:{type:Array}
+    bindingObj:{type:Array},
+    storageId:{type:String}
 })
 
 export default mongoose.models.parts || mongoose.model('parts', partsSchema)

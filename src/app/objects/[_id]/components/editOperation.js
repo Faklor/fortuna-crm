@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import axios from "axios"
 import '../scss/editOperation.scss'
 
@@ -12,10 +12,12 @@ export default function EditOperation({
     usedParts,
     setOperations,
     workers,
-    parts // массив всех запчастей
+    parts,
+    type,
+    category
 }){
     const [editDescription, setEditDescription] = useState(description)
-    const [editPeriodMotor, setEditPeriodMotor] = useState(periodMotorCheck)
+    const [editPeriodMotor, setEditPeriodMotor] = useState(periodMotorCheck || '0')
     const [editDate, setEditDate] = useState(date)
     const [selectedExecutors, setSelectedExecutors] = useState(executors || [])
     const [editUsedParts, setEditUsedParts] = useState(usedParts || [])
@@ -23,50 +25,10 @@ export default function EditOperation({
     const [newExecutor, setNewExecutor] = useState('')
     const [err, setErr] = useState('')
 
-    // Получаем список доступных работников (которые еще не выбраны)
-    const availableWorkers = workers.filter(
-        worker => !selectedExecutors.includes(worker.name)
-    )
-
-    // Обработчик изменения количества запчастей
-    const handlePartCountChange = (partId, newCount) => {
-        if (newCount < 0) return
-
-        // Находим текущую запчасть в общем списке запчастей
-        const stockPart = parts.find(p => p._id === partId)
-        
-        if (!stockPart) {
-            setErr('Запчасть не найдена')
-            return
-        }
-
-        // Проверяем только количество на складе
-        if (newCount > stockPart.count) {
-            setErr(`Доступно только ${stockPart.count} шт.`)
-            return
-        }
-
-        setEditUsedParts(prev => prev.map(part => 
-            part._id === partId 
-                ? { ...part, count: newCount }
-                : part
-        ))
-        setErr('')
-    }
-
-    // Добавление исполнителя (из списка или вручную)
-    const addExecutor = (executorName) => {
-        if (!selectedExecutors.includes(executorName)) {
-            setSelectedExecutors(prev => [...prev, executorName])
-        }
-        setShowExecutorModal(false)
-        setNewExecutor('')
-    }
-
-    // Удаление исполнителя
-    const removeExecutor = (executorToRemove) => {
-        setSelectedExecutors(prev => prev.filter(exec => exec !== executorToRemove))
-    }
+    const categoryTech = category === '🔆 Комбайны' || 
+                        category === '💧 Опрыскиватели' || 
+                        category === '🚜 Трактора' || 
+                        category === '📦 Погрущики' ? 'м.ч.' : 'км.'
 
     async function editOperation(){
         if (selectedExecutors.length === 0) {
@@ -104,13 +66,16 @@ export default function EditOperation({
             onChange={e => setEditDate(e.target.value)} 
         />
         
-        {editPeriodMotor !== '' && 
+        {/* Показываем поле счетчика для всех типов операций */}
+        <div>
+            <p>Показания счетчика ({categoryTech})</p>
             <input 
                 type="number" 
                 value={editPeriodMotor} 
                 onChange={e => setEditPeriodMotor(e.target.value)}
+                placeholder={`Введите ${categoryTech}`}
             />
-        }
+        </div>
         
         <textarea 
             value={editDescription} 

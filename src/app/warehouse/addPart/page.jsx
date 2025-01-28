@@ -22,6 +22,7 @@ export default function BlockAddPart({}){
     const [nowManufacturer, setNowManufacturer] = useState('')
     const [nowContact_Name, setNowContact_Name] = useState('')
     const [nowContact_Link, setNowContact_Link] = useState('')
+    const [nowStorageId, setNowStorageId] = useState('')
     //------
     const [status, setStatus] = useState('')
     const [showSuccess, setShowSuccess] = useState(false)
@@ -39,7 +40,8 @@ export default function BlockAddPart({}){
         contact:{
             name:nowContact_Name,
             link:nowContact_Link
-        }
+        },
+        storageId:nowStorageId
     }
 
     const clearForm = () => {
@@ -51,6 +53,7 @@ export default function BlockAddPart({}){
         setNowManufacturer('')
         setNowContact_Name('')
         setNowContact_Link('')
+        setNowStorageId('')
         // Сбрасываем категорию на первую в списке
         if (categoryes.length > 0) {
             setNowCatagory(categoryes[0])
@@ -140,10 +143,18 @@ export default function BlockAddPart({}){
         
         <input type='number' value={nowCount} onChange={(e)=>{setNowCount(e.target.value)}} placeholder='Кол-во'/>
         <input type='number' value={nowSell} onChange={(e)=>{setNowSell(e.target.value)}} placeholder='Сумма'/>
+        <input 
+            type='text' 
+            value={nowStorageId} 
+            onChange={(e)=>{setNowStorageId(e.target.value)}} 
+            placeholder='Индификатор на складе'
+        />
 
         <h2>Контакты</h2>
         <input type='text' value={nowContact_Name} onChange={(e)=>{setNowContact_Name(e.target.value)}} placeholder='Имя'/>
         <input type='text' value={nowContact_Link} onChange={(e)=>{setNowContact_Link(e.target.value)}} placeholder='Ссылка'/>
+
+        
 
         <button onClick={handleSubmit}>ДОБАВИТЬ</button>
 

@@ -18,11 +18,11 @@ export async function POST(req,res){
             beginDate, 
             periodMotor,
             executors,
-            createdBy,
-            usedParts
+            usedParts,
+            createdBy
         } = await req.json();
 
-        if(type === 'Ремонт'){
+        if(type === 'Ремонт' || type === 'Навигация'){
             const operationAdd = await Operations.create({
                 objectID, 
                 date, 
@@ -35,13 +35,15 @@ export async function POST(req,res){
             })
             return NextResponse.json(operationAdd)
         }
-        else if(type === 'Технический Осмотр' || type === 'Навигация'){
+        else if(type === 'Технический Осмотр' ){
             const operationAdd = await Operations.create({
                 objectID, 
                 date, 
                 type, 
                 description,
-                executors
+                executors,
+                usedParts,
+                createdBy
             })
             
             // Получаем информацию об объекте
@@ -52,13 +54,13 @@ export async function POST(req,res){
             
             if (specialCategories.includes(techObject.catagory)) {
                 // Для специальных категорий обновляем все объекты той же категории
-                const updateAllSameCategory = await Tech.updateMany(
+                await Tech.updateMany(
                     { catagory: techObject.catagory },
                     { $set: { inspection: { dateBegin: beginDate, period: period } } }
                 )
             } else {
                 // Для остальных категорий обновляем только текущий объект
-                const editInspection = await Tech.findByIdAndUpdate(
+                await Tech.findByIdAndUpdate(
                     { _id: objectID },
                     { $set: { inspection: { dateBegin: beginDate, period: period } } }
                 )
@@ -73,10 +75,15 @@ export async function POST(req,res){
                 type, 
                 description, 
                 periodMotor,
-                executors
+                executors,
+                usedParts,
+                createdBy
             })
             
-            const editInspection =  await Tech.findByIdAndUpdate({_id:objectID},{$set:{maintance:{value:Number(periodMotor), period:period}}})
+            await Tech.findByIdAndUpdate(
+                { _id: objectID },
+                { $set: { maintance: { value: Number(periodMotor), period: period } } }
+            )
             
             return NextResponse.json(operationAdd)
 

@@ -28,7 +28,7 @@ export default function Parts({
     objects, 
     catagoryes,
     parts, 
-
+    storageId,
     setVisibleParts
 }){
     
@@ -70,6 +70,10 @@ export default function Parts({
             {sum?<div>
                 <Image src={'/components/sum.svg'} width={20} height={20} alt='sum'/>
                 <p className='sum'>{sum} б.р.</p>
+            </div>:<></>}
+            {storageId?<div>
+                <Image src={'/components/storageId.svg'} width={20} height={20} alt='storageId'/>
+                <p>{storageId}</p>
             </div>:<></>}
 
             {contact.name || contact.link?<p className='titleContacts'>Контакты</p>:''}
@@ -119,6 +123,7 @@ export default function Parts({
     sellNumber={sellNumber}
     serialNumber={serialNumber}
     sum={sum}
+    storageId={storageId}
     index={index}
     catagoryes={catagoryes}
     

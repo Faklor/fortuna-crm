@@ -25,6 +25,7 @@
     "@react-leaflet/core": "^3.0.0",
     "@tanstack/react-virtual": "^3.11.2",
     "@turf/turf": "^7.1.0",
+    "animejs": "^3.2.2",
     "bcryptjs": "^2.4.3",
     "chart.js": "^4.4.7",
     "framer-motion": "^11.16.4",

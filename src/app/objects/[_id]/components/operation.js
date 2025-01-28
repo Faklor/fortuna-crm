@@ -20,16 +20,19 @@ export default function Operation({
     setOperations,
     executors,
     workers,
-    parts
+    parts,
+    objectID
 }){
 
-    
     //refs
     const refsdescriptions = useRef([])
     //ref={(el)=>refsdescriptions.current[index] = el}
 
     //default 
-    const categoryTech = category === '🔆' || category === '💧' || category === '🚜' || category === '📦'?'м.ч.':'км.'
+    const categoryTech = category === '🔆 Комбайны' || 
+                        category === '💧 Опрыскиватели' || 
+                        category === '🚜 Трактора' || 
+                        category === '📦 Погрущики' ? 'м.ч.' : 'км.'
 
     //react
     const [visibleEdit, setVisibleEdit] = useState(false)
@@ -90,7 +93,11 @@ export default function Operation({
                 </div>
             </div>
                 
-            {periodMotorCheck !== '' && <h2>{periodMotorCheck + ' ' + categoryTech}</h2>}
+            {/* Показываем periodMotor если он существует и не равен 0 */}
+            {periodMotorCheck && periodMotorCheck !== '0' && (
+                <h2>{periodMotorCheck} {categoryTech}</h2>
+            )}
+
             {description && <textarea ref={(el)=>refText.current[index] = el} value={description} readOnly/>}
             
             {/* Информация об исполнителях */}
@@ -141,6 +148,9 @@ export default function Operation({
             setOperations={setOperations}
             workers={workers}
             parts={parts}
+            type={type}
+            category={category}
+            objectID={objectID}
         />
     )
 }

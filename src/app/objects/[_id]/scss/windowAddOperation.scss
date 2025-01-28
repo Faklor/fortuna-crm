@@ -633,3 +633,110 @@
         }
     }
 }
+
+// Стили для новой секции исполнителей
+.executors-section {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+
+    p {
+        font-weight: 500;
+        color: #374151;
+        margin-bottom: 12px;
+    }
+
+    .executor-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px;
+        transition: background-color 0.2s;
+
+        &:hover {
+            background: #f3f4f6;
+            border-radius: 4px;
+        }
+
+        input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        span {
+            color: #4b5563;
+            font-size: 14px;
+        }
+    }
+}
+
+.custom-executors {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+
+    p {
+        font-weight: 500;
+        color: #374151;
+        margin-bottom: 12px;
+    }
+   
+
+    .custom-executor-input {
+        display: block;
+        gap: 10px;
+        margin-bottom: 10px;
+
+        input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+
+            &:focus {
+                outline: none;
+                border-color: #3b82f6;
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            }
+        }
+
+        .remove-executor {
+            padding: 8px 12px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+
+            &:hover {
+                background: #dc2626;
+            }
+        }
+    }
+
+    .add-executor {
+        width: 100%;
+        padding: 8px;
+        background: #3b82f6;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background-color 0.2s;
+
+        &:hover {
+            background: #2563eb;
+        }
+
+        &:active {
+            background: #1d4ed8;
+        }
+    }
+}

@@ -62,7 +62,7 @@ export default function Page({
                 })
                 :
                     <option value='Ремонт'>Ремонт</option>
-                }
+                } 
             </select>
             {typeOperation === 'Ремонт' || typeOperation === 'Навигация'?
                 <Repair 
@@ -78,24 +78,28 @@ export default function Page({
             :''}
             {typeOperation === 'Технический Осмотр'?<AddInspection 
             
-            period={obj.inspection.period} 
-            type={typeOperation} 
-            objectID={objectID}
+                period={obj.inspection.period} 
+                type={typeOperation} 
+                objectID={objectID}
 
-            setOperations={setOperations}
-            listTypesOperations={listTypesOperations}
-            setTypeOperation={setTypeOperation} 
+                setOperations={setOperations}
+                listTypesOperations={listTypesOperations}
+                setTypeOperation={setTypeOperation} 
+                workers={workers}
+                parts={parts}
             />:''}
             {typeOperation === 'Техническое обслуживание'?<AddMaintance 
             
-            type={typeOperation} 
-            objectID={objectID}
-            category={obj.category}
-            periodTO={obj.maintance.periodTO}
+                type={typeOperation} 
+                objectID={objectID}
+                category={obj.category}
+                periodTO={obj.maintance.periodTO}
 
-            setOperations={setOperations}
-            listTypesOperations={listTypesOperations}
-            setTypeOperation={setTypeOperation}
+                setOperations={setOperations}
+                listTypesOperations={listTypesOperations}
+                setTypeOperation={setTypeOperation}
+                workers={workers}
+                parts={parts}
             />:''}
 
         </div>

@@ -37,14 +37,13 @@ export default function Repair({
     const [descriptionOpertaion, setDescriptionOperation] = useState('')
     const [periodMotor, setPeriodMotor] = useState('')
     const [selectedExecutors, setSelectedExecutors] = useState([])
+    const [customExecutors, setCustomExecutors] = useState(['']) // Массив для ручного ввода
     const [selectedParts, setSelectedParts] = useState([])
     const [partValues, setPartValues] = useState({})
     const [selectedUnits, setSelectedUnits] = useState({})
     const [showPartsSelector, setShowPartsSelector] = useState(false)
     const [searchParts, setSearchParts] = useState('')
     const [err, setErr] = useState('')
-    const [customExecutor, setCustomExecutor] = useState('')
-    const [executorInputType, setExecutorInputType] = useState('list')
 
     // Получаем текущего пользователя из сессии
     const [currentUser, setCurrentUser] = useState(null)
@@ -100,26 +99,34 @@ export default function Repair({
         setSelectedUnits(prev => ({ ...prev, [partId]: e.target.value }))
     }
 
-    // Обработчик изменения исполнителей
-    const handleExecutorChange = (e) => {
-        const value = e.target.value
-        if (e.target.checked) {
-            setSelectedExecutors(prev => [...prev, value])
-        } else {
-            setSelectedExecutors(prev => prev.filter(exec => exec !== value))
-        }
+    // Функции для работы с исполнителями
+    const addCustomExecutorField = () => {
+        setCustomExecutors([...customExecutors, ''])
+    }
+
+    const removeCustomExecutorField = (index) => {
+        const newCustomExecutors = customExecutors.filter((_, i) => i !== index)
+        setCustomExecutors(newCustomExecutors)
+    }
+
+    const updateCustomExecutor = (index, value) => {
+        const newCustomExecutors = [...customExecutors]
+        newCustomExecutors[index] = value
+        setCustomExecutors(newCustomExecutors)
     }
 
     // Функция добавления операции с запчастями
     async function addOperation(data){
-        if (selectedExecutors.length === 0 && executorInputType === 'list') {
+        if (selectedExecutors.length === 0 && customExecutors.length === 1 && customExecutors[0].trim() === '') {
             setErr('Выберите хотя бы одного исполнителя')
             return
         }
-        if (executorInputType === 'custom' && !customExecutor.trim()) {
-            setErr('Введите исполнителя')
-            return
-        }
+
+        // Формируем массив исполнителей
+        const finalExecutors = [
+            ...selectedExecutors,
+            ...customExecutors.filter(exec => exec.trim() !== '')
+        ]
 
         // Подготавливаем данные о запчастях
         const usedParts = selectedParts.map(partId => {
@@ -137,35 +144,35 @@ export default function Repair({
             }
         }).filter(part => part.count > 0)
 
-        // Формируем массив исполнителей
-        const finalExecutors = executorInputType === 'list' 
-            ? selectedExecutors 
-            : [customExecutor.trim()]
-
-        // Отправляем запрос на создание операции
-        const operationResponse = await axios.post('/api/operations/add', {
-            objectID,
-            date: data.date,
-            type,
-            description: data.description,
-            periodMotor: data.periodMotor,
-            executors: finalExecutors,
-            createdBy: currentUser?.login || 'unknown',
-            usedParts
-        })
-
-        // Если есть запчасти, списываем их
-        if (usedParts.length > 0) {
-            await axios.post('/api/parts/writeOff', {
-                parts: usedParts,
+        try {
+            // Отправляем запрос на создание операции
+            const operationResponse = await axios.post('/api/operations/add', {
                 objectID,
                 date: data.date,
-                workerName: finalExecutors[0],
-                description: data.description
+                type,
+                description: data.description,
+                periodMotor: data.periodMotor,
+                executors: finalExecutors, // Убедимся, что передаем массив исполнителей
+                createdBy: currentUser?.login || 'unknown',
+                usedParts
             })
-        }
 
-        return operationResponse
+            // Если есть запчасти, списываем их
+            if (usedParts.length > 0) {
+                await axios.post('/api/parts/writeOff', {
+                    parts: usedParts,
+                    objectID,
+                    date: data.date,
+                    workerName: finalExecutors[0] || 'unknown',
+                    description: data.description
+                })
+            }
+
+            return operationResponse
+        } catch (error) {
+            console.error('Ошибка при добавлении операции:', error)
+            throw error
+        }
     }
 
     const categoryUnit = category === '🔆 Комбайны' || category === '💧 Опрыскиватели' || category === '🚜 Трактора' || category === '📦 Погрущики' ? 'м.ч.' : 'км.'
@@ -182,63 +189,55 @@ export default function Repair({
             placeholder={`Введите ${categoryUnit}`}
         />
 
-        <p>Исполнители</p>
-        <div className="executor-input-type">
-            <label>
-                <input
-                    type="radio"
-                    value="list"
-                    checked={executorInputType === 'list'}
-                    onChange={(e) => {
-                        setExecutorInputType(e.target.value)
-                        setSelectedExecutors([])
-                        setCustomExecutor('')
-                    }}
-                />
-                Выбрать из списка
-            </label>
-            <label>
-                <input
-                    type="radio"
-                    value="custom"
-                    checked={executorInputType === 'custom'}
-                    onChange={(e) => {
-                        setExecutorInputType(e.target.value)
-                        setSelectedExecutors([])
-                        setCustomExecutor('')
-                    }}
-                />
-                Ввести вручную
-            </label>
+        {/* Выбор исполнителей из списка */}
+        <div className="executors-section">
+            <p>Выберите исполнителей из списка</p>
+            {workers.map(worker => (
+                <label key={worker._id} className="executor-item">
+                    <input
+                        type="checkbox"
+                        checked={selectedExecutors.includes(worker.name)}
+                        onChange={(e) => {
+                            if (e.target.checked) {
+                                setSelectedExecutors([...selectedExecutors, worker.name])
+                            } else {
+                                setSelectedExecutors(selectedExecutors.filter(name => name !== worker.name))
+                            }
+                        }}
+                    />
+                    <span>{worker.name}</span>
+                </label>
+            ))}
         </div>
 
-        {executorInputType === 'list' ? (
-            <div className="executors-selection">
-                <div className="executors-list">
-                    {workers.map(worker => (
-                        <label key={worker._id} className="executor-checkbox">
-                            <input
-                                type="checkbox"
-                                value={worker.name}
-                                checked={selectedExecutors.includes(worker.name)}
-                                onChange={handleExecutorChange}
-                            />
-                            <span>{worker.name} ({worker.position})</span>
-                        </label>
-                    ))}
+        {/* Ручной ввод исполнителей */}
+        <div className="custom-executors">
+            <p>Добавьте дополнительных исполнителей</p>
+            {customExecutors.map((executor, index) => (
+                <div key={index} className="custom-executor-input">
+                    <input
+                        type="text"
+                        value={executor}
+                        onChange={(e) => updateCustomExecutor(index, e.target.value)}
+                        placeholder="ФИО исполнителя"
+                    />
+                    <button 
+                        type="button" 
+                        onClick={() => removeCustomExecutorField(index)}
+                        className="remove-executor"
+                    >
+                        Удалить
+                    </button>
                 </div>
-            </div>
-        ) : (
-            <div className="custom-executor">
-                <input
-                    type="text"
-                    value={customExecutor}
-                    onChange={(e) => setCustomExecutor(e.target.value)}
-                    placeholder="Введите название организации или ФИО исполнителя"
-                    className="custom-executor-input"
-                />
-            </div>
-        )}
+            ))}
+            <button 
+                type="button" 
+                onClick={addCustomExecutorField}
+                className="add-executor"
+            >
+                Добавить исполнителя
+            </button>
+        </div>
 
         <textarea 
             value={descriptionOpertaion} 
@@ -319,25 +318,25 @@ export default function Repair({
         </div>
             
         <button onClick={async()=>{
-            if (executorInputType === 'list' && selectedExecutors.length === 0) {
-                setErr('Выберите хотя бы одного исполнителя')
-                return
-            }
-            if (executorInputType === 'custom' && !customExecutor.trim()) {
-                setErr('Введите исполнителя')
-                return
-            }
+            // Собираем всех исполнителей
+            const customExecutorsList = customExecutors
+                .map(exec => exec.trim())
+                .filter(exec => exec !== '')
 
-            const finalExecutors = executorInputType === 'list' 
-                ? selectedExecutors 
-                : [customExecutor.trim()]
+            const allExecutors = [...selectedExecutors, ...customExecutorsList]
+
+            // Проверка наличия хотя бы одного исполнителя
+            if (allExecutors.length === 0) {
+                setErr('Добавьте хотя бы одного исполнителя')
+                return
+            }
 
             addOperation({
                 date: dateOpertaion,
                 description: descriptionOpertaion,
                 periodMotor: periodMotor,
                 selectedParts: selectedParts,
-                executors: finalExecutors
+                executors: allExecutors
             })
             .then(res => {
                 setOperations(prev => [...prev, res.data])
