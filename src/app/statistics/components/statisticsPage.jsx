@@ -4,6 +4,7 @@ import axios from 'axios'
 import { wialonDateToTimestamp } from '@/utils/wialon'
 import '../scss/statistics.scss'
 import TimelineOperations from './timelineOperations'
+import StatisticsCharts from './statisticsCharts'
 
 export default function StatisticsPage({
     visibleParts,
@@ -104,72 +105,9 @@ export default function StatisticsPage({
         };
     }, [wialonData.sid, fetchWialonData]);
 
-    // Добавляем функцию для получения треков
-    const fetchUnitTrips = async (unitId) => {
-        try {
-            // Получаем текущую дату
-            const currentDate = new Date();
-            
-            // Устанавливаем начало текущего дня (00:00:00)
-            const startDate = new Date(
-                currentDate.getFullYear(),
-                currentDate.getMonth(),
-                currentDate.getDate()
-            );
-            startDate.setHours(0, 0, 0, 0);
+    
 
-            // Устанавливаем конец текущего дня (23:59:59)
-            const endDate = new Date(
-                currentDate.getFullYear(),
-                currentDate.getMonth(),
-                currentDate.getDate()
-            );
-            endDate.setHours(23, 59, 59, 999);
-
-            // Преобразуем в UNIX timestamp (секунды)
-            const dateFrom = Math.floor(startDate.getTime() / 1000);
-            const dateTo = Math.floor(endDate.getTime() / 1000);
-
-            // Форматируем дату в 24-часовом формате
-            const formatDate = (date) => {
-                return date.toLocaleString('ru-RU', {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit',
-                    hour12: false
-                });
-            };
-
-            const response = await axios.get('/api/wialon/trips', {
-                params: {
-                    sid: wialonData.sid,
-                    unitId: unitId,
-                    dateFrom: dateFrom,
-                    dateTo: dateTo
-                }
-            });
-           
-
-            return {
-                ...response.data,
-                period: {
-                    from: formatDate(startDate),
-                    to: formatDate(endDate)
-                }
-            };
-        } catch (error) {
-            console.error('Error fetching tracks:', error);
-            return null;
-        }
-    };
-
-    // Добавляем обработчик клика по карточке ТС
-    const handleUnitClick = async (unitId) => {
-        const tripsData = await fetchUnitTrips(unitId);
-    };
+    
 
     const renderStatistics = (units) => {
         const onlineUnits = units.filter(unit => unit.netconn);
@@ -254,115 +192,27 @@ export default function StatisticsPage({
         );
     };
 
-    const renderVehicleInfo = (pflds) => {
-        if (!pflds) return null;
-        const fields = {
-            brand: pflds[3]?.v || 'Н/Д',
-            model: pflds[2]?.v || 'Н/Д',
-            year: pflds[4]?.v || 'Н/Д',
-            color: pflds[5]?.v || 'Н/Д',
-            type: pflds[6]?.v || 'Н/Д',
-            engine: pflds[7]?.v || 'Н/Д',
-            capacity: pflds[8]?.v || 'Н/Д',
-            weight: pflds[9]?.v || 'Н/Д',
-            axles: pflds[10]?.v || 'Н/Д'
-        };
-        
-        return (
-            <div className="vehicle-info">
-                <h4>Характеристики ТС:</h4>
-                <div className="info-grid">
-                    <div className="info-item">
-                        <span>Марка/Модель:</span>
-                        <span>{fields.brand} {fields.model}</span>
-                    </div>
-                    <div className="info-item">
-                        <span>Год выпуска:</span>
-                        <span>{fields.year}</span>
-                    </div>
-                    <div className="info-item">
-                        <span>Тип/Цвет:</span>
-                        <span>{fields.type} / {fields.color}</span>
-                    </div>
-                    <div className="info-item">
-                        <span>Объем двигателя:</span>
-                        <span>{fields.engine} см³</span>
-                    </div>
-                    <div className="info-item">
-                        <span>Грузоподъемность:</span>
-                        <span>{fields.capacity} т</span>
-                    </div>
-                    <div className="info-item">
-                        <span>Полная масса:</span>
-                        <span>{fields.weight} т</span>
-                    </div>
-                    <div className="info-item">
-                        <span>Количество осей:</span>
-                        <span>{fields.axles}</span>
-                    </div>
-                </div>
-            </div>
-        );
-    };
-
-    const renderSensors = (sens) => {
-        if (!sens) return null;
-        return (
-            <div className="sensors-info">
-                <h4>Датчики:</h4>
-                <div className="info-grid">
-                    {Object.values(sens).map(sensor => (
-                        <div key={sensor.id} className="info-item">
-                            <span>{sensor.n}:</span>
-                            <span>{sensor.m ? `(${sensor.m})` : ''}</span>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        );
-    };
-
-    const renderLastPosition = (pos, lmsg) => {
-        if (!pos) return null;
-        return (
-            <div className="position-info">
-                <h4>Последняя позиция:</h4>
-                <div className="info-grid">
-                    <div className="info-item">
-                        <span>Координаты:</span>
-                        <span>{pos.y}, {pos.x}</span>
-                    </div>
-                    <div className="info-item">
-                        <span>Скорость:</span>
-                        <span>{pos.s} км/ч</span>
-                    </div>
-                    <div className="info-item">
-                        <span>Высота:</span>
-                        <span>{pos.z} м</span>
-                    </div>
-                    {lmsg && (
-                        <>
-                            <div className="info-item">
-                                <span>Внешнее питание:</span>
-                                <span>{lmsg.p?.pwr_ext || 'Н/Д'} В</span>
-                            </div>
-                            <div className="info-item">
-                                <span>Внутреннее питание:</span>
-                                <span>{lmsg.p?.pwr_int || 'Н/Д'} В</span>
-                            </div>
-                        </>
-                    )}
-                </div>
-            </div>
-        );
-    };
 
     return (
         <div className="statistics">
             <div className="statistics-container">
+
+                <h1>Выборка по объекту</h1>
+                {/* Добавляем компонент временной линии */}
+                <TimelineOperations visibleObjects={JSON.parse(visibleObjects)} />
+
+                {/* Добавляем компонент с графиками */}
+                <StatisticsCharts 
+                    operations={JSON.parse(visibleOperations)}
+                    orders={JSON.parse(visibleOrders)}
+                    requests={JSON.parse(visibleHistoryReq)}
+                    parts={JSON.parse(visibleParts)}
+                    objects={JSON.parse(visibleObjects)}
+                />
+
                 <div className="header-container">
                     
-                    <h1>Мониторинг транспорта</h1>
+                    <h1>Данные из Wialon</h1>
                     <div className="update-info">
                         {isLoading ? (
                             <span className="loading-indicator">Обновление...</span>
@@ -387,35 +237,11 @@ export default function StatisticsPage({
                     </div>
                 )}
 
-                {/* Добавляем компонент временной линии */}
-                <TimelineOperations visibleObjects={JSON.parse(visibleObjects)} />
+               
 
                 {wialonData.units.length > 0 && (
                     <>
                         {renderStatistics(wialonData.units)}
-                        <div className="units-grid">
-                            {wialonData.units.map((unit) => (
-                                <div key={unit.id} className="stat-card" onClick={() => handleUnitClick(unit.id)}>
-                                    <div className="card-header">
-                                        <h3>{unit.nm}</h3>
-                                        <span className={`status ${unit.netconn ? 'online' : 'offline'}`}>
-                                            {unit.netconn ? 'На связи' : 'Не на связи'}
-                                        </span>
-                                    </div>
-                                    
-                                    {renderVehicleInfo(unit.pflds)}
-                                    {renderLastPosition(unit.pos, unit.lmsg)}
-                                    {renderSensors(unit.sens)}
-                                    
-                                    <div className="card-footer">
-                                        <span>ID: {unit.id}</span>
-                                        <span>Последнее обновление: {
-                                            unit.mu ? new Date(unit.mu * 1000).toLocaleString() : 'Н/Д'
-                                        }</span>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
                     </>
                 )}
 

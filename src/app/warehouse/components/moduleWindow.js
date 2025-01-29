@@ -27,6 +27,20 @@ export default function ModuleWindow({
    
     const des = ['шт.', 'л.', 'см.', 'м.']
     //react
+    const sortedWorkers = [...workers].sort((a, b) => {
+        const orgCompare = (a.organization || '').localeCompare(b.organization || '', 'ru');
+        if (orgCompare !== 0) return orgCompare;
+        const posCompare = (a.position || '').localeCompare(b.position || '', 'ru');
+        if (posCompare !== 0) return posCompare;
+        return a.name.localeCompare(b.name, 'ru');
+    });
+
+    const sortedTeches = [...teches].sort((a, b) => {
+        const catCompare = (a.catagory || '').localeCompare(b.catagory || '', 'ru');
+        if (catCompare !== 0) return catCompare;
+        return a.name.localeCompare(b.name, 'ru');
+    });
+
     const [sendCount, setSendCount] = useState(count)
     const [sendWorker, setWorker] = useState('')
     const [sendObject, setObject] = useState('')
@@ -62,6 +76,42 @@ export default function ModuleWindow({
        return await axios.post('/api/parts/sendPart', {date:new Date(), workerName:workerName, objectID:objectID, part:part, count:count, des:des})
     }
 
+    // Группируем работников по организациям
+    const groupedWorkers = workers.reduce((acc, worker) => {
+        const organization = worker.organization || 'Без организации';
+        if (!acc[organization]) {
+            acc[organization] = [];
+        }
+        acc[organization].push(worker);
+        return acc;
+    }, {});
+
+    // Группируем объекты по категориям
+    const groupedTeches = teches.reduce((acc, tech) => {
+        const category = tech.catagory || '📦 Другое';
+        if (!acc[category]) {
+            acc[category] = [];
+        }
+        acc[category].push(tech);
+        return acc;
+    }, {});
+
+    // Сортируем категории объектов
+    const sortedCategories = Object.keys(groupedTeches).sort((a, b) => {
+        const order = {
+            '🚜': 1,  // Трактора
+            '🔆': 2,  // Комбайны
+            '💧': 3,  // Опрыскиватели
+            '📦': 4,  // Погрузчики
+            '🏠': 5,  // Здания
+            '🚗': 6   // Автомобили
+        };
+        return (order[a.charAt(0)] || 99) - (order[b.charAt(0)] || 99);
+    });
+
+    // Сортируем организации
+    const sortedOrganizations = Object.keys(groupedWorkers).sort();
+
     return sendVisible?<div className="moduleWindow">
         <div className='message'>
             <div className='title'>
@@ -78,15 +128,33 @@ export default function ModuleWindow({
             <br/>
             <p>Выберите работника</p>
             <select className='workers' onChange={(e)=>{setWorker(e.target.value)}}>
-                {workers.map((worker,index)=>{
-                    return <option key={index} value={worker.name}>{worker.name}</option>
-                })}
+                {sortedOrganizations.map(organization => (
+                    <optgroup key={organization} label={organization}>
+                        {groupedWorkers[organization]
+                            .sort((a, b) => a.name.localeCompare(b.name, 'ru'))
+                            .map(worker => (
+                                <option key={worker._id} value={worker.name}>
+                                    {`${worker.name} ${worker.position ? `(${worker.position})` : ''}`}
+                                </option>
+                            ))
+                        }
+                    </optgroup>
+                ))}
             </select>
             <p>Выберите Объект</p>
             <select className='objects' onChange={(e)=>{setObject(e.target.value)}}>
-                {teches.map((tech,index)=>{
-                    return <option key={index} value={tech._id}>{tech.name}</option>
-                })}
+                {sortedCategories.map(category => (
+                    <optgroup key={category} label={category}>
+                        {groupedTeches[category]
+                            .sort((a, b) => a.name.localeCompare(b.name, 'ru'))
+                            .map(tech => (
+                                <option key={tech._id} value={tech._id}>
+                                    {tech.name}
+                                </option>
+                            ))
+                        }
+                    </optgroup>
+                ))}
             </select>
             <br/>
             <p>Выберите кол-во</p>
