@@ -42,31 +42,95 @@ export default function SubtaskForm({ onSubmit, onCancel, maxArea, workArea, onW
     const calculateArea = () => {
         if (!tracks.length || !formData.equipment.length) return;
 
-        // Находим прицеп с шириной захвата
         const trailer = equipment
             .filter(tech => formData.equipment.includes(tech._id))
             .find(tech => tech.catagory?.includes('🚃 Прицепы') && tech.captureWidth);
 
         if (!trailer) return;
 
-        // Считаем только для рабочих сегментов
         const workingSegments = tracks.filter(segment => 
             Array.isArray(segment) && segment[0]?.isWorking
         );
 
         let totalLength = 0;
+        let has3DData = false;
+
         workingSegments.forEach(segment => {
-            const line = turf.lineString(segment.map(point => [point.lon, point.lat]));
-            totalLength += turf.length(line, { units: 'meters' });
+            if (segment.length < 2) return;
+
+            // Создаем массив координат с учетом высоты
+            const coordinates = segment
+                .map(point => {
+                    if (!point || 
+                        typeof point.lon === 'undefined' || 
+                        typeof point.lat === 'undefined') {
+                        return null;
+                    }
+                    // Проверяем наличие высоты
+                    if (point.altitude) {
+                        has3DData = true;
+                        return [point.lon, point.lat, point.altitude];
+                    }
+                    return [point.lon, point.lat];
+                })
+                .filter(coord => coord !== null);
+
+            if (coordinates.length >= 2) {
+                try {
+                    let length;
+                    if (coordinates[0].length === 3) {
+                        // Если есть данные о высоте, используем 3D расчет
+                        const points = coordinates.map(coord => 
+                            turf.point([coord[0], coord[1]], { elevation: coord[2] })
+                        );
+                        
+                        // Считаем длину с учетом рельефа
+                        length = 0;
+                        for (let i = 1; i < points.length; i++) {
+                            const from = points[i - 1];
+                            const to = points[i];
+                            
+                            // Расстояние по горизонтали
+                            const horizontalDist = turf.distance(from, to, { units: 'meters' });
+                            
+                            // Разница высот
+                            const heightDiff = Math.abs(
+                                from.properties.elevation - to.properties.elevation
+                            );
+                            
+                            // Теорема Пифагора для расчета реального расстояния
+                            const realDist = Math.sqrt(
+                                Math.pow(horizontalDist, 2) + Math.pow(heightDiff, 2)
+                            );
+                            
+                            length += realDist;
+                        }
+                    } else {
+                        // Если нет данных о высоте, считаем по плоскости
+                        const line = turf.lineString(coordinates);
+                        length = turf.length(line, { units: 'meters' });
+                    }
+                    
+                    totalLength += length;
+                } catch (error) {
+                    console.error('Ошибка расчета длины сегмента:', error);
+                }
+            }
         });
 
-        // Расчет площади: длина * ширина захвата / 10000 (для перевода в га)
-        const areaHectares = (totalLength * trailer.captureWidth) / 10000;
-        
-        setFormData(prev => ({
-            ...prev,
-            area: areaHectares.toFixed(2)
-        }));
+        if (totalLength > 0) {
+            const areaHectares = (totalLength * trailer.captureWidth) / 10000;
+            
+            setFormData(prev => ({
+                ...prev,
+                area: areaHectares.toFixed(2)
+            }));
+
+            // Добавляем информацию о типе расчета
+            console.log(`Площадь рассчитана ${has3DData ? 
+                'с учетом рельефа' : 
+                'по плоскости'}`);
+        }
     };
 
     const handleWialonTrackSelect = (newTracks) => {
