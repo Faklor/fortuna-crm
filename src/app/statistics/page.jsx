@@ -6,6 +6,7 @@ import Orders from "@/models/orders";
 import HistoryReq from "@/models/historyReq";
 import Operation from "@/models/operations"
 import Tech from "@/models/tech";
+import Ratings from "@/models/ratings"
 
 import { unstable_cache } from 'next/cache'
 import Image from "next/image";
@@ -27,6 +28,7 @@ export default async function Page({}){
     const historyReq = await HistoryReq.find({})
     const orders = await Orders.find({})
     const operations = await Operation.find({})
+    const retings = await Ratings.find({})
     //default 
     let visibleParts = JSON.stringify(await parts)
     let visibleWorkers = JSON.stringify(await workers)
@@ -35,6 +37,7 @@ export default async function Page({}){
     let visibleHistoryReq = JSON.stringify(await historyReq)
     let visibleOrders = JSON.stringify(await orders)
     let visibleOperations = JSON.stringify(await operations)
+    let visibleRatings = JSON.stringify(await retings)
 
     return <StatisticsPage 
         visibleParts={visibleParts}
@@ -44,6 +47,7 @@ export default async function Page({}){
         visibleHistoryReq={visibleHistoryReq}
         visibleOrders={visibleOrders}
         visibleOperations={visibleOperations}
+        visibleRatings={visibleRatings}
     />
 }
 

@@ -24,7 +24,7 @@ ChartJS.register(
     ArcElement
 )
 
-const StatisticsCharts = ({ operations, orders, requests, parts, objects }) => {
+const StatisticsCharts = ({ operations, orders, requests, parts, objects, startDate, endDate }) => {
     const [stats, setStats] = useState({
         partsStats: {
             total: 0,
@@ -41,6 +41,19 @@ const StatisticsCharts = ({ operations, orders, requests, parts, objects }) => {
     })
 
     useEffect(() => {
+        // Фильтруем данные по периоду
+        const filteredOperations = operations?.filter(op => 
+            new Date(op.date) >= startDate && new Date(op.date) <= endDate
+        )
+        
+        const filteredOrders = orders?.filter(order => 
+            new Date(order.date) >= startDate && new Date(order.date) <= endDate
+        )
+        
+        const filteredRequests = requests?.filter(req => 
+            new Date(req.dateEnd) >= startDate && new Date(req.dateEnd) <= endDate
+        )
+
         // Статистика по запчастям
         const partsStats = parts?.reduce((acc, part) => {
             // Общая статистика
@@ -61,8 +74,8 @@ const StatisticsCharts = ({ operations, orders, requests, parts, objects }) => {
             return acc;
         }, { total: 0, inStock: 0, outOfStock: 0, categories: {} });
 
-        // Статистика заявок по объектам
-        const requestStats = requests?.reduce((acc, req) => {
+        // Статистика заявок по объектам с учетом фильтрации
+        const requestStats = filteredRequests?.reduce((acc, req) => {
             const objectId = req.obj?._id;
             const object = objects?.find(obj => obj._id === objectId);
             const objectName = object ? `${object.name}` : 'Неизвестный';
@@ -70,8 +83,8 @@ const StatisticsCharts = ({ operations, orders, requests, parts, objects }) => {
             return acc;
         }, {});
 
-        // Статистика выданных запчастей по объектам
-        const orderStats = orders?.reduce((acc, order) => {
+        // Статистика выданных запчастей по объектам с учетом фильтрации
+        const orderStats = filteredOrders?.reduce((acc, order) => {
             const objectId = order.objectID;
             const object = objects?.find(obj => obj._id === objectId);
             const objectName = object ? `${object.name}` : 'Неизвестный';
@@ -80,8 +93,8 @@ const StatisticsCharts = ({ operations, orders, requests, parts, objects }) => {
             return acc;
         }, {});
 
-        // Статистика затрат по объектам
-        const expensesStats = orders?.reduce((acc, order) => {
+        // Статистика затрат по объектам с учетом фильтрации
+        const expensesStats = filteredOrders?.reduce((acc, order) => {
             const objectId = order.objectID;
             const object = objects?.find(obj => obj._id === objectId);
             const objectName = object ? `${object.name}` : 'Неизвестный';
@@ -171,11 +184,11 @@ const StatisticsCharts = ({ operations, orders, requests, parts, objects }) => {
                     borderWidth: 1
                 }]
             },
-            totalOperations: operations?.length || 0,
-            totalOrders: orders?.length || 0,
+            totalOperations: filteredOperations?.length || 0,
+            totalOrders: filteredOrders?.length || 0,
             totalExpenses: expensesStats?.total || 0
         })
-    }, [operations, orders, requests, parts, objects])
+    }, [operations, orders, requests, parts, objects, startDate, endDate])
 
     const options = {
         responsive: true,

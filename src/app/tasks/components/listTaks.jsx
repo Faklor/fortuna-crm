@@ -43,7 +43,7 @@ export default function ListTasks({
                         objects={objects}
                         parts={parts}
                     />
-                    <HistoryReqs className="section history-section"/>
+                    <HistoryReqs className="section history-section" visibleHistoryReq={historyReq}/>
                 </div>
             </div>
         </div>

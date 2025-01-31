@@ -75,7 +75,7 @@ export default function WorkersCharts({ workers, periodStart, periodEnd }) {
         scales: {
             y: {
                 beginAtZero: true,
-                max: 1.3,
+                max: 1.5,
                 ticks: {
                     stepSize: 0.1
                 },
@@ -117,7 +117,7 @@ export default function WorkersCharts({ workers, periodStart, periodEnd }) {
             <div className="chart-legend">
                 <div className="legend-item">
                     <span className="color-box" style={{backgroundColor: 'rgba(75, 192, 192, 0.8)'}}></span>
-                    <span>Отличный КТУ (1.1-1.3)</span>
+                    <span>Отличный КТУ (1.1-1.5)</span>
                 </div>
                 <div className="legend-item">
                     <span className="color-box" style={{backgroundColor: 'rgba(54, 162, 235, 0.8)'}}></span>

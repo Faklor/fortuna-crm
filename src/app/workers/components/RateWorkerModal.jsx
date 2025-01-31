@@ -147,8 +147,8 @@ export default function RateWorkerModal({ isOpen, onClose, onRate, worker, disab
                         <label>КТУ (от 0.1 до 1.3):</label>
                         <input
                             type="number"
-                            min="0.7"
-                            max="1.3"
+                            min="0.1"
+                            max="1.5"
                             step="0.1"
                             value={ktuValue}
                             onChange={(e) => setKtuValue(e.target.value)}

@@ -5,6 +5,14 @@ import { wialonDateToTimestamp } from '@/utils/wialon'
 import '../scss/statistics.scss'
 import TimelineOperations from './timelineOperations'
 import StatisticsCharts from './statisticsCharts'
+import WorkersKtuChart from './workersKtuChart'
+import DatePicker from 'react-datepicker'
+import { registerLocale } from 'react-datepicker'
+import ru from 'date-fns/locale/ru'
+import "react-datepicker/dist/react-datepicker.css"
+
+// Регистрируем русскую локаль
+registerLocale('ru', ru)
 
 export default function StatisticsPage({
     visibleParts,
@@ -13,8 +21,11 @@ export default function StatisticsPage({
     visibleRequisition,
     visibleHistoryReq,
     visibleOrders,
-    visibleOperations
+    visibleOperations,
+    visibleRatings
 }) {
+    const [startDate, setStartDate] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1))
+    const [endDate, setEndDate] = useState(new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0))
     const [wialonData, setWialonData] = useState({
         sid: null,
         units: [],
@@ -105,9 +116,40 @@ export default function StatisticsPage({
         };
     }, [wialonData.sid, fetchWialonData]);
 
-    
+    const handleStartDateChange = (date) => {
+        if (date) {
+            const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1)
+            setStartDate(startOfMonth)
+        }
+    }
 
-    
+    const handleEndDateChange = (date) => {
+        if (date) {
+            const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0)
+            setEndDate(endOfMonth)
+        }
+    }
+
+    // Добавляем функцию для установки максимального периода
+    const handleAllPeriod = () => {
+        // Находим самую раннюю дату из всех данных
+        const allDates = [
+            ...JSON.parse(visibleOperations).map(op => new Date(op.date)),
+            ...JSON.parse(visibleOrders).map(order => new Date(order.date)),
+            ...JSON.parse(visibleHistoryReq).map(req => new Date(req.dateEnd)),
+            ...JSON.parse(visibleRatings).map(rating => new Date(rating.date))
+        ].filter(date => date instanceof Date && !isNaN(date))
+
+        if (allDates.length > 0) {
+            const minDate = new Date(Math.min(...allDates))
+            const maxDate = new Date()
+            
+            // Устанавливаем начало месяца для минимальной даты
+            setStartDate(new Date(minDate.getFullYear(), minDate.getMonth(), 1))
+            // Устанавливаем конец месяца для максимальной даты
+            setEndDate(new Date(maxDate.getFullYear(), maxDate.getMonth() + 1, 0))
+        }
+    }
 
     const renderStatistics = (units) => {
         const onlineUnits = units.filter(unit => unit.netconn);
@@ -192,14 +234,36 @@ export default function StatisticsPage({
         );
     };
 
-
     return (
         <div className="statistics">
             <div className="statistics-container">
-
-                <h1>Выборка по объекту</h1>
-                {/* Добавляем компонент временной линии */}
-                <TimelineOperations visibleObjects={JSON.parse(visibleObjects)} />
+                <div className="period-selector">
+                    <span>Период с:</span>
+                    <DatePicker
+                        selected={startDate}
+                        onChange={handleStartDateChange}
+                        locale="ru"
+                        dateFormat="MMMM yyyy"
+                        showMonthYearPicker
+                        className="date-picker"
+                    />
+                    <span>по:</span>
+                    <DatePicker
+                        selected={endDate}
+                        onChange={handleEndDateChange}
+                        locale="ru"
+                        dateFormat="MMMM yyyy"
+                        showMonthYearPicker
+                        className="date-picker"
+                        minDate={startDate}
+                    />
+                    <button 
+                        className="all-period-button"
+                        onClick={handleAllPeriod}
+                    >
+                        За весь период
+                    </button>
+                </div>
 
                 {/* Добавляем компонент с графиками */}
                 <StatisticsCharts 
@@ -208,6 +272,25 @@ export default function StatisticsPage({
                     requests={JSON.parse(visibleHistoryReq)}
                     parts={JSON.parse(visibleParts)}
                     objects={JSON.parse(visibleObjects)}
+                    startDate={startDate}
+                    endDate={endDate}
+                />
+
+                <h1>Выборка по объекту</h1>
+                {/* Добавляем компонент временной линии */}
+                <TimelineOperations 
+                    visibleObjects={JSON.parse(visibleObjects)} 
+                    startDate={startDate}
+                    endDate={endDate}
+                />
+
+                {/* Добавляем график КТУ работников */}
+                <h1>КТУ Сотрудников</h1>
+                <WorkersKtuChart 
+                    workers={JSON.parse(visibleWorkers)} 
+                    ratings={JSON.parse(visibleRatings)}
+                    startDate={startDate}
+                    endDate={endDate}
                 />
 
                 <div className="header-container">
@@ -250,6 +333,8 @@ export default function StatisticsPage({
                         Загрузка данных...
                     </div>
                 )}
+
+                
             </div>
         </div>
     );

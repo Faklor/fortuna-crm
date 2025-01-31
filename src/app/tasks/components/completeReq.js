@@ -30,6 +30,26 @@ export default function CompleteReq({partsOption, setErr, dateBegin, object, _id
     async function completeReq(_id, dateBegin, object, partsOption, dateNow, workerName){
         return await axios.post('/api/requisition/completeReq', {_id:_id, dateBegin:dateBegin, object:object, partsOption:partsOption, dateNow:dateNow, workerName:workerName})
     }
+    
+    async function sendCompletionNotification(dateBegin, object, partsOption, workerName) {
+        const message = `
+<b>✅ Заявка выполнена и перемещена в архив</b>
+
+📅 Дата создания: ${dateBegin}
+📅 Дата завершения: ${new Date().toLocaleDateString()}
+Объект: ${object.name}
+👨‍🔧 Выдано: ${workerName}
+
+<b>Выданные запчасти:</b>
+${partsOption.map(part => `• ${part.countReq} ${part.description} ${part._doc.name}${part._doc.manufacturer ? ` (${part._doc.manufacturer})` : ''}`).join('\n')}
+`;
+
+        try {
+            await axios.post('/api/telegram/sendNotification', { message });
+        } catch (error) {
+            console.error('Failed to send completion notification:', error);
+        }
+    }
 
     useEffect(()=>{
         if(workers.length !== 0){
@@ -80,15 +100,20 @@ export default function CompleteReq({partsOption, setErr, dateBegin, object, _id
                 <button onClick={()=>{
                     completeReq(_id, dateBegin, object, partsOption, createDataEnd, worker)
                     .then(res=>{
+                        // Отправляем уведомление после успешного завершения
+                        sendCompletionNotification(
+                            dateBegin,
+                            object,
+                            partsOption,
+                            worker
+                        );
+
                         arrActive.forEach((item,index)=>{
-                            
                             if(item._id === res.data){
                                 setArrActive(arrActive.toSpliced(index,1)) 
-                                
                             }
                         })
                         setVisible(false)
-                        //console.log(arrActive)
                     })
                     .catch(e=>console.log(e))
                 }}>Завершить</button>

@@ -1,55 +1,120 @@
 import axios from "axios"
-import react, { useState } from "react";
-import { useEffect } from "react"
+import { useState, useEffect } from "react"
+import DatePicker, { registerLocale } from 'react-datepicker'
+import "react-datepicker/dist/react-datepicker.css"
+import ru from 'date-fns/locale/ru'
 import '../scss/historyReqs.scss'
 import Image from 'next/image'
 
-export default function HistoryReqs(){
-    function formatDate(inputDate) {
-        const parts = inputDate.split('.');
-        if (parts.length !== 3) {
-          return 'Некорректный формат даты';
-        }
-        const day = parts[0];
-        const month = parts[1];
-        const year = parts[2];
-        const formattedDate = `${year}-${month}-${day}`;
-        return formattedDate;
-    }
+// Регистрируем русскую локаль
+registerLocale('ru', ru)
 
-    //default
-    const date = formatDate(new Date().toLocaleDateString())
-
-    //react
+export default function HistoryReqs({ visibleHistoryReq }){
+    const [selectedDate, setSelectedDate] = useState(new Date())
     const [history, setHistory] = useState([])
+    const [allDates, setAllDates] = useState([])
+    const [showConfirmDelete, setShowConfirmDelete] = useState(null) // для модального окна подтверждения
 
-    //function
-    async function getHistory(date){
-        return await axios.post('api/historyReqs',{date:date})
+    useEffect(() => {
+        // Получаем все даты из существующих заявок
+        const historyReqs = visibleHistoryReq
+        const dates = historyReqs.map(req => new Date(req.dateEnd))
+        setAllDates(dates)
+        
+        // Получаем заявки за текущую дату
+        filterHistoryByDate(selectedDate)
+    }, [visibleHistoryReq])
+
+    // Фильтруем заявки по выбранной дате
+    const filterHistoryByDate = (date) => {
+        const historyReqs = visibleHistoryReq
+        const filteredHistory = historyReqs.filter(req => {
+            const reqDate = new Date(req.dateEnd)
+            return reqDate.getDate() === date.getDate() &&
+                   reqDate.getMonth() === date.getMonth() &&
+                   reqDate.getFullYear() === date.getFullYear()
+        })
+        setHistory(filteredHistory)
     }
 
-    useEffect(()=>{
-        getHistory(date)
-        .then(res=>{
-            setHistory(res.data)
-        })
-        .catch(e=>{})
-    },[])
+    const handleDateChange = (date) => {
+        setSelectedDate(date)
+        filterHistoryByDate(date)
+    }
+
+    // Подсвечиваем даты с заявками
+    const highlightWithOrders = (date) => {
+        return allDates.some(d => 
+            d.getDate() === date.getDate() &&
+            d.getMonth() === date.getMonth() &&
+            d.getFullYear() === date.getFullYear()
+        )
+    }
+
+    // Функция отправки уведомления об удалении
+    const sendDeletionNotification = async (deletedReq) => {
+        const message = `
+<b>🗑️ Заявка удалена из архива</b>
+
+📅 Дата создания: ${deletedReq.dateBegin}
+📅 Дата завершения: ${deletedReq.dateEnd}
+🏢 Объект: ${deletedReq.obj.name}
+👨‍🔧 Исполнитель: ${deletedReq.workerName}
+
+<b>Удаленные запчасти:</b>
+${deletedReq.parts.map(part => `• ${part.countReq} ${part.description} ${part.name}`).join('\n')}
+`
+        try {
+            await axios.post('/api/telegram/sendNotification', { message })
+        } catch (error) {
+            console.error('Failed to send deletion notification:', error)
+        }
+    }
+
+    // Функция удаления заявки из архива
+    const deleteHistoryReq = async (reqId) => {
+        try {
+            // Находим заявку перед удалением для уведомления
+            const reqToDelete = history.find(req => req._id === reqId)
+            
+            // Отправляем запрос на удаление
+            await axios.post('/api/historyReqs/delete', { _id: reqId })
+            
+            // Отправляем уведомление
+            if (reqToDelete) {
+                await sendDeletionNotification(reqToDelete)
+            }
+
+            // Обновляем локальное состояние
+            const updatedHistory = history.filter(req => req._id !== reqId)
+            setHistory(updatedHistory)
+            
+            // Обновляем даты
+            const historyReqs = visibleHistoryReq.filter(req => req._id !== reqId)
+            const dates = historyReqs.map(req => new Date(req.dateEnd))
+            setAllDates(dates)
+        } catch (error) {
+            console.error('Error deleting history request:', error)
+        }
+    }
+    
 
     return <div className="history-container">
         <div className="history-header">
             <h2>Архив заявок</h2>
-            <input 
-                type="date" 
-                defaultValue={date} 
-                onChange={async e=>{ 
-                    getHistory(e.target.value)
-                    .then(res=>{
-                        setHistory(res.data)
-                    })
-                    .catch(e=>{})
-                }}
+            <DatePicker
+                selected={selectedDate}
+                onChange={handleDateChange}
+                dateFormat="dd.MM.yyyy"
+                locale="ru"
+                highlightDates={allDates}
+                dayClassName={date =>
+                    highlightWithOrders(date) ? "has-orders" : undefined
+                }
+                calendarClassName="custom-calendar"
                 className="date-picker"
+                
+                toggleCalendarOnIconClick={true}
             />
         </div>
 
@@ -65,10 +130,19 @@ export default function HistoryReqs(){
                                 </span>
                             </div>
                             <div className="header-right">
-                                <div className="date-range">
-                                    <span>С {item.dateBegin}</span>
-                                    <span>По {item.dateEnd}</span>
+                                <div className="date-info">
+                                    <div className="date-range">
+                                        <span>С {item.dateBegin}</span>
+                                        <span>По {item.dateEnd}</span>
+                                    </div>
+                                    <span className="worker-name">👨‍🔧 {item.workerName}</span>
                                 </div>
+                                <button 
+                                    className="delete-btn"
+                                    onClick={() => setShowConfirmDelete(item._id)}
+                                >
+                                    🗑️
+                                </button>
                             </div>
                         </div>
                         
@@ -120,5 +194,32 @@ export default function HistoryReqs(){
                 </div>
             )}
         </div>
+
+        {/* Модальное окно подтверждения удаления */}
+        {showConfirmDelete && (
+            <div className="delete-modal">
+                <div className="delete-modal-content">
+                    <h3>Подтверждение удаления</h3>
+                    <p>Вы уверены, что хотите удалить эту заявку из архива?</p>
+                    <div className="delete-modal-buttons">
+                        <button 
+                            className="confirm-delete"
+                            onClick={() => {
+                                deleteHistoryReq(showConfirmDelete);
+                                setShowConfirmDelete(null);
+                            }}
+                        >
+                            Удалить
+                        </button>
+                        <button 
+                            className="cancel-delete"
+                            onClick={() => setShowConfirmDelete(null)}
+                        >
+                            Отмена
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
     </div>
 }

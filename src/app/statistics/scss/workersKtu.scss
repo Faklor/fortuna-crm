@@ -1,0 +1,135 @@
+.workers-ktu {
+    margin: 2rem 0;
+
+    .chart-container {
+        width: 50%;
+        margin: 0 auto;
+    }
+
+    .chart-legend {
+        margin: 1rem 0;
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+
+            .color-box {
+                width: 20px;
+                height: 20px;
+                border-radius: 4px;
+            }
+        }
+    }
+
+    .workers-list {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        padding: 1rem;
+        max-height: 30em;
+        overflow: auto;
+        margin-top: 1rem;
+        font-family: Arial, sans-serif;
+        min-height: auto;
+
+        h3 {
+            font-size: 1.2rem;
+            color: #333;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #eee;
+        }
+
+        .organization-group {
+            margin-bottom: 1.5rem;
+
+            h4 {
+                font-size: 1rem;
+                color: #666;
+                background: #f5f5f5;
+                padding: 0.5rem 1rem;
+                border-radius: 4px;
+                margin-bottom: 0.5rem;
+            }
+
+            .worker-item {
+                display: grid;
+                grid-template-columns: minmax(200px, 2fr) minmax(150px, 1fr) 100px;
+                align-items: center;
+                padding: 0.75rem 1rem;
+                border-bottom: 1px solid #eee;
+                transition: background-color 0.2s;
+
+                &:hover {
+                    background: #f8f9fa;
+                }
+
+                .worker-name {
+                    font-weight: 500;
+                    color: #2c3e50;
+                }
+
+                .worker-position {
+                    color: #666;
+                    font-size: 0.9em;
+                }
+
+                .worker-ktu {
+                    text-align: center;
+                    padding: 0.25rem 0.5rem;
+                    border-radius: 4px;
+                    font-weight: 500;
+                    font-size: 0.9em;
+                    width: fit-content;
+                    justify-self: end;
+
+                    &.excellent {
+                        background: #e3fcef;
+                        color: #0c6b58;
+                    }
+
+                    &.good {
+                        background: #e3f2fd;
+                        color: #1565c0;
+                    }
+
+                    &.average {
+                        background: #fff3e0;
+                        color: #e65100;
+                    }
+
+                    &.low {
+                        background: #ffebee;
+                        color: #c62828;
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Медиа-запрос для мобильных устройств
+@media (max-width: 768px) {
+    .workers-ktu {
+        .workers-list {
+            .worker-item {
+                grid-template-columns: 1fr auto;
+                gap: 0.5rem;
+
+                .worker-position {
+                    grid-column: 1;
+                }
+
+                .worker-ktu {
+                    grid-column: 2;
+                    grid-row: 1 / span 2;
+                }
+            }
+        }
+    }
+} 

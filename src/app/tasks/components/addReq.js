@@ -19,6 +19,25 @@ const URGENCY_TYPES = {
 
 export default function AddReq({setVisibleAdd, arrActive, objects, parts}){
 
+    // Группируем объекты по категориям
+    const categorizedObjects = objects.reduce((acc, obj) => {
+        const category = obj.catagory || 'Без категории';
+        if (!acc[category]) {
+            acc[category] = [];
+        }
+        acc[category].push(obj);
+        return acc;
+    }, {});
+
+    // Сортируем объекты в каждой категории по имени
+    Object.keys(categorizedObjects).forEach(category => {
+        categorizedObjects[category].sort((a, b) => a.name.localeCompare(b.name));
+    });
+
+    // Получаем первый объект из отсортированного списка
+    const firstCategory = Object.keys(categorizedObjects)[0];
+    const firstObject = categorizedObjects[firstCategory][0];
+
     //default
     const selectedData = {}
     
@@ -43,7 +62,7 @@ export default function AddReq({setVisibleAdd, arrActive, objects, parts}){
     //react
     const [date, setSdate] = useState(formatDate(defaultDate))
     const [urgencySt, setUrgencySt] = useState(arrUrgency[0])
-    const [objectSt, setObjectSt] = useState(JSON.stringify(objects[0]))
+    const [objectSt, setObjectSt] = useState(JSON.stringify(firstObject))
     const [selectDes, setSelectDes] = useState(des[0])
     //react-checked
     const [selectedParts, setSelectedParts] = useState([])
@@ -137,12 +156,12 @@ export default function AddReq({setVisibleAdd, arrActive, objects, parts}){
         const message = `
         <b>🔔 Новая заявка создана</b>
 
-        📅 Дата: ${reqData.date}
-        🏢 Объект: ${object.name}
-        ⚡ Срочность: ${urgencyEmoji} <code>${reqData.urgencySt}</code>
+📅 Дата: ${reqData.date}
+🏢 Объект: ${object.name}
+⚡ Срочность: ${urgencyEmoji} <code>${reqData.urgencySt}</code>
 
-        <b>Запчасти:</b>
-        ${partsWithNames.map(part => `• ${part.countReq} ${part.description} ${part.name}`).join('\n')}
+<b>Запчасти:</b>
+${partsWithNames.map(part => `• ${part.countReq} ${part.description} ${part.name}`).join('\n')}
         `;
 
         return await axios.post('/api/telegram/sendNotification', { message });
@@ -200,10 +219,17 @@ export default function AddReq({setVisibleAdd, arrActive, objects, parts}){
                         onChange={e=>setObjectSt(e.target.value)}
                         className="object-select"
                     >
-                        {objects.map((obj,index)=>(
-                            <option key={index} value={JSON.stringify(obj)}>
-                                {obj.name}
-                            </option>
+                        {Object.entries(categorizedObjects).map(([category, categoryObjects]) => (
+                            <optgroup key={category} label={category}>
+                                {categoryObjects.map((obj, index) => (
+                                    <option 
+                                        key={`${category}-${index}`} 
+                                        value={JSON.stringify(obj)}
+                                    >
+                                        {obj.name}
+                                    </option>
+                                ))}
+                            </optgroup>
                         ))}
                     </select>
                 </div>
@@ -242,7 +268,10 @@ export default function AddReq({setVisibleAdd, arrActive, objects, parts}){
                                             onChange={(e) => handleCheckboxChange(e, item._id)}
                                             className="part-checkbox"
                                         />
-                                        <p className="part-name">{item.name}</p>
+                                        <div className="part-info">
+                                            <p className="part-name">{item.name}</p>
+                                            <p className="part-stock">На складе: {item.count} шт.</p>
+                                        </div>
                                     </div>
                                     
                                     {selectedParts.includes(item._id) && (
@@ -303,7 +332,10 @@ export default function AddReq({setVisibleAdd, arrActive, objects, parts}){
                                 return <div key={index} className='part-card'>
                                     <div className="part-header">
                                         <input type='checkbox' value={item._id} onChange={(e) => handleCheckboxChange(e, item._id)}/>
-                                        <p className="part-name">{item.name}</p>
+                                        <div className="part-info">
+                                            <p className="part-name">{item.name}</p>
+                                            <p className="part-stock">На складе: {item.count} шт.</p>
+                                        </div>
                                     </div>
                                     {selectedParts.includes(item._id) && <div className="part-details">
                                         <input type="number" placeholder='Введите нужное кол-во' 
@@ -333,48 +365,39 @@ export default function AddReq({setVisibleAdd, arrActive, objects, parts}){
                 onClick={()=>{
                     let selectedArr = []
                     selectedParts.forEach((partId) => {
-                        
-                        selectedArr.push({_id:partId, countReq:Number(partValues[partId] !== undefined?partValues[partId]:''), 
-                            description:selectedDes[partId] !== undefined?selectedDes[partId]:''})
-                      
+                        selectedArr.push({
+                            _id:partId, 
+                            countReq:Number(partValues[partId] !== undefined?partValues[partId]:''), 
+                            description:selectedDes[partId] !== undefined?selectedDes[partId]:''
+                        })
                     })
 
                     if(selectedArr.length === 0){
                         setErr('Не выбраны запчасти')
-                        
                     }
                     else{
-
-                       
-
                         selectedArr.forEach((item)=>{
                             if(item.count <= 0){
-                                
                                 setErr('Не везде указано кол-во')        
-                            }
-                            else{
-                                
-                                
                             }
                         })
 
+                        setErr('')
+                        createReq(selectedArr,urgencySt,date,JSON.parse(objectSt)._id)
+                        .then(res=>{
+                            arrActive.push(res.data)
+                            // Отправляем уведомление в Telegram
+                            sendTelegramNotification(
+                                { date, urgencySt, objectSt }, 
+                                JSON.parse(objectSt), 
+                                selectedArr
+                            ).catch(e => console.log('Failed to send notification:', e))
                             
-                            setErr('')
-                            createReq(selectedArr,urgencySt,date,JSON.parse(objectSt)._id)
-                            .then(res=>{
-                                arrActive.push(res.data)
-                                // Отправляем уведомление в Telegram
-                                sendTelegramNotification(
-                                    { date, urgencySt, objectSt }, 
-                                    JSON.parse(objectSt), 
-                                    selectedArr
-                                ).catch(e => console.log('Failed to send notification:', e))
-                                
-                                setVisibleAdd(false)
-                            })
-                            .catch(e=>console.log(e))
-                        
-                        
+                            setVisibleAdd(false)
+                            // Добавляем обновление страницы
+                            window.location.reload()
+                        })
+                        .catch(e=>console.log(e))
                     }                
                 }}
             >

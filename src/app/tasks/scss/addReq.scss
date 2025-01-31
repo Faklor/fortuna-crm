@@ -97,9 +97,8 @@
 
                 .part-header {
                     display: flex;
-                    align-items: center;
-                    gap: 8px;
-                    margin-bottom: 8px;
+                    align-items: flex-start;
+                    padding: 10px;
 
                     .part-checkbox {
                         width: 18px;
@@ -108,14 +107,20 @@
                         accent-color: #2196F3;
                     }
 
-                    .part-name {
-                        margin: 0;
-                        font-weight: 100;
-                        max-width: 160px;
-                        word-wrap: break-word;
-                        overflow-wrap: break-word;
-                        color: #333;
+                    .part-info {
+                        flex: 1;
+                        margin-left: 10px;
                         
+                        .part-name {
+                            margin: 0;
+                            font-weight: 500;
+                        }
+                        
+                        .part-stock {
+                            margin: 2px 0 0 0;
+                            font-size: 0.9em;
+                            color: #666;
+                        }
                     }
                 }
 

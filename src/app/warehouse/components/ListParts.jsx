@@ -9,6 +9,7 @@ import anime from 'animejs'
 import Parts from "./parts"
 import Search from "./search"
 import SlyderCategory from './slyder_category'
+import SortingOptions from './SortingOptions'
 
 export default function WareHouse({parts, workers, objects}){
     const router = useRouter()
@@ -48,6 +49,13 @@ export default function WareHouse({parts, workers, objects}){
                 scale: [0.8, 1],
                 opacity: [0, 1],
                 delay: anime.stagger(50),
+                duration: 600
+            }, '-=400')
+            // Анимация сортировки
+            .add({
+                targets: '.sorting-options',
+                translateY: [-20, 0],
+                opacity: [0, 1],
                 duration: 600
             }, '-=400')
             // Анимация карточек запчастей
@@ -114,6 +122,8 @@ export default function WareHouse({parts, workers, objects}){
             </div>
             <h2>Категории</h2>
             <SlyderCategory parts={JSON.parse(parts)} setVisibleParts={setVisibleParts}/>
+            <h2>Сортировка</h2>
+            <SortingOptions parts={visibleParts} setVisibleParts={setVisibleParts} />
         </div>
         
         <div className='content' ref={contentRef}>

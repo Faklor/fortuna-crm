@@ -11,13 +11,22 @@ export async function POST(req){
     try{
         const { _id, dateBegin, object, partsOption, dateNow, workerName} = await req.json()
 
+        // Создаем массив с обновленными значениями count
+        const updatedParts = partsOption.map(el => ({
+            ...el._doc,
+            count: el.countReq,
+            
+            description: el.description
+        }))
+
         const createHistoryItem = await HistoryReq.create({
             dateBegin: dateBegin,
             dateEnd: dateNow,
             status: false,
             urgency: 'Закрыта',
             obj: object,
-            parts: partsOption
+            parts: updatedParts,
+            workerName: workerName
         })
 
         if(createHistoryItem){
@@ -30,7 +39,7 @@ export async function POST(req){
                     { $set: { count: newCount } }
                 )
 
-                // Создаем запись о выдаче с типом 'request'
+                // Создаем запись о выдаче
                 await Order.create({
                     date: dateNow,
                     workerName: workerName,
@@ -38,17 +47,13 @@ export async function POST(req){
                     part: el._doc,
                     countPart: Number(el.countReq),
                     description: el.description,
-                    operationType: 'request' // указываем, что выдача произошла после заявки
+                    operationType: 'request'
                 })
             }
 
             const deleteActiveReq = await Requisition.findOneAndDelete({_id:_id})
             return NextResponse.json(_id)
         }       
-        //console.log(_id, dateBegin, object, partsOption)
-
-       
-        
         
     }
     catch(e){

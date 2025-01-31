@@ -6,6 +6,7 @@ const historyReqSchema = new mongoose.Schema({
     
     dateBegin:{type:String},
     dateEnd:{type:String},
+    workerName:{type:String},
 
     status:{type:Boolean},
     urgency:{type:String},

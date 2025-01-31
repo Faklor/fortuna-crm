@@ -4,7 +4,7 @@ import anime from 'animejs'
 import axios from 'axios'
 import '../scss/timelineOperations.scss'
 
-const TimelineOperations = ({ visibleObjects }) => {
+const TimelineOperations = ({ visibleObjects, startDate, endDate }) => {
     const [selectedObject, setSelectedObject] = useState('')
     const [operations, setOperations] = useState([])
     const [orders, setOrders] = useState([])
@@ -22,28 +22,46 @@ const TimelineOperations = ({ visibleObjects }) => {
         try {
             setLoading(true)
             
-            // Запрос операций
-            const operationsResponse = await axios.post('/api/operations', { _id: objectId })
-            const sortedOperations = operationsResponse.data.sort((a, b) => 
-                new Date(b.date) - new Date(a.date)
-            )
-            console.log('Операции:', sortedOperations)
+            // Запрос операций с учетом периода
+            const operationsResponse = await axios.post('/api/operations', { 
+                _id: objectId,
+                startDate: startDate.toISOString(),
+                endDate: endDate.toISOString()
+            })
+            const sortedOperations = operationsResponse.data
+                .filter(op => {
+                    const opDate = new Date(op.date)
+                    return opDate >= startDate && opDate <= endDate
+                })
+                .sort((a, b) => new Date(b.date) - new Date(a.date))
             setOperations(sortedOperations)
 
-            // Запрос выдачи запчастей
-            const ordersResponse = await axios.post('/api/orders', { _id: objectId })
-            const sortedOrders = ordersResponse.data.sort((a, b) => 
-                new Date(b.date) - new Date(a.date)
-            )
-            console.log('Выдача запчастей:', sortedOrders)
+            // Запрос выдачи запчастей с учетом периода
+            const ordersResponse = await axios.post('/api/orders', { 
+                _id: objectId,
+                startDate: startDate.toISOString(),
+                endDate: endDate.toISOString()
+            })
+            const sortedOrders = ordersResponse.data
+                .filter(order => {
+                    const orderDate = new Date(order.date)
+                    return orderDate >= startDate && orderDate <= endDate
+                })
+                .sort((a, b) => new Date(b.date) - new Date(a.date))
             setOrders(sortedOrders)
 
-            // Запрос заявок
-            const requestsResponse = await axios.post('/api/historyReqs/findObj', { _id: objectId })
-            const sortedRequests = requestsResponse.data.sort((a, b) => 
-                new Date(b.dateEnd) - new Date(a.dateEnd)
-            )
-            console.log('Заявки:', sortedRequests)
+            // Запрос заявок с учетом периода
+            const requestsResponse = await axios.post('/api/historyReqs/findObj', { 
+                _id: objectId,
+                startDate: startDate.toISOString(),
+                endDate: endDate.toISOString()
+            })
+            const sortedRequests = requestsResponse.data
+                .filter(req => {
+                    const reqDate = new Date(req.dateEnd)
+                    return reqDate >= startDate && reqDate <= endDate
+                })
+                .sort((a, b) => new Date(b.dateEnd) - new Date(a.dateEnd))
             setRequests(sortedRequests)
 
         } catch (error) {
@@ -57,7 +75,7 @@ const TimelineOperations = ({ visibleObjects }) => {
         if (selectedObject) {
             fetchData(selectedObject)
         }
-    }, [selectedObject])
+    }, [selectedObject, startDate, endDate])
 
     const renderUsedParts = (parts) => {
         if (!parts || parts.length === 0) return null;
