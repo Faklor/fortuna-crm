@@ -20,10 +20,10 @@ const techSchema = new mongoose.Schema({
             return this.catagory === '🚃 Прицепы' ? 0 : null;
         }
     },
-    inspection: { type: Object },
+    inspection: { type: Object, default: {dateBegin: '', period: 0} },
     maintance: {
         type: Object, 
-        default: {}
+        default: {value: 0, period: 0}
     },
     organization: { type: String },
     history: [

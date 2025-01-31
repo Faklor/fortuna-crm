@@ -9,6 +9,7 @@ import '../scss/fieldWorks.scss'
 import { useSearchParams } from 'next/navigation'
 import { WORK_TYPES } from '../constants/workTypes';
 import { WORK_STATUSES } from '../constants/workStatuses';
+import SubtaskManager from './SubtaskManager';
 
 export default function ShowField({
     setShowFieldVisible, 
@@ -1330,6 +1331,15 @@ ${work.description ? `• Описание: ${work.description}` : ''}`;
                     </p>
                 )}
             </div>
+
+            {selectedWork && selectedWork.status === 'in_progress' && (
+                <SubtaskManager 
+                    work={selectedWork}
+                    onUpdate={() => {
+                        loadFieldWorks();
+                    }}
+                />
+            )}
         </div>
     ) : <div>Loading...</div>
 }

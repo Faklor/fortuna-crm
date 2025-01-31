@@ -1,0 +1,110 @@
+.subtask-manager {
+    padding: 1rem;
+    background: #f5f5f5;
+    border-radius: 8px;
+    margin: 1rem 0;
+
+    .subtask-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+
+        .area-info {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.9rem;
+            color: #666;
+        }
+    }
+
+    .subtasks-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .subtask-item {
+        background: white;
+        padding: 1rem;
+        border-radius: 6px;
+        border-left: 4px solid #4F8DE3;
+        
+        &.completed {
+            border-left-color: #4CAF50;
+        }
+
+        .subtask-content {
+            h4 {
+                margin: 0 0 0.5rem 0;
+            }
+
+            p {
+                margin: 0.25rem 0;
+                font-size: 0.9rem;
+            }
+        }
+
+        .subtask-actions {
+            margin-top: 1rem;
+            display: flex;
+            justify-content: flex-end;
+        }
+    }
+
+    .create-subtask-form {
+        background: white;
+        padding: 1rem;
+        border-radius: 6px;
+        margin: 1rem 0;
+
+        .form-group {
+            margin-bottom: 1rem;
+
+            label {
+                display: block;
+                margin-bottom: 0.5rem;
+            }
+
+            input, textarea {
+                width: 100%;
+                padding: 0.5rem;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+            }
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+    }
+
+    button {
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        
+        &.add-subtask-btn {
+            background: #4F8DE3;
+            color: white;
+            
+            &:disabled {
+                background: #ccc;
+                cursor: not-allowed;
+            }
+        }
+        
+        &.complete-btn {
+            background: #4CAF50;
+            color: white;
+        }
+    }
+
+    .area-selected {
+        background: #4CAF50;
+        color: white;
+    }
+} 
