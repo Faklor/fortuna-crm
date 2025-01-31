@@ -18,7 +18,15 @@ export async function POST(req, res) {
       catagory: category,
       organization,
       description,
-      icon: 'Default.png'
+      icon: 'Default.png',
+      inspection: {
+        dateBegin: "",
+        period: 0
+      },
+      maintance: {
+        value: 0,
+        period: 0
+      },
     }
 
     // Добавляем захват если это прицеп

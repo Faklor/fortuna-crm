@@ -56,13 +56,13 @@ export async function POST(req,res){
                 // Для специальных категорий обновляем все объекты той же категории
                 await Tech.updateMany(
                     { catagory: techObject.catagory },
-                    { $set: { inspection: { dateBegin: beginDate, period: period } } }
+                    { $set: { inspection: { dateBegin: beginDate, period: Number(period) } } }
                 )
             } else {
                 // Для остальных категорий обновляем только текущий объект
                 await Tech.findByIdAndUpdate(
                     { _id: objectID },
-                    { $set: { inspection: { dateBegin: beginDate, period: period } } }
+                    { $set: { inspection: { dateBegin: beginDate, period: Number(period) } } }
                 )
             }
             
@@ -82,7 +82,7 @@ export async function POST(req,res){
             
             await Tech.findByIdAndUpdate(
                 { _id: objectID },
-                { $set: { maintance: { value: Number(periodMotor), period: period } } }
+                { $set: { maintance: { value: Number(periodMotor), period: Number(period) } } }
             )
             
             return NextResponse.json(operationAdd)
