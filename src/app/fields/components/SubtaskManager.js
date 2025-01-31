@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import SubtaskForm from './SubtaskForm';
 import '../scss/subtaskManager.scss';
 
-export default function SubtaskManager({ work, onUpdate }) {
+export default function SubtaskManager({ work, onUpdate, onWialonTrackSelect }) {
     const [subtasks, setSubtasks] = useState([]);
     const [isCreating, setIsCreating] = useState(false);
     const [remainingArea, setRemainingArea] = useState(work.area);
@@ -17,15 +18,36 @@ export default function SubtaskManager({ work, onUpdate }) {
 
     const loadSubtasks = async () => {
         try {
-            const response = await axios.get(`/api/works/${work._id}/subtasks`);
-            setSubtasks(response.data.subtasks);
+            const response = await axios.get(`/api/fields/works/${work._id}/subtasks`);
+            const loadedSubtasks = response.data.subtasks || [];
+            setSubtasks(loadedSubtasks);
             
             // Вычисляем оставшуюся площадь
-            const completedArea = response.data.subtasks.reduce((sum, task) => 
-                task.status === 'completed' ? sum + task.area : sum, 0);
+            const completedArea = loadedSubtasks.reduce((sum, task) => 
+                sum + (task.area || 0), 0
+            );
             setRemainingArea(work.area - completedArea);
         } catch (error) {
             console.error('Error loading subtasks:', error);
+        }
+    };
+
+    const handleCreateSubtask = async (formData) => {
+        try {
+            const response = await axios.post(`/api/fields/works/${work._id}/subtasks`, formData);
+            if (response.data.success) {
+                await loadSubtasks();
+                setIsCreating(false);
+                if (onUpdate) onUpdate();
+            }
+        } catch (error) {
+            console.error('Error creating subtask:', error);
+        }
+    };
+
+    const handleWialonTrackSelect = (tracks) => {
+        if (typeof onWialonTrackSelect === 'function') {
+            onWialonTrackSelect(tracks);
         }
     };
 
@@ -42,64 +64,35 @@ export default function SubtaskManager({ work, onUpdate }) {
                     <span>Общая площадь: {work.area} га</span>
                     <span>Осталось: {remainingArea} га</span>
                 </div>
-                {!isCreating && (
-                    <button 
-                        className="add-subtask-btn"
-                        onClick={() => setIsCreating(true)}
-                        disabled={remainingArea <= 0}
-                    >
-                        Добавить подработу
-                    </button>
-                )}
+                <button 
+                    onClick={() => setIsCreating(true)}
+                    disabled={remainingArea <= 0}
+                    className="add-subtask-btn"
+                >
+                    Добавить подработу
+                </button>
+            </div>
+
+            <div className="subtasks-list">
+                {subtasks && subtasks.map(subtask => (
+                    <div key={subtask._id} className="subtask-item">
+                        <div className="subtask-info">
+                            <h4>{subtask.name}</h4>
+                            <span>Площадь: {subtask.area} га</span>
+                        </div>
+                    </div>
+                ))}
             </div>
 
             {isCreating && (
-                <CreateSubtask 
-                    workId={work._id}
-                    maxArea={remainingArea}
+                <SubtaskForm
+                    onSubmit={handleCreateSubtask}
                     onCancel={() => setIsCreating(false)}
-                    onSuccess={() => {
-                        setIsCreating(false);
-                        loadSubtasks();
-                    }}
-                    setIsDrawingArea={setIsDrawingArea}
+                    maxArea={remainingArea}
+                    workArea={work.processingArea}
+                    onWialonTrackSelect={handleWialonTrackSelect}
                 />
             )}
-
-            <div className="subtasks-list">
-                {subtasks.map(subtask => (
-                    <SubtaskItem 
-                        key={subtask._id}
-                        subtask={subtask}
-                        onStatusChange={async (newStatus) => {
-                            try {
-                                await axios.patch(`/api/works/${work._id}/subtasks/${subtask._id}`, {
-                                    status: newStatus
-                                });
-                                loadSubtasks();
-                                
-                                // Если все подработы завершены, предлагаем завершить основную работу
-                                if (newStatus === 'completed') {
-                                    const allCompleted = subtasks.every(t => 
-                                        t._id === subtask._id ? true : t.status === 'completed'
-                                    );
-                                    if (allCompleted) {
-                                        if (window.confirm('Все подработы завершены. Завершить основную работу?')) {
-                                            await axios.patch(`/api/works/${work._id}`, {
-                                                status: 'completed'
-                                            });
-                                            onUpdate();
-                                        }
-                                    }
-                                }
-                            } catch (error) {
-                                console.error('Error updating subtask:', error);
-                                alert('Ошибка при обновлении статуса подработы');
-                            }
-                        }}
-                    />
-                ))}
-            </div>
         </div>
     );
 }

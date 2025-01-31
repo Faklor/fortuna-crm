@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { MapContainer, TileLayer, Polygon, FeatureGroup, useMap, WMSTileLayer, Marker, Popup, Polyline } from 'react-leaflet'
 import { EditControl } from 'react-leaflet-draw'
 import ShowField from './showField'
@@ -815,6 +815,56 @@ function Map({ fields, currentSeason }) {
     setWialonTracks(tracks || []);
   };
 
+  const renderWialonTrack = (segments) => {
+    if (!segments || !Array.isArray(segments)) return null;
+
+    return segments.map((segment, segmentIndex) => {
+        if (!Array.isArray(segment)) return null;
+
+        // Создаем массив координат для линии трека
+        const trackCoords = segment.map(point => {
+            if (!point || typeof point.lat === 'undefined' || typeof point.lon === 'undefined') {
+                return null;
+            }
+            return [point.lat, point.lon];
+        }).filter(coord => coord !== null);
+
+        if (trackCoords.length < 2) return null;
+
+        // Определяем цвет линии в зависимости от типа сегмента
+        const isWorking = segment[0]?.isWorking;
+        const color = isWorking ? '#4CAF50' : '#9e9e9e';
+
+        // Находим центральную точку сегмента для размещения метки
+        const centerIndex = Math.floor(trackCoords.length / 2);
+        const centerPoint = trackCoords[centerIndex];
+
+        return (
+            <React.Fragment key={`segment-${segmentIndex}`}>
+                <Polyline
+                    positions={trackCoords}
+                    pathOptions={{
+                        color: color,
+                        weight: 3,
+                        opacity: 0.7
+                    }}
+                />
+                <Marker
+                    position={centerPoint}
+                    icon={L.divIcon({
+                        className: 'segment-label',
+                        html: `<div class="segment-number ${isWorking ? 'working' : 'non-working'}">
+                                ${segmentIndex + 1}
+                              </div>`,
+                        iconSize: [24, 24],
+                        iconAnchor: [12, 12]
+                    })}
+                />
+            </React.Fragment>
+        );
+    });
+  };
+
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       <style jsx global>{`
@@ -1020,59 +1070,8 @@ function Map({ fields, currentSeason }) {
           </FeatureGroup>
         )}
 
-        {/* Отображение треков Wialon */}
-        {wialonTracks && wialonTracks.length > 0 && (
-            <>
-                {/* Основной трек (синий) */}
-                <Polyline
-                    positions={wialonTracks.map(point => [point.lat, point.lon])}
-                    pathOptions={{
-                        color: '#4F8DE3',
-                        weight: 3,
-                        opacity: 0.8
-                    }}
-                />
-                
-                {/* Сегменты трека, пересекающие поля (красные) */}
-                {(() => {
-                    const segments = [];
-                    let currentSegment = [];
-                    
-                    wialonTracks.forEach((point, index) => {
-                        if (point.intersectsField) {
-                            currentSegment.push([point.lat, point.lon]);
-                            
-                            // Если следующая точка не пересекает поле или это последняя точка
-                            if (!wialonTracks[index + 1]?.intersectsField || index === wialonTracks.length - 1) {
-                                if (currentSegment.length > 0) {
-                                    segments.push([...currentSegment]);
-                                    currentSegment = [];
-                                }
-                            }
-                        } else {
-                            // Если предыдущая точка пересекала поле, добавляем текущую для плавности
-                            if (wialonTracks[index - 1]?.intersectsField) {
-                                currentSegment.push([point.lat, point.lon]);
-                                segments.push([...currentSegment]);
-                                currentSegment = [];
-                            }
-                        }
-                    });
-                    
-                    return segments.map((segment, index) => (
-                        <Polyline
-                            key={`intersection-segment-${index}`}
-                            positions={segment}
-                            pathOptions={{
-                                color: '#FF0000',
-                                weight: 4,
-                                opacity: 0.8
-                            }}
-                        />
-                    ));
-                })()}
-            </>
-        )}
+        {/* Отрисовка трека Wialon */}
+        {wialonTracks && renderWialonTrack(wialonTracks)}
       </MapContainer>
 
       {/* Компонент ShowField */}
@@ -1107,13 +1106,6 @@ function Map({ fields, currentSeason }) {
           onWialonTrackSelect={handleWialonTrackSelect}
         />
       )}
-
-      {/* Компонент добавления заметок
-      <AddNotes 
-        onAddNote={(status) => setIsAddingNote(status)}
-        isCreatingNote={isCreatingNote}
-        onCancelNote={handleCloseModal}
-      /> */}
 
       {/* Модальное окно для добавления информации о заметке */}
       {selectedPoint && isCreatingNote && (
@@ -1187,8 +1179,6 @@ function MapEvents({ onClick }) {
   
   return null;
 }
-
-
 
 export default Map;
 

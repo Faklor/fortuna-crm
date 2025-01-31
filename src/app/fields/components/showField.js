@@ -1338,6 +1338,7 @@ ${work.description ? `• Описание: ${work.description}` : ''}`;
                     onUpdate={() => {
                         loadFieldWorks();
                     }}
+                    onWialonTrackSelect={onWialonTrackSelect}
                 />
             )}
         </div>
