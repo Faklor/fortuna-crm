@@ -36,7 +36,9 @@ export default function SubtaskForm({ onSubmit, onCancel, maxArea, workArea, onW
 
     // Расчет площади при изменении треков или оборудования
     useEffect(() => {
-        calculateArea();
+        if (tracks.length > 0) {
+            calculateArea();
+        }
     }, [tracks, formData.equipment]);
 
     const calculateArea = () => {

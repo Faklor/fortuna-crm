@@ -82,43 +82,76 @@ export default function WialonControl({ onSelectTrack, onClose, workArea }) {
 
         const segments = [];
         let currentSegment = [];
-        
-        for (let i = 1; i < tracks.length; i++) {
-            const prevPoint = tracks[i - 1];
-            const currentPoint = tracks[i];
-            
-            // Вычисляем характеристики движения
-            const speed = currentPoint.speed || 0;
-            const turnAngle = calculateTurnAngle(
-                [prevPoint.lon, prevPoint.lat],
-                [currentPoint.lon, currentPoint.lat],
-                i > 1 ? [tracks[i - 2].lon, tracks[i - 2].lat] : null
+        let lastDirection = null;
+        const DIRECTION_THRESHOLD = 15; // градусов
+        const MIN_SPEED = 5; // км/ч
+        const MAX_SPEED = 15; // км/ч
+        const MIN_SEGMENT_LENGTH = 5; // минимальная длина сегмента в точках
+
+        for (let i = 2; i < tracks.length; i++) {
+            const point0 = tracks[i - 2];
+            const point1 = tracks[i - 1];
+            const point2 = tracks[i];
+
+            // Вычисляем направление движения
+            const currentDirection = turf.bearing(
+                turf.point([point1.lon, point1.lat]),
+                turf.point([point2.lon, point2.lat])
             );
-            
-            // Определяем, является ли это рабочим сегментом
-            const isWorkingSegment = isWorkingCondition(speed, turnAngle);
-            
-            if (currentSegment.length === 0 || 
-                currentSegment[0].isWorking === isWorkingSegment) {
+
+            // Нормализуем направление в диапазоне 0-360
+            const normalizedDirection = (currentDirection + 360) % 360;
+
+            // Проверяем скорость
+            const speed = point2.speed || 0;
+            const isSpeedInRange = speed >= MIN_SPEED && speed <= MAX_SPEED;
+
+            // Проверяем изменение направления
+            const directionChange = lastDirection !== null ? 
+                Math.abs(normalizedDirection - lastDirection) : 0;
+            const isDirectionSteady = directionChange <= DIRECTION_THRESHOLD;
+
+            // Определяем, является ли точка частью рабочего сегмента
+            const isWorkingPoint = isSpeedInRange && isDirectionSteady;
+
+            if (currentSegment.length === 0) {
                 currentSegment.push({
-                    ...currentPoint,
-                    isWorking: isWorkingSegment
+                    ...point2,
+                    isWorking: isWorkingPoint
+                });
+            } else if (currentSegment[0].isWorking === isWorkingPoint) {
+                currentSegment.push({
+                    ...point2,
+                    isWorking: isWorkingPoint
                 });
             } else {
-                if (currentSegment.length > 0) {
+                // Проверяем длину сегмента перед добавлением
+                if (currentSegment.length >= MIN_SEGMENT_LENGTH) {
                     segments.push([...currentSegment]);
+                } else {
+                    // Если сегмент слишком короткий, присоединяем его к предыдущему
+                    if (segments.length > 0) {
+                        segments[segments.length - 1].push(...currentSegment);
+                    } else {
+                        segments.push([...currentSegment]);
+                    }
                 }
                 currentSegment = [{
-                    ...currentPoint,
-                    isWorking: isWorkingSegment
+                    ...point2,
+                    isWorking: isWorkingPoint
                 }];
             }
+
+            lastDirection = normalizedDirection;
         }
-        
-        if (currentSegment.length > 0) {
+
+        // Добавляем последний сегмент
+        if (currentSegment.length >= MIN_SEGMENT_LENGTH) {
             segments.push(currentSegment);
+        } else if (segments.length > 0) {
+            segments[segments.length - 1].push(...currentSegment);
         }
-        
+
         return segments;
     };
 
@@ -150,7 +183,7 @@ export default function WialonControl({ onSelectTrack, onClose, workArea }) {
     const [selectedSegmentIndex, setSelectedSegmentIndex] = useState(null);
 
     const toggleSegmentType = (segmentIndex) => {
-        setWorkSegments(prev => prev.map((segment, index) => {
+        const newSegments = workSegments.map((segment, index) => {
             if (index === segmentIndex) {
                 return segment.map(point => ({
                     ...point,
@@ -158,7 +191,10 @@ export default function WialonControl({ onSelectTrack, onClose, workArea }) {
                 }));
             }
             return segment;
-        }));
+        });
+        setWorkSegments(newSegments);
+        // Передаем обновленные сегменты наверх
+        onSelectTrack(newSegments);
     };
 
     // Модифицируем функцию загрузки треков
