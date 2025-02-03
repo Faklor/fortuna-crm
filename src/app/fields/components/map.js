@@ -379,6 +379,7 @@ function Map({ fields, currentSeason }) {
   });
   const [wialonTracks, setWialonTracks] = useState([]);
   const [showWialonControl, setShowWialonControl] = useState(false);
+  const [subtaskTracks, setSubtaskTracks] = useState(null);
 
   useEffect(() => {
     // Здесь можно добавить логику загрузки полей с учетом сезона
@@ -776,14 +777,13 @@ function Map({ fields, currentSeason }) {
                     body: JSON.stringify({
                         name: fieldName,
                         coordinates: coordinates,
-                        season: season || new Date().getFullYear().toString() // Используем выбранный сезон из URL
+                        season: season || new Date().getFullYear().toString()
                     })
                 });
 
                 const data = await response.json();
 
                 if (data.success) {
-                    // Обновляем список полей или перезагружаем страницу
                     window.location.reload();
                 } else {
                     throw new Error(data.error || 'Failed to create field');
@@ -791,7 +791,6 @@ function Map({ fields, currentSeason }) {
             }
         });
     } catch (error) {
-        console.error('Error:', error);
         setDialog({
             isOpen: true,
             type: 'alert',
@@ -865,6 +864,62 @@ function Map({ fields, currentSeason }) {
     });
   };
 
+  const renderSubtaskTracks = (subtasks) => {
+    if (!subtasks || !Array.isArray(subtasks)) {
+        return null;
+    }
+
+    return subtasks.map((subtask, index) => {
+        if (!subtask?.coordinates || !Array.isArray(subtask.coordinates)) {
+            return null;
+        }
+
+        // Проверяем координаты
+        const validCoords = subtask.coordinates.filter(coord => 
+            Array.isArray(coord) && 
+            coord.length === 2 &&
+            !isNaN(coord[0]) && 
+            !isNaN(coord[1]) &&
+            coord[0] >= -90 && coord[0] <= 90 && 
+            coord[1] >= -180 && coord[1] <= 180
+        );
+
+        if (validCoords.length < 2) {
+            return null;
+        }
+
+        return (
+            <React.Fragment key={`subtask-track-${subtask.subtaskId || index}`}>
+                <Polyline
+                    positions={validCoords}
+                    pathOptions={{
+                        color: '#4CAF50', // Зеленый цвет для всех треков
+                        weight: 3,
+                        opacity: 0.7
+                    }}
+                />
+                {/* Маркер с номером трека */}
+                <Marker
+                    position={validCoords[Math.floor(validCoords.length / 2)]}
+                    icon={L.divIcon({
+                        className: 'track-label',
+                        html: `<div class="track-number">${index + 1}</div>`,
+                        iconSize: [24, 24],
+                        iconAnchor: [12, 12]
+                    })}
+                />
+            </React.Fragment>
+        );
+    }).filter(track => track !== null);
+  };
+
+  // Обработчик получения треков
+  const handleSubtaskTracksSelect = useCallback((tracks) => {
+    if (tracks && tracks.length > 0) {
+    }
+    setSubtaskTracks(tracks);
+  }, []);
+
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       <style jsx global>{`
@@ -883,6 +938,23 @@ function Map({ fields, currentSeason }) {
           margin-top: -6px !important;
           background-color: white !important;
           border: 2px solid #FFF !important;
+        }
+      `}</style>
+
+      <style jsx global>{`
+        .track-number {
+            background-color: white;
+            border: 2px solid #4CAF50;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            color: #4CAF50;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
       `}</style>
 
@@ -1070,6 +1142,23 @@ function Map({ fields, currentSeason }) {
           </FeatureGroup>
         )}
 
+        {/* Добавляем отображение треков подзадач */}
+        {subtaskTracks && subtaskTracks.length > 0 && (
+            <FeatureGroup>
+                {subtaskTracks.map((track, index) => (
+                    <Polyline
+                        key={track.subtaskId || index}
+                        positions={track.coordinates}
+                        pathOptions={{
+                            color: '#FF0000',
+                            weight: 3,
+                            opacity: 0.8
+                        }}
+                    />
+                ))}
+            </FeatureGroup>
+        )}
+
         {/* Отрисовка трека Wialon */}
         {wialonTracks && renderWialonTrack(wialonTracks)}
       </MapContainer>
@@ -1104,6 +1193,7 @@ function Map({ fields, currentSeason }) {
           dialog={dialog}
           setDialog={setDialog}
           onWialonTrackSelect={handleWialonTrackSelect}
+          onSubtaskTracksSelect={handleSubtaskTracksSelect}
         />
       )}
 

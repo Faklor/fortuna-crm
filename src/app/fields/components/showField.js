@@ -10,6 +10,7 @@ import { useSearchParams } from 'next/navigation'
 import { WORK_TYPES } from '../constants/workTypes';
 import { WORK_STATUSES } from '../constants/workStatuses';
 import SubtaskManager from './SubtaskManager';
+import PropTypes from 'prop-types';
 
 export default function ShowField({
     setShowFieldVisible, 
@@ -37,7 +38,8 @@ export default function ShowField({
     setIsCreateWorkModalOpen,
     dialog,
     setDialog,
-    onWialonTrackSelect
+    onWialonTrackSelect,
+    onSubtaskTracksSelect
 }) {
     
     const [field, setField] = useState(null)
@@ -581,12 +583,45 @@ ${work.description ? `• Описание: ${work.description}` : ''}`;
         return WORK_TYPES[type] || type;
     };
 
-    const handleWorkClick = (work, e) => {
+    const handleWorkClick = async (work, e) => {
         e.stopPropagation();
         const newSelectedWork = selectedWork?._id === work._id ? null : work;
         setSelectedWork(newSelectedWork);
-        // Передаем информацию о выбранной области в родительский компонент
-        onWorkSelect(newSelectedWork?.processingArea || null);
+        
+        if (newSelectedWork) {
+            try {
+                const response = await axios.get(`/api/fields/works/${newSelectedWork._id}/subtasks`);
+                
+                if (response.data.success && response.data.subtasks && Array.isArray(response.data.subtasks)) {
+                    const allTracks = response.data.subtasks
+                        .filter(subtask => subtask && Array.isArray(subtask.tracks))
+                        .flatMap((subtask, subtaskIndex) => 
+                            subtask.tracks.map((track, trackIndex) => {
+                                if (!Array.isArray(track)) return null;
+                                
+                                const coordinates = track
+                                    .filter(point => point && typeof point.lat === 'number' && typeof point.lon === 'number')
+                                    .map(point => [point.lat, point.lon]);
+                                
+                                return coordinates.length >= 2 ? {
+                                    coordinates: coordinates,
+                                    subtaskId: `${subtask._id}_track_${trackIndex}`,
+                                    originalSubtaskId: subtask._id
+                                } : null;
+                            }).filter(track => track !== null)
+                        );
+
+                    if (allTracks.length > 0) {
+                        onSubtaskTracksSelect(allTracks);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading subtask tracks:', error);
+                onSubtaskTracksSelect(null);
+            }
+        } else {
+            onSubtaskTracksSelect(null);
+        }
     };
 
     // Обновляем сортировку и добавляем фильтрацию
@@ -712,17 +747,21 @@ ${work.description ? `• Описание: ${work.description}` : ''}`;
         // Когда модальное окно открыто, блокируем прокрутку showField
         const showFieldElement = showFieldRef.current;
         
-        if (showFieldElement) {
-            if (isCreateWorkModalOpen) {
-                showFieldElement.style.overflow = 'hidden';
-                showFieldElement.style.paddingRight = '17px';
-            } else {
-                showFieldElement.style.overflow = '';
-                showFieldElement.style.paddingRight = '';
-            }
+        // Добавляем проверку на существование элемента
+        if (!showFieldElement) {
+            return; // Выходим из эффекта, если элемент не существует
+        }
+        
+        if (isCreateWorkModalOpen) {
+            showFieldElement.style.overflow = 'hidden';
+            showFieldElement.style.paddingRight = '17px';
+        } else {
+            showFieldElement.style.overflow = '';
+            showFieldElement.style.paddingRight = '';
         }
 
         return () => {
+            // В cleanup также проверяем существование элемента
             if (showFieldElement) {
                 showFieldElement.style.overflow = '';
                 showFieldElement.style.paddingRight = '';
@@ -1342,5 +1381,15 @@ ${work.description ? `• Описание: ${work.description}` : ''}`;
                 />
             )}
         </div>
-    ) : <div>Loading...</div>
+    ) : null;
 }
+
+ShowField.propTypes = {
+    // ... другие propTypes ...
+    onSubtaskTracksSelect: PropTypes.func,
+};
+
+ShowField.defaultProps = {
+    // ... другие defaultProps ...
+    onSubtaskTracksSelect: () => {}, // Пустая функция по умолчанию
+};
