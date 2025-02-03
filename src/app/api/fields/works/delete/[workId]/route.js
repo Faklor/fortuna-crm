@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Work from '@/models/works';
+import Subtask from '@/models/subtasks';
 
 export async function DELETE(request, { params: paramsPromise }) {
     await dbConnect();
@@ -19,12 +20,15 @@ export async function DELETE(request, { params: paramsPromise }) {
             );
         }
 
-        // Удаляем работу
+        // Сначала удаляем все связанные подработы
+        await Subtask.deleteMany({ workId });
+
+        // Затем удаляем саму работу
         await Work.findByIdAndDelete(workId);
 
         return NextResponse.json({
             success: true,
-            message: 'Work deleted successfully'
+            message: 'Work and related subtasks deleted successfully'
         });
 
     } catch (error) {

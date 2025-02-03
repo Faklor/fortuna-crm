@@ -2,10 +2,11 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Subtask from '@/models/subtasks';
 
-export async function GET(request, { params }) {
+export async function GET(request, { params: paramsPromise }) {
     await dbConnect();
 
     try {
+        const params = await paramsPromise;
         const { workId } = params;
 
         const subtasks = await Subtask.find({ workId })
@@ -25,11 +26,11 @@ export async function GET(request, { params }) {
     }
 }
 
-
-export async function POST(request, { params }) {
+export async function POST(request, { params: paramsPromise }) {
     await dbConnect();
 
     try {
+        const params = await paramsPromise;
         const { workId } = params;
         const data = await request.json();
         

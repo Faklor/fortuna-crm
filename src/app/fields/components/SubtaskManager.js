@@ -51,6 +51,23 @@ export default function SubtaskManager({ work, onUpdate, onWialonTrackSelect }) 
         }
     };
 
+    const handleDeleteSubtask = async (subtaskId) => {
+        if (!window.confirm('Вы уверены, что хотите удалить эту подработу?')) {
+            return;
+        }
+
+        try {
+            const response = await axios.delete(`/api/fields/works/${work._id}/subtasks/${subtaskId}`);
+            if (response.data.success) {
+                await loadSubtasks();
+                if (onUpdate) onUpdate();
+            }
+        } catch (error) {
+            console.error('Error deleting subtask:', error);
+            alert('Ошибка при удалении подработы');
+        }
+    };
+
     // Если работа не в процессе, не показываем менеджер подработ
     if (work.status !== 'in_progress') {
         return null;
@@ -82,6 +99,14 @@ export default function SubtaskManager({ work, onUpdate, onWialonTrackSelect }) 
                             {subtask.tracks && (
                                 <span>Треков: {subtask.tracks.length}</span>
                             )}
+                        </div>
+                        <div className="subtask-actions">
+                            <button 
+                                onClick={() => handleDeleteSubtask(subtask._id)}
+                                className="delete-subtask-btn"
+                            >
+                                Удалить
+                            </button>
                         </div>
                     </div>
                 ))}

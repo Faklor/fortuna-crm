@@ -1273,6 +1273,16 @@ ${work.description ? `• Описание: ${work.description}` : ''}`;
                 </div>
             </div>
 
+            {selectedWork && selectedWork.status === 'in_progress' && (
+                <SubtaskManager 
+                    work={selectedWork}
+                    onUpdate={() => {
+                        loadFieldWorks();
+                    }}
+                    onWialonTrackSelect={onWialonTrackSelect}
+                />
+            )}
+
             <div className="field-works-archive">
                 <h3>Архив работ</h3>
                 <div className="archive-date-range">
@@ -1371,15 +1381,7 @@ ${work.description ? `• Описание: ${work.description}` : ''}`;
                 )}
             </div>
 
-            {selectedWork && selectedWork.status === 'in_progress' && (
-                <SubtaskManager 
-                    work={selectedWork}
-                    onUpdate={() => {
-                        loadFieldWorks();
-                    }}
-                    onWialonTrackSelect={onWialonTrackSelect}
-                />
-            )}
+            
         </div>
     ) : null;
 }

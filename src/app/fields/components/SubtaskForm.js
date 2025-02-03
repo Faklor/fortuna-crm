@@ -18,7 +18,38 @@ export default function SubtaskForm({ onSubmit, onCancel, maxArea, workArea, onW
     const [equipment, setEquipment] = useState([]);
     const [tracks, setTracks] = useState([]);
 
-    // Загрузка работников и техники
+    // Добавим функцию сортировки оборудования
+    const sortEquipment = (equipment) => {
+        // Определяем порядок категорий
+        const categoryOrder = {
+            '🚜 Трактора': 1,  // Тракторы
+            '🚛 Грузовики': 2,  // Грузовики
+            '🚃 Прицепы': 3,  // Прицепы
+            '🛠️ Оборудование': 4,  // Оборудование
+            '🌾 Другое': 5   // Другое
+        };
+
+        return equipment.sort((a, b) => {
+            // Получаем первый эмодзи из категории или присваиваем последний приоритет
+            const getCategoryPriority = (item) => {
+                const emoji = item.catagory?.split(' ')[0] || '🌾';
+                return categoryOrder[emoji] || 999;
+            };
+
+            const priorityA = getCategoryPriority(a);
+            const priorityB = getCategoryPriority(b);
+
+            // Сначала сортируем по категории
+            if (priorityA !== priorityB) {
+                return priorityA - priorityB;
+            }
+
+            // Если категории одинаковые, сортируем по имени
+            return (a.name || '').localeCompare(b.name || '');
+        });
+    };
+
+    // В компоненте обновляем useEffect для загрузки данных
     useEffect(() => {
         const loadData = async () => {
             try {
@@ -27,7 +58,9 @@ export default function SubtaskForm({ onSubmit, onCancel, maxArea, workArea, onW
                     axios.get('/api/teches')
                 ]);
                 setWorkers(workersRes.data || []);
-                setEquipment(equipmentRes.data.tech || []);
+                // Сортируем оборудование перед установкой в state
+                const sortedEquipment = sortEquipment(equipmentRes.data.tech || []);
+                setEquipment(sortedEquipment);
             } catch (error) {
                 console.error('Ошибка загрузки данных:', error);
             }
@@ -167,6 +200,29 @@ export default function SubtaskForm({ onSubmit, onCancel, maxArea, workArea, onW
         });
     };
 
+    // В рендере группируем оборудование по категориям
+    const renderEquipmentOptions = () => {
+        const groupedEquipment = equipment.reduce((acc, tech) => {
+            const category = tech.catagory || '🌾 Другое';
+            if (!acc[category]) {
+                acc[category] = [];
+            }
+            acc[category].push(tech);
+            return acc;
+        }, {});
+
+        return Object.entries(groupedEquipment).map(([category, items]) => (
+            <optgroup key={category} label={category}>
+                {items.map(tech => (
+                    <option key={tech._id} value={tech._id}>
+                        {tech.name}
+                        {tech.captureWidth ? ` (${tech.captureWidth}м)` : ''}
+                    </option>
+                ))}
+            </optgroup>
+        ));
+    };
+
     return (
         <form onSubmit={handleSubmit} className="subtask-form">
             <div className="form-group">
@@ -213,12 +269,7 @@ export default function SubtaskForm({ onSubmit, onCancel, maxArea, workArea, onW
                     }))}
                     required
                 >
-                    {equipment.map(tech => (
-                        <option key={tech._id} value={tech._id}>
-                            {tech.catagory ? `${tech.catagory.split(' ')[0]}` : ''} {tech.name}
-                            {tech.captureWidth ? ` (${tech.captureWidth}м)` : ''}
-                        </option>
-                    ))}
+                    {renderEquipmentOptions()}
                 </select>
             </div>
 
