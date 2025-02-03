@@ -32,13 +32,17 @@ export async function POST(request, { params }) {
     try {
         const { workId } = params;
         const data = await request.json();
-
-        const subtask = new Subtask({
+        
+        // Convert plannedDate string to Date object
+        const subtaskData = {
             ...data,
             workId,
+            plannedDate: new Date(data.plannedDate),
+            tracks: data.tracks || [], // Add tracks array
             createdAt: new Date()
-        });
+        };
 
+        const subtask = new Subtask(subtaskData);
         await subtask.save();
 
         return NextResponse.json({

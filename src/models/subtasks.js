@@ -5,31 +5,20 @@ const subtasksSchema = new mongoose.Schema({
     workId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'works',
-        required: true
-    },
-    name: {
-        type: String,
-        required: true
     },
     area: {
         type: Number,
-        required: true
-    },
-    processingArea: {
-        type: {
-            type: String,
-            enum: ['Polygon'],
-            required: true
-        },
-        coordinates: {
-            type: [[[Number]]],
-            required: true
-        }
     },
     status: {
         type: String,
         enum: ['in_progress', 'completed'],
         default: 'in_progress'
+    },
+    tracks: [{
+        type: Array
+    }],
+    plannedDate: {
+        type: Date
     },
     workers: [{
         type: mongoose.Schema.Types.ObjectId,
@@ -46,8 +35,12 @@ const subtasksSchema = new mongoose.Schema({
     createdAt: {
         type: Date,
         default: Date.now
+    },
+    updatedAt: {
+        type: Date,
+        default: Date.now
     }
-});
+}, { timestamps: true });
 
 // Добавляем хук для проверки общей площади подработ
 subtasksSchema.pre('save', async function(next) {

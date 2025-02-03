@@ -9,7 +9,8 @@ export default function SubtaskForm({ onSubmit, onCancel, maxArea, workArea, onW
         workers: [],
         equipment: [],
         processingArea: null,
-        area: ''
+        area: '',
+        tracks: []
     });
     const [showWialonControl, setShowWialonControl] = useState(false);
     const [useWialon, setUseWialon] = useState(false);
@@ -137,6 +138,10 @@ export default function SubtaskForm({ onSubmit, onCancel, maxArea, workArea, onW
 
     const handleWialonTrackSelect = (newTracks) => {
         setTracks(newTracks);
+        setFormData(prev => ({
+            ...prev,
+            tracks: newTracks
+        }));
         if (typeof onWialonTrackSelect === 'function') {
             onWialonTrackSelect(newTracks);
         }
@@ -156,7 +161,10 @@ export default function SubtaskForm({ onSubmit, onCancel, maxArea, workArea, onW
             alert(`Площадь не может превышать ${maxArea} га`);
             return;
         }
-        onSubmit(formData);
+        onSubmit({
+            ...formData,
+            tracks: tracks
+        });
     };
 
     return (

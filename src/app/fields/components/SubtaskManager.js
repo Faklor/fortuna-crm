@@ -77,8 +77,11 @@ export default function SubtaskManager({ work, onUpdate, onWialonTrackSelect }) 
                 {subtasks && subtasks.map(subtask => (
                     <div key={subtask._id} className="subtask-item">
                         <div className="subtask-info">
-                            <h4>{subtask.name}</h4>
+                            <h4>Подработа от {new Date(subtask.plannedDate).toLocaleDateString()}</h4>
                             <span>Площадь: {subtask.area} га</span>
+                            {subtask.tracks && (
+                                <span>Треков: {subtask.tracks.length}</span>
+                            )}
                         </div>
                     </div>
                 ))}
