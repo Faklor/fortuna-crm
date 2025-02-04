@@ -12,6 +12,7 @@ import {
 import { Bar } from 'react-chartjs-2'
 import RatingHistoryModal from './RatingHistoryModal'
 import '../scss/workersCharts.scss'
+import axios from 'axios'
 
 ChartJS.register(
     CategoryScale,
@@ -33,7 +34,7 @@ export default function WorkersCharts({ workers, periodStart, periodEnd }) {
         return `${start.toLocaleDateString('ru', { month: 'long', year: 'numeric' })} - ${end.toLocaleDateString('ru', { month: 'long', year: 'numeric' })}`
     }
 
-    const handleChartClick = (event, elements) => {
+    const handleChartClick = async (event, elements) => {
         if (elements.length > 0) {
             const index = elements[0].index
             const worker = sortedWorkers[index]
@@ -44,7 +45,7 @@ export default function WorkersCharts({ workers, periodStart, periodEnd }) {
 
     const options = {
         responsive: true,
-        onClick: handleChartClick, // Добавляем обработчик клика
+        onClick: handleChartClick,
         plugins: {
             legend: {
                 position: 'top',
@@ -56,18 +57,17 @@ export default function WorkersCharts({ workers, periodStart, periodEnd }) {
             tooltip: {
                 callbacks: {
                     label: function(context) {
-                        const worker = workers[context.dataIndex];
-                        const value = context.raw || 0;
-                        let label = `КТУ: ${value.toFixed(2)}`;
+                        const worker = workers[context.dataIndex]
+                        const value = context.raw || 0
+                        let label = `КТУ: ${value.toFixed(2)}`
                         
-                        // Добавляем последний комментарий, если он есть
                         if (worker.periodRatings && worker.periodRatings.length > 0) {
-                            const lastRating = worker.periodRatings[worker.periodRatings.length - 1];
-                            label += `\nПоследний комментарий: ${lastRating.comment}`;
-                            label += `\nДата: ${new Date(lastRating.date).toLocaleDateString('ru')}`;
+                            const lastRating = worker.periodRatings[worker.periodRatings.length - 1]
+                            label += `\nПоследний комментарий: ${lastRating.comment}`
+                            label += `\nДата: ${new Date(lastRating.date).toLocaleDateString('ru')}`
                         }
                         
-                        return label;
+                        return label
                     }
                 }
             }
@@ -98,10 +98,10 @@ export default function WorkersCharts({ workers, periodStart, periodEnd }) {
                 data: sortedWorkers.map(worker => worker.averageKtu || 0),
                 backgroundColor: sortedWorkers.map(worker => {
                     const ktu = worker.averageKtu || 0
-                    if (ktu >= 1.1) return 'rgba(75, 192, 192, 0.8)'
-                    if (ktu >= 0.7) return 'rgba(54, 162, 235, 0.8)'
-                    if (ktu >= 0.3) return 'rgba(255, 206, 86, 0.8)'
-                    return 'rgba(255, 99, 132, 0.8)'
+                    if (ktu >= 1.1) return 'rgba(75, 192, 192, 0.8)' // Отличный
+                    if (ktu >= 0.7) return 'rgba(54, 162, 235, 0.8)' // Хороший
+                    if (ktu >= 0.3) return 'rgba(255, 206, 86, 0.8)' // Базовый
+                    return 'rgba(255, 99, 132, 0.8)' // Низкий
                 }),
                 borderColor: 'rgba(0, 0, 0, 0.1)',
                 borderWidth: 1
@@ -133,7 +133,6 @@ export default function WorkersCharts({ workers, periodStart, periodEnd }) {
                 </div>
             </div>
 
-            {/* Добавляем модальное окно истории */}
             <RatingHistoryModal
                 isOpen={showHistoryModal}
                 onClose={() => {

@@ -162,10 +162,7 @@ export default function SubtaskForm({ onSubmit, onCancel, maxArea, workArea, onW
                 area: areaHectares.toFixed(2)
             }));
 
-            // Добавляем информацию о типе расчета
-            console.log(`Площадь рассчитана ${has3DData ? 
-                'с учетом рельефа' : 
-                'по плоскости'}`);
+           
         }
     };
 

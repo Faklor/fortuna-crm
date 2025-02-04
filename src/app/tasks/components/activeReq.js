@@ -56,7 +56,7 @@ export default function ActiveReq({_id, index, dateBegin, urgency, obj, parts, s
 ${partsOption.map(part => `• ${part.countReq} ${part.description} ${part._doc.name}`).join('\n')}
 `;
 
-        return await axios.post('/api/telegram/sendNotification', { message });
+        return await axios.post('/api/telegram/sendNotification', { message, type: 'requests' });
     }
 
     function getColor(){

@@ -45,7 +45,7 @@ ${partsOption.map(part => `• ${part.countReq} ${part.description} ${part._doc.
 `;
 
         try {
-            await axios.post('/api/telegram/sendNotification', { message });
+            await axios.post('/api/telegram/sendNotification', { message, type: 'requests' });
         } catch (error) {
             console.error('Failed to send completion notification:', error);
         }

@@ -12,6 +12,7 @@ import {
 } from 'chart.js'
 import { Bar, Pie } from 'react-chartjs-2'
 import '../scss/statisticsCharts.scss'
+import axios from 'axios'
 
 // Регистрируем компоненты Chart.js
 ChartJS.register(
@@ -74,7 +75,7 @@ const StatisticsCharts = ({ operations, orders, requests, parts, objects, startD
             return acc;
         }, { total: 0, inStock: 0, outOfStock: 0, categories: {} });
 
-        // Статистика заявок по объектам с учетом фильтрации
+        // Статистика заявок по объектам
         const requestStats = filteredRequests?.reduce((acc, req) => {
             const objectId = req.obj?._id;
             const object = objects?.find(obj => obj._id === objectId);
@@ -83,7 +84,7 @@ const StatisticsCharts = ({ operations, orders, requests, parts, objects, startD
             return acc;
         }, {});
 
-        // Статистика выданных запчастей по объектам с учетом фильтрации
+        // Статистика выданных запчастей по объектам
         const orderStats = filteredOrders?.reduce((acc, order) => {
             const objectId = order.objectID;
             const object = objects?.find(obj => obj._id === objectId);
@@ -93,7 +94,7 @@ const StatisticsCharts = ({ operations, orders, requests, parts, objects, startD
             return acc;
         }, {});
 
-        // Статистика затрат по объектам с учетом фильтрации
+        // Статистика затрат по объектам
         const expensesStats = filteredOrders?.reduce((acc, order) => {
             const objectId = order.objectID;
             const object = objects?.find(obj => obj._id === objectId);
@@ -110,28 +111,30 @@ const StatisticsCharts = ({ operations, orders, requests, parts, objects, startD
         }, { byObject: {}, total: 0 });
 
         // Сортируем объекты по количеству заявок
-        const sortedRequestStats = Object.entries(requestStats || {})
-            .sort(([, a], [, b]) => b - a)
-            .reduce((acc, [key, value]) => {
-                acc[key] = value;
-                return acc;
-            }, {});
+        const sortedRequestStats = Object.fromEntries(
+            Object.entries(requestStats || {}).sort(([, a], [, b]) => b - a)
+        );
 
         // Сортируем объекты по количеству выданных запчастей
-        const sortedOrderStats = Object.entries(orderStats || {})
-            .sort(([, a], [, b]) => b - a)
-            .reduce((acc, [key, value]) => {
-                acc[key] = value;
-                return acc;
-            }, {});
+        const sortedOrderStats = Object.fromEntries(
+            Object.entries(orderStats || {}).sort(([, a], [, b]) => b - a)
+        );
 
         // Сортируем объекты по сумме затрат
-        const sortedExpensesStats = Object.entries(expensesStats?.byObject || {})
-            .sort(([, a], [, b]) => b - a)
-            .reduce((acc, [key, value]) => {
-                acc[key] = value;
-                return acc;
-            }, {});
+        const sortedExpensesStats = Object.fromEntries(
+            Object.entries(expensesStats?.byObject || {}).sort(([, a], [, b]) => b - a)
+        );
+
+        // Отправляем уведомление в Telegram о новых данных
+        const sendStatisticsNotification = async () => {
+            try {
+                
+            } catch (error) {
+                console.error('Failed to send statistics notification:', error);
+            }
+        };
+
+        sendStatisticsNotification();
 
         setStats({
             partsStats: {
@@ -155,30 +158,30 @@ const StatisticsCharts = ({ operations, orders, requests, parts, objects, startD
                 }
             },
             requestsByObject: {
-                labels: Object.keys(sortedRequestStats || {}),
+                labels: Object.keys(sortedRequestStats),
                 datasets: [{
                     label: 'Количество заявок',
-                    data: Object.values(sortedRequestStats || {}),
+                    data: Object.values(sortedRequestStats),
                     backgroundColor: '#84E168',
                     borderColor: '#84E168',
                     borderWidth: 1
                 }]
             },
             ordersByObject: {
-                labels: Object.keys(sortedOrderStats || {}),
+                labels: Object.keys(sortedOrderStats),
                 datasets: [{
                     label: 'Выдано запчастей',
-                    data: Object.values(sortedOrderStats || {}),
+                    data: Object.values(sortedOrderStats),
                     backgroundColor: '#36A2EB',
                     borderColor: '#36A2EB',
                     borderWidth: 1
                 }]
             },
             expensesByObject: {
-                labels: Object.keys(sortedExpensesStats || {}),
+                labels: Object.keys(sortedExpensesStats),
                 datasets: [{
                     label: 'Затраты (руб)',
-                    data: Object.values(sortedExpensesStats || {}),
+                    data: Object.values(sortedExpensesStats),
                     backgroundColor: '#FA5C62',
                     borderColor: '#FA5C62',
                     borderWidth: 1
@@ -187,8 +190,8 @@ const StatisticsCharts = ({ operations, orders, requests, parts, objects, startD
             totalOperations: filteredOperations?.length || 0,
             totalOrders: filteredOrders?.length || 0,
             totalExpenses: expensesStats?.total || 0
-        })
-    }, [operations, orders, requests, parts, objects, startDate, endDate])
+        });
+    }, [operations, orders, requests, parts, objects, startDate, endDate]);
 
     const options = {
         responsive: true,
@@ -218,7 +221,7 @@ const StatisticsCharts = ({ operations, orders, requests, parts, objects, startD
                 }
             }
         }
-    }
+    };
 
     return (
         <div className="statistics-charts">
@@ -289,7 +292,7 @@ const StatisticsCharts = ({ operations, orders, requests, parts, objects, startD
                 </div>
             </div>
         </div>
-    )
-}
+    );
+};
 
-export default StatisticsCharts 
+export default StatisticsCharts; 

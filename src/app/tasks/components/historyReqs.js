@@ -65,7 +65,7 @@ export default function HistoryReqs({ visibleHistoryReq }){
 ${deletedReq.parts.map(part => `• ${part.countReq} ${part.description} ${part.name}`).join('\n')}
 `
         try {
-            await axios.post('/api/telegram/sendNotification', { message })
+            await axios.post('/api/telegram/sendNotification', { message, type: 'requests' })
         } catch (error) {
             console.error('Failed to send deletion notification:', error)
         }

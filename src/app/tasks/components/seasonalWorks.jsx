@@ -126,7 +126,7 @@ export default function SeasonalWorks() {
             ) : (
                 <div className="no-works">
                     <i className="far fa-calendar-times"></i>
-                    <p>Нет активных сезонных работ</p>
+                    <p>Нет запланированных сезонных работ</p>
                 </div>
             )}
         </div>

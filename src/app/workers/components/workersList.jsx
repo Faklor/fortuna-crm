@@ -10,6 +10,7 @@ import DatePicker from 'react-datepicker'
 import { registerLocale } from 'react-datepicker'
 import ru from 'date-fns/locale/ru'
 import "react-datepicker/dist/react-datepicker.css"
+import axios from 'axios'
 
 // Регистрируем русскую локаль
 registerLocale('ru', ru)
@@ -22,18 +23,41 @@ export default function WorkersList({ visibleWorkers, initialStartDate, initialE
     const [startDate, setStartDate] = useState(new Date(initialStartDate))
     const [endDate, setEndDate] = useState(new Date(initialEndDate))
     const [processedWorkers, setProcessedWorkers] = useState([])
+    const [isLoading, setIsLoading] = useState(false)
 
-    // Добавляем функцию расчета среднего КТУ
+    // Функция расчета среднего КТУ
     const calculateAverageKTU = (ratings) => {
         if (!ratings || ratings.length === 0) return 0
         return ratings.reduce((sum, rating) => sum + rating.ktu, 0) / ratings.length
     }
 
+    // Загрузка и обработка данных работников
     useEffect(() => {
-        const parsedWorkers = JSON.parse(visibleWorkers)
-        setWorkers(parsedWorkers)
-        processWorkersData(parsedWorkers, startDate, endDate)
+        const loadAndProcessWorkers = async () => {
+            try {
+                setIsLoading(true)
+                const parsedWorkers = JSON.parse(visibleWorkers)
+                setWorkers(parsedWorkers)
+                await processWorkersData(parsedWorkers, startDate, endDate)
+            } catch (error) {
+                console.error('Error loading workers:', error)
+                // Добавим уведомление через Telegram
+               
+            } finally {
+                setIsLoading(false)
+            }
+        }
+        loadAndProcessWorkers()
     }, [visibleWorkers, startDate, endDate])
+
+    // Функция отправки уведомлений
+    const sendNotification = async (data) => {
+        try {
+            await axios.post('/api/telegram/sendNotification', data)
+        } catch (error) {
+            console.error('Error sending notification:', error)
+        }
+    }
 
     const processWorkersData = (workersData, start, end) => {
         const processed = workersData.map(worker => {
@@ -171,23 +195,25 @@ export default function WorkersList({ visibleWorkers, initialStartDate, initialE
                             <DatePicker
                                 selected={startDate}
                                 onChange={handleStartDateChange}
-                                locale="ru"
-                                dateFormat="MMMM yyyy"
+                                dateFormat="MM/yyyy"
                                 showMonthYearPicker
+                                locale="ru"
                                 className="date-picker"
                             />
                             <span>По:</span>
                             <DatePicker
                                 selected={endDate}
                                 onChange={handleEndDateChange}
-                                locale="ru"
-                                dateFormat="MMMM yyyy"
+                                dateFormat="MM/yyyy"
                                 showMonthYearPicker
+                                locale="ru"
                                 className="date-picker"
-                                minDate={startDate} // Нельзя выбрать дату раньше начальной
                             />
                         </div>
-                        <button onClick={() => setShowAddForm(true)}>
+                        <button 
+                            className="add-worker-btn"
+                            onClick={() => setShowAddForm(true)}
+                        >
                             Добавить сотрудника
                         </button>
                     </div>
@@ -195,20 +221,26 @@ export default function WorkersList({ visibleWorkers, initialStartDate, initialE
                 <SearchWorkers onSearch={handleSearch} />
             </div>
 
-            <WorkersCharts 
-                workers={getFilteredWorkers()}
-                periodStart={startDate}
-                periodEnd={endDate}
-            />
-            
-            <WorkersTable 
-                workers={getFilteredWorkers()}
-                onEdit={setEditingWorker}
-                onDelete={handleDeleteWorker}
-                onRate={handleRate}
-                periodStart={startDate}
-                periodEnd={endDate}
-            />
+            {isLoading ? (
+                <div className="loading-spinner">Загрузка...</div>
+            ) : (
+                <>
+                    <WorkersCharts 
+                        workers={getFilteredWorkers()}
+                        periodStart={startDate}
+                        periodEnd={endDate}
+                    />
+                    
+                    <WorkersTable 
+                        workers={getFilteredWorkers()}
+                        onEdit={setEditingWorker}
+                        onDelete={handleDeleteWorker}
+                        onRate={handleRate}
+                        periodStart={startDate}
+                        periodEnd={endDate}
+                    />
+                </>
+            )}
 
             {showAddForm && (
                 <AddWorkerModal

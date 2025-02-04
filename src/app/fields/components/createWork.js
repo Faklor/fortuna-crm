@@ -216,7 +216,7 @@ ${selectedWorkers.length > 0 ? `\n<b>Работники:</b>\n${selectedWorkers.
 ${selectedEquipment.length > 0 ? `\n<b>Техника:</b>\n${selectedEquipment.map(e => `• ${e}`).join('\n')}` : ''}`;
 
             // Отправляем уведомление
-            await axios.post('/api/telegram/sendNotification', { message });
+            await axios.post('/api/telegram/sendNotification', { message, type: 'fields' });
 
             // Сохраняем работу
             onSave(dataToSave);

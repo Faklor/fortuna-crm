@@ -569,7 +569,7 @@ export default function ShowField({
 • Площадь: ${work.area} га
 ${work.description ? `• Описание: ${work.description}` : ''}`;
 
-                    await axios.post('/api/telegram/sendNotification', { message });
+                    await axios.post('/api/telegram/sendNotification', { message, type: 'fields' });
                 }
             }
         } catch (error) {
@@ -689,7 +689,7 @@ ${WORK_STATUSES[work.status].emoji} Статус: ${WORK_STATUSES[work.status].n
 • Площадь: ${work.area} га
 ${work.description ? `• Описание: ${work.description}` : ''}`;
 
-                    await axios.post('/api/telegram/sendNotification', { message });
+                    await axios.post('/api/telegram/sendNotification', { message, type: 'fields' });
                 }
 
                 // Обновляем список работ
