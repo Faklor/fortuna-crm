@@ -142,7 +142,8 @@ export default function WorkersList({ visibleWorkers, initialStartDate, initialE
                 method: 'DELETE'
             })
             if (response.ok) {
-                await loadWorkers()
+                // Обновляем страницу после удаления
+                window.location.reload()
             }
         } catch (error) {
             console.error('Error deleting worker:', error)
@@ -160,8 +161,8 @@ export default function WorkersList({ visibleWorkers, initialStartDate, initialE
             })
 
             if (response.ok) {
-                // После успешной оценки обновляем данные
-                await loadWorkers()
+                // Обновляем страницу после установки КТУ
+                window.location.reload()
             }
         } catch (error) {
             console.error('Error rating worker:', error)

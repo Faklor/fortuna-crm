@@ -63,6 +63,8 @@ export default function AddWorkerModal({ isOpen, onClose, onAdd }) {
                 setFormData({ name: '', position: '', phone: '', email: '', organization: '' })
                 setIsCustomPosition(false)
                 setIsCustomOrganization(false)
+                // Обновляем страницу после добавления
+                window.location.reload()
             }
         } catch (error) {
             console.error('Error adding worker:', error)

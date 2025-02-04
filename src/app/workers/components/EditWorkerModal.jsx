@@ -73,6 +73,8 @@ export default function EditWorkerModal({ isOpen, onClose, worker, onUpdate }) {
                 const updatedWorker = await response.json()
                 onUpdate(updatedWorker)
                 onClose()
+                // Обновляем страницу после редактирования
+                window.location.reload()
             }
         } catch (error) {
             console.error('Error updating worker:', error)
