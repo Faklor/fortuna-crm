@@ -670,7 +670,7 @@ ${work.description ? `• Описание: ${work.description}` : ''}`;
     const handleDeleteWork = async (workId) => {
         try {
             // Находим информацию о работе перед удалением
-            const work = fieldWorks.find(w => w._id === workId);
+            const work = fieldWorks.find(w => w._id === workId) || archiveWorks.find(w => w._id === workId);
             
             const response = await axios.delete(`/api/fields/works/delete/${workId}`);
             
@@ -699,8 +699,17 @@ ${work.description ? `• Описание: ${work.description}` : ''}`;
                     await axios.post('/api/telegram/sendNotification', { message, type: 'fields' });
                 }
 
-                // Обновляем список работ
+                // Обновляем список активных работ
                 setFieldWorks(prevWorks => prevWorks.filter(w => w._id !== workId));
+                
+                // Обновляем список архивных работ
+                setArchiveWorks(prevWorks => prevWorks.filter(w => w._id !== workId));
+
+                // Перезагружаем данные
+                await Promise.all([
+                    loadFieldWorks(),
+                    loadArchiveWorks()
+                ]);
             }
         } catch (error) {
             console.error('Error deleting work:', error);
