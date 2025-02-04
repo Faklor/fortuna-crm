@@ -191,9 +191,15 @@ export default function SubtaskForm({ onSubmit, onCancel, maxArea, workArea, onW
             alert(`Площадь не может превышать ${maxArea} га`);
             return;
         }
+
+        // Фильтруем только рабочие сегменты перед отправкой
+        const workingTracks = tracks.filter(segment => 
+            Array.isArray(segment) && segment[0]?.isWorking
+        );
+
         onSubmit({
             ...formData,
-            tracks: tracks
+            tracks: workingTracks // Передаем только рабочие сегменты
         });
     };
 
