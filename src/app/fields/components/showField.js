@@ -11,6 +11,12 @@ import { WORK_TYPES } from '../constants/workTypes';
 import { WORK_STATUSES } from '../constants/workStatuses';
 import SubtaskManager from './SubtaskManager';
 import PropTypes from 'prop-types';
+import DatePicker, { registerLocale } from 'react-datepicker'
+import "react-datepicker/dist/react-datepicker.css"
+import ru from 'date-fns/locale/ru'
+
+// Регистрируем русскую локаль
+registerLocale('ru', ru)
 
 export default function ShowField({
     setShowFieldVisible, 
@@ -84,6 +90,7 @@ export default function ShowField({
     const searchParams = useSearchParams();
     const urlSeason = searchParams.get('season');
     const showFieldRef = useRef(null);
+    const [allWorkDates, setAllWorkDates] = useState([])
 
     const calculateAreaInHectares = (coordinates) => {
         try {
@@ -769,6 +776,25 @@ ${work.description ? `• Описание: ${work.description}` : ''}`;
         };
     }, [isCreateWorkModalOpen]);
 
+    // Получаем все даты с работами при загрузке поля
+    useEffect(() => {
+        if (field && field.works && Array.isArray(field.works)) {
+            const dates = field.works
+                .filter(work => work.status === 'completed')
+                .map(work => new Date(work.plannedDate))
+            setAllWorkDates(dates)
+        }
+    }, [field])
+
+    // Подсвечиваем даты с работами
+    const highlightWithWorks = (date) => {
+        return allWorkDates.some(d => 
+            d.getDate() === date.getDate() &&
+            d.getMonth() === date.getMonth() &&
+            d.getFullYear() === date.getFullYear()
+        )
+    }
+
     return field && field.properties ? (
         <div 
             ref={showFieldRef}
@@ -869,7 +895,7 @@ ${work.description ? `• Описание: ${work.description}` : ''}`;
                                                         }));
                                                         setShowCropSuggestions(false);
                                                     }}
-                                                >
+                                                > 
                                                     {crop}
                                                 </div>
                                             ))}
@@ -1286,26 +1312,42 @@ ${work.description ? `• Описание: ${work.description}` : ''}`;
             <div className="field-works-archive">
                 <h3>Архив работ</h3>
                 <div className="archive-date-range">
-                    <div className="date-input">
+                    <div className="date-picker-container">
                         <label>С:</label>
-                        <input 
-                            type="date"
-                            value={archiveDateRange.startDate}
-                            onChange={(e) => setArchiveDateRange(prev => ({
+                        <DatePicker
+                            selected={archiveDateRange.startDate ? new Date(archiveDateRange.startDate) : null}
+                            onChange={(date) => setArchiveDateRange(prev => ({
                                 ...prev,
-                                startDate: e.target.value
+                                startDate: date ? date.toISOString().split('T')[0] : ''
                             }))}
+                            dateFormat="dd.MM.yyyy"
+                            locale="ru"
+                            highlightDates={allWorkDates}
+                            dayClassName={date =>
+                                highlightWithWorks(date) ? "has-works" : undefined
+                            }
+                            calendarClassName="custom-calendar"
+                            className="date-picker"
+                            placeholderText="Выберите дату"
                         />
                     </div>
-                    <div className="date-input">
+                    <div className="date-picker-container">
                         <label>По:</label>
-                        <input 
-                            type="date"
-                            value={archiveDateRange.endDate}
-                            onChange={(e) => setArchiveDateRange(prev => ({
+                        <DatePicker
+                            selected={archiveDateRange.endDate ? new Date(archiveDateRange.endDate) : null}
+                            onChange={(date) => setArchiveDateRange(prev => ({
                                 ...prev,
-                                endDate: e.target.value
+                                endDate: date ? date.toISOString().split('T')[0] : ''
                             }))}
+                            dateFormat="dd.MM.yyyy"
+                            locale="ru"
+                            highlightDates={allWorkDates}
+                            dayClassName={date =>
+                                highlightWithWorks(date) ? "has-works" : undefined
+                            }
+                            calendarClassName="custom-calendar"
+                            className="date-picker"
+                            placeholderText="Выберите дату"
                         />
                     </div>
                     <button 
