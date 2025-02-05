@@ -3,6 +3,18 @@ import axios from 'axios';
 import SubtaskForm from './SubtaskForm';
 import '../scss/subtaskManager.scss';
 
+// Экспортируем массив цветов, чтобы использовать его в других компонентах
+export const SUBTASK_COLORS = [
+    '#4CAF50', // зеленый
+    '#FF0000', // красный
+    '#2196F3', // синий
+    '#FF9800', // оранжевый
+    '#9C27B0', // фиолетовый
+    '#00BCD4', // голубой
+    '#FFEB3B', // желтый
+    '#795548'  // коричневый
+];
+
 export default function SubtaskManager({ work, onUpdate, onWialonTrackSelect }) {
     const [subtasks, setSubtasks] = useState([]);
     const [isCreating, setIsCreating] = useState(false);
@@ -91,8 +103,18 @@ export default function SubtaskManager({ work, onUpdate, onWialonTrackSelect }) 
             </div>
 
             <div className="subtasks-list">
-                {subtasks && subtasks.map(subtask => (
+                {subtasks && subtasks.map((subtask, index) => (
                     <div key={subtask._id} className="subtask-item">
+                        <div 
+                            className="subtask-color-indicator"
+                            style={{ 
+                                backgroundColor: SUBTASK_COLORS[index % SUBTASK_COLORS.length],
+                                width: '12px',
+                                height: '12px',
+                                borderRadius: '50%',
+                                marginRight: '8px'
+                            }}
+                        />
                         <div className="subtask-info">
                             <h4>Подработа от {new Date(subtask.plannedDate).toLocaleDateString()}</h4>
                             <span>Площадь: {subtask.area} га</span>

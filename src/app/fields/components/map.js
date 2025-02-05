@@ -19,6 +19,7 @@ import ActionMenu from './ActionMenu'
 import CoordinatesDisplay from './CoordinatesDisplay'
 import DialogModal from './DialogModal'
 import WialonControl from './WialonControl'
+import { SUBTASK_COLORS } from './SubtaskManager'
 
 function DrawingControl({ 
   selectedFieldData, 
@@ -1145,17 +1146,25 @@ function Map({ fields, currentSeason }) {
         {/* Добавляем отображение треков подзадач */}
         {subtaskTracks && subtaskTracks.length > 0 && (
             <FeatureGroup>
-                {subtaskTracks.map((track, index) => (
-                    <Polyline
-                        key={track.subtaskId || index}
-                        positions={track.coordinates}
-                        pathOptions={{
-                            color: '#FF0000',
-                            weight: 3,
-                            opacity: 0.8
-                        }}
-                    />
-                ))}
+                {subtaskTracks.map((track) => {
+                    // Получаем индекс подработы для соответствия цветам в SubtaskManager
+                    const subtaskIndex = subtaskTracks.findIndex(t => 
+                        t.originalSubtaskId === track.originalSubtaskId
+                    );
+                    
+                    return (
+                        <Polyline
+                            key={track.subtaskId}
+                            positions={track.coordinates}
+                            pathOptions={{
+                                // Используем те же цвета и тот же порядок, что и в SubtaskManager
+                                color: SUBTASK_COLORS[subtaskIndex % SUBTASK_COLORS.length],
+                                weight: 3,
+                                opacity: 0.8
+                            }}
+                        />
+                    );
+                })}
             </FeatureGroup>
         )}
 
