@@ -1,6 +1,6 @@
 'use client'
 import React, { useState, useEffect, useCallback } from 'react'
-import { MapContainer, TileLayer, Polygon, FeatureGroup, useMap, WMSTileLayer, Marker, Popup, Polyline } from 'react-leaflet'
+import { MapContainer, TileLayer, Polygon, FeatureGroup, useMap, WMSTileLayer, Marker, Popup, Polyline, Circle } from 'react-leaflet'
 import { EditControl } from 'react-leaflet-draw'
 import ShowField from './showField'
 import axios from 'axios'
@@ -20,6 +20,10 @@ import CoordinatesDisplay from './CoordinatesDisplay'
 import DialogModal from './DialogModal'
 import WialonControl from './WialonControl'
 import { SUBTASK_COLORS } from './SubtaskManager'
+import { FendtLayer } from './FendtLayer'
+import { FendtInfoPanel } from './FendtInfoPanel'
+import { RavenLayer } from './RavenLayer'
+import { RavenInfoPanel } from './RavenInfoPanel'
 
 function DrawingControl({ 
   selectedFieldData, 
@@ -381,6 +385,8 @@ function Map({ fields, currentSeason }) {
   const [wialonTracks, setWialonTracks] = useState([]);
   const [showWialonControl, setShowWialonControl] = useState(false);
   const [subtaskTracks, setSubtaskTracks] = useState(null);
+  const [fendtData, setFendtData] = useState(null);
+  const [ravenData, setRavenData] = useState(null);
 
   useEffect(() => {
     // Здесь можно добавить логику загрузки полей с учетом сезона
@@ -921,8 +927,20 @@ function Map({ fields, currentSeason }) {
     setSubtaskTracks(tracks);
   }, []);
 
+  // Обработчик загрузки данных Fendt
+  const handleFendtDataLoad = useCallback((data) => {
+    console.log('Received Fendt data:', data);
+    setFendtData(data);
+  }, []);
+
+  // Добавляем обработчик загрузки данных Raven
+  const handleRavenDataLoad = useCallback((data) => {
+    console.log('Received Raven data:', data);
+    setRavenData(data);
+  }, []);
+
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+    <div className="map-container">
       <style jsx global>{`
         .ndvi-layer {
           filter: contrast(200%) brightness(150%) saturate(200%) !important;
@@ -1170,6 +1188,12 @@ function Map({ fields, currentSeason }) {
 
         {/* Отрисовка трека Wialon */}
         {wialonTracks && renderWialonTrack(wialonTracks)}
+
+        {/* Слой с данными Fendt */}
+        {fendtData && <FendtLayer data={fendtData} />}
+
+        {/* Слой с данными Raven */}
+        {ravenData && <RavenLayer data={ravenData} />}
       </MapContainer>
 
       {/* Компонент ShowField */}
@@ -1203,6 +1227,8 @@ function Map({ fields, currentSeason }) {
           setDialog={setDialog}
           onWialonTrackSelect={handleWialonTrackSelect}
           onSubtaskTracksSelect={handleSubtaskTracksSelect}
+          onFendtDataLoad={handleFendtDataLoad}
+          onRavenDataLoad={handleRavenDataLoad}
         />
       )}
 
@@ -1231,6 +1257,8 @@ function Map({ fields, currentSeason }) {
         setDialog={setDialog}
         onShowWialonControl={(status) => setShowWialonControl(status)}
         showWialonControl={showWialonControl}
+        onFendtDataLoad={handleFendtDataLoad}
+        onRavenDataLoad={handleRavenDataLoad}
       />
 
       {/* Модальное окно для просмотра изображения */}
@@ -1258,6 +1286,12 @@ function Map({ fields, currentSeason }) {
         onClose={() => setDialog({ ...dialog, isOpen: false })}
         defaultValue={dialog.defaultValue}
       />
+
+      {/* Добавляем панель информации */}
+      {fendtData && <FendtInfoPanel data={fendtData} />}
+
+      {/* Добавляем панель информации Raven */}
+      {ravenData && <RavenInfoPanel data={ravenData} />}
     </div>
   );
 }
@@ -1277,6 +1311,14 @@ function MapEvents({ onClick }) {
   }, [map, onClick]);
   
   return null;
+}
+
+// Функция для определения цвета точки в зависимости от расхода топлива
+function getColorByFuelConsumption(consumption) {
+    if (!consumption) return 'gray';
+    if (consumption < 10) return 'green';
+    if (consumption < 20) return 'yellow';
+    return 'red';
 }
 
 export default Map;

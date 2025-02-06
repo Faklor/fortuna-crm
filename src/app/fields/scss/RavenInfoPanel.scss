@@ -1,0 +1,331 @@
+.raven-info-panel {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: white;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    max-width: 300px;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    z-index: 1000;
+
+    .raven-info-header {
+        margin-bottom: 15px;
+        
+        h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+    }
+
+    .device-info, .summary-info {
+        margin-bottom: 10px;
+        
+        p {
+            margin: 5px 0;
+            font-size: 0.9em;
+        }
+    }
+
+    .tasks-list {
+        .task-item {
+            margin-bottom: 10px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            overflow: hidden;
+
+            .task-header {
+                padding: 10px;
+                background: white;
+                
+                h4 {
+                    margin: 0 0 5px 0;
+                    color: #444;
+                }
+            }
+
+            .task-details {
+                p {
+                    margin: 3px 0;
+                    font-size: 0.85em;
+                }
+            }
+        }
+    }
+
+    .panel-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+
+        .tab-button {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+
+            &.active {
+                background: #007bff;
+                color: white;
+            }
+
+            &:hover {
+                background: #e9ecef;
+            }
+        }
+    }
+
+    .machine-info-section,
+    .track-info-section,
+    .field-geometry-section {
+        margin: 15px 0;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 4px;
+        border: 1px solid #dee2e6;
+
+        h4 {
+            margin-bottom: 10px;
+            color: #495057;
+        }
+    }
+
+    .track-list {
+        margin-top: 10px;
+
+        .track-item {
+            padding: 8px;
+            margin: 5px 0;
+            background: white;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+        }
+    }
+
+    .geometry-details,
+    .machine-details,
+    .track-details {
+        p {
+            margin: 5px 0;
+            font-size: 0.9em;
+        }
+    }
+
+    .machine-info-section {
+        .implement-item {
+            margin: 15px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+
+            h5 {
+                color: #495057;
+                margin-bottom: 10px;
+                border-bottom: 1px solid #dee2e6;
+                padding-bottom: 5px;
+            }
+
+            .sections-info {
+                margin-top: 10px;
+                padding-left: 15px;
+
+                .section-item {
+                    margin: 5px 0;
+                    padding: 5px;
+                    background: #f8f9fa;
+                    border-radius: 3px;
+                }
+            }
+        }
+    }
+
+    .line-info-section {
+        margin: 15px 0;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 4px;
+        border: 1px solid #dee2e6;
+
+        .coordinates-sample {
+            margin-top: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+
+            h5 {
+                color: #495057;
+                margin-bottom: 5px;
+            }
+        }
+    }
+}
+
+.raw-files-section {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f5f5f5;
+    border-radius: 4px;
+
+    h4 {
+        margin-bottom: 10px;
+    }
+
+    .file-selector {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 15px;
+
+        .file-button {
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+
+            &.selected {
+                background: #007bff;
+                color: white;
+            }
+
+            &:hover {
+                background: #e9ecef;
+            }
+        }
+    }
+
+    .file-content {
+        background: white;
+        padding: 15px;
+        border-radius: 4px;
+        border: 1px solid #ddd;
+        overflow: auto;
+        max-height: 500px;
+
+        pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    }
+}
+
+.coverage-map-section,
+.job-details-section {
+    margin: 15px 0;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+
+    h4 {
+        color: #495057;
+        margin-bottom: 10px;
+        border-bottom: 1px solid #dee2e6;
+        padding-bottom: 5px;
+    }
+
+    .coordinates-grid,
+    .job-info {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        
+        p {
+            margin: 5px 0;
+        }
+    }
+}
+
+.products-info {
+    margin-top: 15px;
+    border-top: 1px solid #dee2e6;
+    padding-top: 15px;
+
+    h5 {
+        color: #495057;
+        margin-bottom: 10px;
+    }
+
+    .product-item {
+        margin-bottom: 15px;
+        padding: 12px;
+        background: #f8f9fa;
+        border-radius: 6px;
+        border: 1px solid #dee2e6;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+
+        strong {
+            color: #495057;
+        }
+
+        p {
+            margin: 5px 0;
+            font-size: 0.9em;
+            
+            &:first-child {
+                font-weight: 500;
+                color: #212529;
+                border-bottom: 1px solid #dee2e6;
+                padding-bottom: 5px;
+                margin-bottom: 8px;
+            }
+        }
+    }
+}
+
+.job-info-section {
+    margin: 15px 0;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+
+    h4 {
+        color: #495057;
+        margin-bottom: 15px;
+        border-bottom: 1px solid #dee2e6;
+        padding-bottom: 8px;
+    }
+
+    .job-details {
+        p {
+            margin: 8px 0;
+            font-size: 0.95em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            strong {
+                color: #495057;
+            }
+        }
+    }
+}
+
+// Улучшаем стили для всплывающих подсказок на карте
+:global {
+    .leaflet-popup-content {
+        margin: 10px;
+        
+        h4 {
+            margin: 0 0 8px 0;
+            color: #495057;
+            font-size: 1.1em;
+        }
+
+        p {
+            margin: 4px 0;
+            font-size: 0.9em;
+            color: #666;
+        }
+    }
+} 
