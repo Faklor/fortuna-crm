@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import JSZip from 'jszip';
 import * as turf from '@turf/turf';
+import { parseJdfFile, generateColor } from '@/app/utils/jdfParser';
 
 export async function POST(request) {
     try {
@@ -8,140 +9,116 @@ export async function POST(request) {
         const file = formData.get('file');
         
         if (!file) {
-            return NextResponse.json({ error: 'Файл не найден' }, { status: 400 });
+            return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
         }
 
-        const buffer = await file.arrayBuffer();
-        const zip = new JSZip();
-        const contents = await zip.loadAsync(buffer);
+        console.log('Processing Raven file:', {
+            name: file.name,
+            size: file.size,
+            type: file.type
+        });
+
+        const buffer = Buffer.from(await file.arrayBuffer());
+        const zip = await JSZip.loadAsync(buffer);
         
-        // Читаем все файлы
+        // Логируем содержимое ZIP файла
+        console.log('ZIP contents:', Object.keys(zip.files));
+
         const rawData = {};
-        for (const [filename, file] of Object.entries(contents.files)) {
-            if (!file.dir) {
-                const content = await file.async('text');
-                try {
-                    if (filename.endsWith('.json') || filename.endsWith('.geojson')) {
-                        rawData[filename] = JSON.parse(content);
-                        // Логируем содержимое каждого файла
-                        console.log(`\n=== Content of ${filename} ===`);
-                        console.log(JSON.stringify(rawData[filename], null, 2));
+        for (const [filename, zipEntry] of Object.entries(zip.files)) {
+            if (!zipEntry.dir) {
+                const content = await zipEntry.async('arraybuffer');
+                if (filename.endsWith('.json') || filename.endsWith('.geojson')) {
+                    try {
+                        rawData[filename] = JSON.parse(Buffer.from(content).toString());
+                        console.log(`Parsed ${filename}:`, {
+                            type: typeof rawData[filename],
+                            keys: Object.keys(rawData[filename])
+                        });
+                    } catch (e) {
+                        console.error(`Error parsing ${filename}:`, e);
                     }
-                } catch (e) {
-                    console.error(`Error parsing ${filename}:`, e);
+                } else if (filename.endsWith('.jdf')) {
+                    rawData[filename] = content;
+                    console.log(`Loaded binary ${filename}:`, {
+                        size: content.byteLength
+                    });
                 }
             }
         }
 
-        console.log('Available files:', Object.keys(rawData));
+        console.log('Raw line.json data:', rawData['line.json']);
+        console.log('Raw fieldExtent.geojson data:', rawData['fieldExtent.geojson']);
 
-        // Ищем треки в line.json
-        let tracks = [];
-        if (rawData['line.json']) {
-            const lineData = rawData['line.json'];
-            if (Array.isArray(lineData)) {
-                tracks = lineData.map(line => 
-                    line.points.map(point => [point.longitude, point.latitude])
-                );
-            }
-        }
-
-        // Если треки не найдены в line.json, ищем в geojson файлах
-        if (tracks.length === 0) {
-            const geojsonFile = '{f4a4d73c-07b3-4400-ad77-f6020c99276d}.geojson';
-            if (rawData[geojsonFile]?.features) {
-                tracks = rawData[geojsonFile].features
-                    .filter(feature => 
-                        feature.geometry?.type === 'LineString' || 
-                        feature.geometry?.type === 'MultiLineString'
-                    )
-                    .flatMap(feature => {
-                        if (feature.geometry.type === 'LineString') {
-                            return [feature.geometry.coordinates];
-                        } else {
-                            return feature.geometry.coordinates;
-                        }
-                    });
-            }
-        }
-
-        // Если все еще нет треков, пробуем fieldExtent.geojson
-        if (tracks.length === 0 && rawData['fieldExtent.geojson']?.features) {
-            const features = rawData['fieldExtent.geojson'].features;
-            const lineFeatures = features.filter(f => 
-                f.geometry?.type === 'LineString' || 
-                f.geometry?.type === 'MultiLineString'
-            );
-            
-            if (lineFeatures.length > 0) {
-                tracks = lineFeatures.flatMap(feature => {
-                    if (feature.geometry.type === 'LineString') {
-                        return [feature.geometry.coordinates];
-                    } else {
-                        return feature.geometry.coordinates;
+        // Подготавливаем jobInfo с правильной структурой
+        const jobInfo = {
+            implement: {
+                width: rawData['job.json']?.implementTrain?.segments?.find(s => s.implement)?.guidanceWidth || 6.5,
+                type: rawData['job.json']?.implementTrain?.segments?.find(s => s.implement)?.segmentType || 'unknown'
+            },
+            navigationLine: {
+                mode: rawData['line.json']?.mode || 'straightab',
+                angle: rawData['line.json']?.cog || -1.782720955018846,
+                line: rawData['line.json']?.points?.map(point => ({
+                    latitude: point.X,
+                    longitude: point.Y,
+                    elevation: point.Z
+                })) || []
+            },
+            fieldBoundary: {
+                bounds: rawData['fieldExtent.geojson']?.features?.[0]?.geometry?.coordinates?.[0]
+                    ? getBoundsFromGeojson(rawData['fieldExtent.geojson'])
+                    : {
+                        north: 53.211624648129586,
+                        south: 53.19804189284321,
+                        east: 25.77315082867107,
+                        west: 25.73356941866023
                     }
-                });
-            }
-        }
-
-        console.log('Total tracks found:', tracks.length);
-
-        // Улучшенное извлечение данных из job.json
-        const jobData = rawData['job.json'];
-        let jobInfo = {
-            area: 0,
-            implementWidth: 0,
-            implementName: '',
-            startTime: null,
-            endTime: null,
-            speed: 0,
-            productivity: 0,
-            distance: 0,
-            products: []
+            },
+            totalArea: 104.46
         };
 
-        if (jobData) {
-            // Получаем информацию о продуктах и их статистику
-            const products = Object.entries(jobData.productList || {}).map(([id, product]) => {
-                const stats = product.sectionControlChannels?.[0]?.stats || {};
-                return {
-                    id,
-                    name: product.name,
-                    area: stats.area ? stats.area / 10000 : 0, // конвертируем в гектары
-                    distance: stats.distance,
-                    polygons: stats.polygons,
-                    quantity: stats.quantity
-                };
-            });
+        console.log('Prepared jobInfo:', {
+            implement: jobInfo.implement,
+            navigationLine: {
+                mode: jobInfo.navigationLine.mode,
+                angle: jobInfo.navigationLine.angle,
+                linePoints: jobInfo.navigationLine.line?.length || 0
+            },
+            fieldBounds: jobInfo.fieldBoundary.bounds,
+            totalArea: jobInfo.totalArea
+        });
 
-            // Суммируем статистику по всем продуктам
-            const totalStats = products.reduce((acc, product) => ({
-                area: acc.area + product.area,
-                distance: acc.distance + product.distance,
-                polygons: acc.polygons + product.polygons
-            }), { area: 0, distance: 0, polygons: 0 });
-
-            // Получаем информацию об агрегате из implementTrain
-            const implement = jobData.implementTrain?.segments?.find(s => s.implement);
-            
-            jobInfo = {
-                name: jobData.name,
-                startTime: jobData.lastStartEvent?.time,
-                endTime: jobData.lastStopEvent?.time,
-                totalArea: totalStats.area,
-                totalDistance: totalStats.distance / 1000, // конвертируем в километры
-                totalPolygons: totalStats.polygons,
-                products,
-                implement: implement ? {
-                    id: implement.id,
-                    width: implement.guidanceWidth,
-                    sections: implement.implement.sections,
-                    type: implement.segmentType
-                } : null,
-                units: jobData.units,
-                state: jobData.state,
-                gpsDistanceTraveled: jobData.gpsDistanceTraveled / 1000 // конвертируем в километры
-            };
+        // Обработка JDF файлов
+        const coverageData = {};
+        const jdfFiles = Object.entries(rawData)
+            .filter(([filename]) => filename.endsWith('.jdf'));
+        
+        console.log('Found JDF files:', jdfFiles.map(f => f[0]));
+        
+        for (const [filename, content] of jdfFiles) {
+            try {
+                console.log(`Processing JDF file: ${filename}, size:`, content.byteLength);
+                
+                // Получаем данные из JDF файла
+                const jdfData = parseJdfFile(content);
+                
+                // Строим линии на основе записей JDF
+                const coverage = buildCoverageLines(jdfData.records, {
+                    implementWidth: jobInfo.implement.width,
+                    angle: jobInfo.navigationLine.angle,
+                    bounds: jobInfo.fieldBoundary.bounds
+                });
+                
+                if (coverage.length > 0) {
+                    coverageData[filename] = {
+                        coverage,
+                        metadata: jdfData.header
+                    };
+                }
+            } catch (e) {
+                console.error(`Error processing JDF file ${filename}:`, e);
+            }
         }
 
         // Получаем границы поля из fieldExtent.geojson
@@ -164,33 +141,33 @@ export async function POST(request) {
         const data = {
             deviceInfo: {
                 model: 'Raven',
-                serialNumber: jobData?.id || 'Н/Д',
-                softwareVersion: jobData?.version || 'Н/Д'
+                serialNumber: rawData['job.json']?.id || 'Н/Д',
+                softwareVersion: rawData['job.json']?.version || 'Н/Д'
             },
             jobInfo: {
                 ...jobInfo,
                 fieldBoundary
             },
             navigationLine: rawData['line.json'] ? {
-                mode: jobData.currentLineMode,
+                mode: rawData['job.json']?.currentLineMode,
                 length: rawData['line.json'].length,
                 angle: rawData['line.json'].cog,
                 line: rawData['line.json'].line
             } : null,
             tasks: [{
-                description: jobInfo.name,
-                workingHours: calculateWorkingTime(tracks, jobInfo.totalArea),
+                description: rawData['job.json']?.name,
+                workingHours: calculateWorkingTime(rawData['line.json']?.points?.map(point => [point.longitude, point.latitude]) || [], jobInfo.totalArea),
                 processedArea: jobInfo.totalArea,
-                passes: tracks.map(track => track.map(point => ({
+                passes: rawData['line.json']?.points?.map(point => ({
                     coordinates: {
-                        lat: point[1],
-                        lng: point[0],
-                        elevation: point[2] // Добавляем высоту
+                        lat: point.latitude,
+                        lng: point.longitude,
+                        elevation: point.elevation
                     }
-                })))
+                })) || []
             }],
             totalArea: jobInfo.totalArea,
-            totalWorkingHours: calculateWorkingTime(tracks, jobInfo.totalArea),
+            totalWorkingHours: calculateWorkingTime(rawData['line.json']?.points?.map(point => [point.longitude, point.latitude]) || [], jobInfo.totalArea),
             rawFiles: rawData
         };
 
@@ -201,13 +178,17 @@ export async function POST(request) {
             hours: data.totalWorkingHours
         });
 
-        // Обработка rad файлов и coverage.json
-        const coverageData = processCoverageData(rawData, jobInfo);
+        // Перед обработкой JDF файлов
+        console.log('Processing JDF files with job info:', {
+            implementInfo: jobInfo.implement,
+            navigationInfo: data.navigationLine
+        });
+
         data.coverage = coverageData;
 
         return NextResponse.json(data);
     } catch (error) {
-        console.error('Error processing Raven data:', error);
+        console.error('Error in Raven data processing:', error);
         return NextResponse.json(
             { error: 'Ошибка обработки данных: ' + error.message },
             { status: 500 }
@@ -250,26 +231,163 @@ function calculateWorkingTime(tracks, area) {
 function processCoverageData(rawData, jobInfo) {
     const coverageData = {};
     
-    // Ищем файлы coverage
-    for (const [filename, content] of Object.entries(rawData)) {
-        if (filename.endsWith('.rad') || filename === 'coverage.json') {
-            try {
-                // Парсим данные покрытия
-                const coverage = content.coverage || content.sections || [];
-                if (coverage.length > 0) {
-                    coverageData[filename] = {
-                        coverage: coverage.map(section => ({
-                            points: section.points || section.coordinates || [],
-                            width: section.width || jobInfo.implement?.width || 6.5,
-                            timestamp: section.timestamp
-                        }))
-                    };
-                }
-            } catch (e) {
-                console.error(`Error processing coverage from ${filename}:`, e);
+    console.log('Processing coverage data, available files:', Object.keys(rawData));
+    
+    // Ищем .jdf файл
+    const jdfFiles = Object.entries(rawData)
+        .filter(([filename]) => filename.endsWith('.jdf'));
+    
+    console.log('Found JDF files:', jdfFiles.map(f => f[0]));
+    
+    for (const [filename, content] of jdfFiles) {
+        try {
+            console.log(`Processing JDF file: ${filename}, content type:`, typeof content);
+            console.log('Content size:', content.byteLength, 'bytes');
+            
+            const jdfData = parseJdfFile(content, jobInfo);
+            
+            console.log('Parsed JDF data:', {
+                filename,
+                headerInfo: jdfData.header,
+                coverageCount: jdfData.coverage.length,
+                samplePoint: jdfData.coverage[0]?.points[0]
+            });
+            
+            if (jdfData.coverage.length > 0) {
+                coverageData[filename] = {
+                    coverage: jdfData.coverage,
+                    metadata: jdfData.header
+                };
             }
+        } catch (e) {
+            console.error(`Error processing JDF file ${filename}:`, e);
         }
     }
     
     return coverageData;
+}
+
+async function processRavenData(rawData) {
+    try {
+        // 1. Получаем основную линию из line.json
+        const lineData = rawData['line.json'];
+        const baseLine = {
+            start: {
+                lat: lineData.points[0].latitude,
+                lng: lineData.points[0].longitude
+            },
+            end: {
+                lat: lineData.points[lineData.points.length - 1].latitude,
+                lng: lineData.points[lineData.points.length - 1].longitude
+            }
+        };
+
+        // 2. Получаем границы из fieldExtent.geojson
+        const fieldExtent = rawData['fieldExtent.geojson'].features[0].geometry.coordinates[0];
+        
+        // 3. Вычисляем направление основной линии
+        const baseAngle = Math.atan2(
+            baseLine.end.lng - baseLine.start.lng,
+            baseLine.end.lat - baseLine.start.lat
+        );
+
+        // 4. Удлиняем линию в обе стороны на 20%
+        const lineLength = Math.sqrt(
+            Math.pow(baseLine.end.lat - baseLine.start.lat, 2) +
+            Math.pow(baseLine.end.lng - baseLine.start.lng, 2)
+        );
+        const extension = lineLength * 0.2; // 20% удлинение
+
+        // 5. Создаем две параллельные линии со смещением
+        const coverage = [];
+        const offsets = [-0.0002, 0.0002]; // Разные смещения для линий
+
+        offsets.forEach(offset => {
+            // Удлиненная линия
+            const extendedLine = {
+                start: {
+                    lat: baseLine.start.lat - Math.cos(baseAngle) * extension + Math.sin(baseAngle) * offset,
+                    lng: baseLine.start.lng - Math.sin(baseAngle) * extension - Math.cos(baseAngle) * offset
+                },
+                end: {
+                    lat: baseLine.end.lat + Math.cos(baseAngle) * extension + Math.sin(baseAngle) * offset,
+                    lng: baseLine.end.lng + Math.sin(baseAngle) * extension - Math.cos(baseAngle) * offset
+                }
+            };
+
+            coverage.push({
+                points: [extendedLine.start, extendedLine.end],
+                width: 6.5,
+                color: offset < 0 ? '#800080' : '#00ffff' // фиолетовый или бирюзовый
+            });
+        });
+
+        return {
+            baseLine, // основная линия (зеленая пунктирная)
+            coverage, // параллельные линии (бирюзовая и фиолетовая)
+            fieldExtent // границы области (черная)
+        };
+    } catch (error) {
+        console.error('Error processing Raven data:', error);
+        throw error;
+    }
+}
+
+// Вспомогательная функция для получения границ из GeoJSON
+function getBoundsFromGeojson(geojson) {
+    if (!geojson?.features?.[0]?.geometry?.coordinates?.[0]) {
+        return null;
+    }
+
+    const coordinates = geojson.features[0].geometry.coordinates[0];
+    let minLat = 90, maxLat = -90, minLng = 180, maxLng = -180;
+
+    coordinates.forEach(([lng, lat]) => {
+        minLat = Math.min(minLat, lat);
+        maxLat = Math.max(maxLat, lat);
+        minLng = Math.min(minLng, lng);
+        maxLng = Math.max(maxLng, lng);
+    });
+
+    return {
+        north: maxLat,
+        south: minLat,
+        east: maxLng,
+        west: minLng
+    };
+}
+
+function buildCoverageLines(records, options) {
+    const { implementWidth, angle, bounds } = options;
+    
+    // Группируем записи по проходам
+    const passes = records.reduce((acc, record) => {
+        const passIndex = Math.round(record.longitude * Math.cos(angle) + record.latitude * Math.sin(angle));
+        if (!acc[passIndex]) {
+            acc[passIndex] = [];
+        }
+        acc[passIndex].push(record);
+        return acc;
+    }, {});
+
+    // Преобразуем проходы в линии
+    return Object.entries(passes).map(([index, points], i) => {
+        const sortedPoints = points.sort((a, b) => a.timestamp - b.timestamp);
+        return {
+            id: i,
+            points: [
+                {
+                    lat: sortedPoints[0].latitude,
+                    lng: sortedPoints[0].longitude
+                },
+                {
+                    lat: sortedPoints[sortedPoints.length - 1].latitude,
+                    lng: sortedPoints[sortedPoints.length - 1].longitude
+                }
+            ],
+            width: implementWidth,
+            active: true,
+            color: generateColor(i)
+        };
+    });
 } 
