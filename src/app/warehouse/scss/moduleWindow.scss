@@ -1,19 +1,22 @@
 .moduleWindow{
     
     z-index: 99;
-    
+    //display: none;
+    //z-index: -1;
 
     //style
     
     .message{
+        //position: relative;
         display: block;
-        top:15%;
+        //top:15%;
         left:0%;
-        width: 100%;
-        
+        //width: 100%;
+        //box-sizing: border-box;
         text-align: center;
+        margin-bottom: 1em;
         
-        position: fixed;
+        //position: fixed;
         background-color: #fff;
         padding: 1em;
         border-radius: 5px;
@@ -141,15 +144,15 @@
        
     }
 
-    &::before{
-        position: fixed;
-        content: '';
-        //background-color: red;
-        backdrop-filter: blur(5px);
-        top:0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        overflow: hidden;
-    }
+    // &::before{
+    //     position: relative;
+    //     content: '';
+    //     //background-color: red;
+    //     backdrop-filter: blur(5px);
+    //     top:0;
+    //     left: 0;
+    //     right: 0;
+    //     bottom: 0;
+    //     overflow: hidden;
+    // }
 }

@@ -303,15 +303,15 @@ export default function ActionMenu({
                                     onClick={() => fendtFileInputRef.current.click()}
                                 >
                                     <span className="icon">🚜</span>
-                                    Загрузка Fendt работы
+                                    Загрузить работу Fendt 
                                 </button>
 
                                 <button 
                                     className="action-menu__item"
                                     onClick={() => ravenFileInputRef.current?.click()}
                                 >
-                                    <span className="icon">📁</span>
-                                    Загрузить Raven
+                                    <span className="icon">🚜</span>
+                                    Загрузить работу Raven CR7
                                 </button>
 
                             </>

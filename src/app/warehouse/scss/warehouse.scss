@@ -10,6 +10,7 @@
     gap: 20px;
     height: calc(100vh - 4em);
     max-width: 400px;
+    overflow: hidden;
     
     // Мобильная версия (по умолчанию)
     grid-template-areas:
