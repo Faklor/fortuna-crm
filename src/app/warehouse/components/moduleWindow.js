@@ -48,14 +48,18 @@ export default function ModuleWindow({
 
     useEffect(()=>{
         if(workers[0]){
-            setWorker(workers[0].name)
+            // Используем первого работника из отсортированного массива
+            const firstWorker = sortedWorkers[0];
+            setWorker(firstWorker.name);
         }
         if(teches[0]){
-            setObject(teches[0]._id)
+            // Используем первый объект из отсортированного массива
+            const firstTech = sortedTeches[0];
+            setObject(firstTech._id);
         }
 
-        setSendCount(count)
-    },[workers,teches, count])
+        setSendCount(count);
+    }, [workers, teches, count]);
 
     //default
     let part = {
@@ -181,9 +185,6 @@ export default function ModuleWindow({
                 <button onClick={async ()=>{
                     SendPart(sendWorker,sendObject,part,Number(sendCount),sendDes)
                     .then(res=>{
-                        //console.log(res.data)
-                        //console.log(JSON.stringify(res.data).data)
-
                         setVisibleParts((prevParts) => {
                             const updatedParts = [...prevParts];
                             const index = updatedParts.findIndex((item) => item._id === _id);
@@ -191,8 +192,9 @@ export default function ModuleWindow({
                               updatedParts[index] = { ...updatedParts[index], count: JSON.parse(res.data).data.count };
                             }
                             return updatedParts;
-                        })
-
+                        });
+                        // Закрываем окно после успешной выдачи
+                        setSendVisible(false);
                     })
                     .catch(e=>{
                         console.log(e)

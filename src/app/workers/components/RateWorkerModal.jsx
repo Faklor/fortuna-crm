@@ -144,11 +144,11 @@ export default function RateWorkerModal({ isOpen, onClose, onRate, worker, disab
                     </div>
 
                     <div className="form-group">
-                        <label>КТУ (от 0.1 до 1.3):</label>
+                        <label>КТУ (от 0.1 до 2.0):</label>
                         <input
                             type="number"
                             min="0.1"
-                            max="1.5"
+                            max="2.0"
                             step="0.1"
                             value={ktuValue}
                             onChange={(e) => setKtuValue(e.target.value)}

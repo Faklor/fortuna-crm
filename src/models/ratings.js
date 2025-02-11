@@ -17,7 +17,7 @@ const ratingSchema = new mongoose.Schema({
         type: Number,
         required: true,
         min: 0.1,    // Минимальное значение КТУ
-        max: 1.3     // Максимальное значение КТУ
+        max: 2.0     // Максимальное значение КТУ
     },
     comment: {       // Добавляем поле для комментария
         type: String,

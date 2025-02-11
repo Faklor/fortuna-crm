@@ -209,6 +209,7 @@ export default function WorkersTable({ workers, onEdit, onDelete, onRate, period
                     worker={ratingWorker}
                     periodStart={periodStart}
                     periodEnd={periodEnd}
+                    disabledDates={ratingWorker.periodRatings?.map(rating => new Date(rating.date))}
                 />
             )}
 
