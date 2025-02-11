@@ -1,5 +1,6 @@
 .addWorker{
     z-index: 99;
+    
 
     .message{
         display: grid;
@@ -9,7 +10,7 @@
         
         text-align: center;
         
-        position: fixed;
+        position: relative;
         background-color: #fff;
         padding: 1em;
         border-radius: 5px;
