@@ -1,60 +1,54 @@
-import dbConnect from "@/lib/db"
+import dbConnet from "@/lib/db"
 import HistoryReq from "@/models/historyReq"
 import Order from "@/models/orders"
 import Parts from "@/models/parts"
 import { NextResponse } from "next/server"
 
-export async function POST(req) {
+export async function POST(req){
+    await dbConnet()
+
     try {
-        await dbConnect()
         const { _id } = await req.json()
 
-        if (!_id) {
-            return NextResponse.json({ error: "ID не указан" }, { status: 400 })
-        }
-
-        // Находим заявку перед удалением
-        const historyReq = await HistoryReq.findById(_id)
-
+        // Получаем данные заявки перед удалением
+        const historyReq = await HistoryReq.findOne({ _id: _id })
         if (!historyReq) {
-            return NextResponse.json({ error: "Заявка не найдена" }, { status: 404 })
+            throw new Error('История заявки не найдена')
         }
 
-        console.log('HistoryReq found:', historyReq) // Добавим лог для проверки
-
-        // Возвращаем запчасти на склад и удаляем записи о выдаче
-        for (const part of historyReq.parts) {
-            // Находим запчасть на складе и обновляем количество
-            await Parts.findOneAndUpdate(
-                { _id: part._id },
-                { $inc: { count: part.count } }
-            )
-
-            // Ищем и удаляем записи о выдаче
-            await Order.deleteMany({
-                date: historyReq.dateEnd,
-                workerName: historyReq.workerName,
-                objectID: historyReq.obj._id,
-                'part._id': part._id,
-                countPart: part.count,
-                description: part.description,
-                operationType: 'request'
-            })
-
-        }
-
-        // Удаляем саму заявку из архива
-        await HistoryReq.findByIdAndDelete(_id)
-
-        return NextResponse.json({ 
-            message: "Заявка успешно удалена, запчасти возвращены на склад" 
+        // Находим все orders связанные с этой заявкой
+        const orders = await Order.find({
+            date: historyReq.dateEnd,
+            workerName: historyReq.workerName,
+            objectID: historyReq.obj
         })
 
-    } catch (error) {
-        console.error('Error in delete route:', error)
+        // Возвращаем запчасти на склад
+        for (const order of orders) {
+            const part = order.part
+            await Parts.findOneAndUpdate(
+                { _id: part._id },
+                { $inc: { count: order.countPart } }
+            )
+        }
+
+        // Удаляем orders
+        await Order.deleteMany({
+            date: historyReq.dateEnd,
+            workerName: historyReq.workerName,
+            objectID: historyReq.obj
+        })
+
+        // Удаляем саму заявку из истории
+        const deletedHistoryReq = await HistoryReq.findOneAndDelete({ _id: _id })
+
+        return NextResponse.json(deletedHistoryReq)
+    }
+    catch(e){
+        console.error('Error in deleteHistoryReq:', e)
         return NextResponse.json({ 
-            error: "Внутренняя ошибка сервера",
-            details: error.message 
+            error: e.message || 'Internal Server Error',
+            details: 'Ошибка при удалении заявки из архива'
         }, { status: 500 })
     }
 } 

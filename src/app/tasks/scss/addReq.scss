@@ -347,3 +347,53 @@
         }
     }
 }
+
+.objects-container {
+    .object-section {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 16px;
+
+        .object-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+
+            h3 {
+                margin: 0;
+                color: #333;
+            }
+
+            .remove-object {
+                padding: 8px 16px;
+                background: #ff4444;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+
+                &:hover {
+                    background: #cc0000;
+                }
+            }
+        }
+    }
+
+    .add-object-button {
+        width: 100%;
+        padding: 12px;
+        background: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        margin-bottom: 16px;
+        cursor: pointer;
+        transition: background 0.2s;
+
+        &:hover {
+            background: #45a049;
+        }
+    }
+}

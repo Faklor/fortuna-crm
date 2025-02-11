@@ -3,16 +3,27 @@ import axios from 'axios'
 import { useState, useEffect } from 'react';
 import '../scss/completeReq.scss'
 
-export default function CompleteReq({partsOption, setErr, dateBegin, object, _id, arrActive, setArrActive, workers}){
-
+export default function CompleteReq({
+    requests, 
+    setErr, 
+    dateBegin, 
+    _id, 
+    arrActive, 
+    setArrActive, 
+    workers,
+    objects
+}){
     //default
     let arr = []
     let defaultDate = new Date().toLocaleDateString()
+    const [parts, setParts] = useState({}) // Состояние для запчастей
+    const [visible, setVisible] = useState(false)
+    const [workersForObjects, setWorkersForObjects] = useState({})
 
     function formatDate(inputDate) {
         const parts = inputDate.split('.');
         if (parts.length !== 3) {
-        return 'Некорректный формат даты';
+            return 'Некорректный формат даты';
         }
         const day = parts[0];
         const month = parts[1];
@@ -22,27 +33,91 @@ export default function CompleteReq({partsOption, setErr, dateBegin, object, _id
     }
     let createDataEnd = formatDate(defaultDate)
 
-    //react
-    const [visible, setVisible] = useState(false)
-    const [worker, setWorker] = useState('')
+    // Получение данных запчастей
+    async function getPartsData(partsIds) {
+        try {
+            const response = await axios.post('/api/parts/optionParts', { partsArr: partsIds })
+            const partsMap = response.data.reduce((acc, part) => {
+                acc[part._id] = part;
+                return acc;
+            }, {});
+            return partsMap;
+        } catch (error) {
+            console.error('Error fetching parts data:', error)
+            return {}
+        }
+    }
+
+    // Загружаем данные о запчастях при монтировании компонента
+    useEffect(() => {
+        const loadPartsData = async () => {
+            const partsIds = [...new Set(requests.flatMap(req => 
+                req.parts.map(part => part._id)
+            ))];
+            const partsData = await getPartsData(partsIds);
+            setParts(partsData);
+        };
+        
+        loadPartsData();
+    }, [requests]);
+
+    useEffect(() => {
+        // Инициализируем работников для каждого объекта первым работником из списка
+        if (workers.length > 0) {
+            const initialWorkers = requests.reduce((acc, request) => {
+                acc[request._id] = workers[0].name;
+                return acc;
+            }, {});
+            setWorkersForObjects(initialWorkers);
+        }
+    }, [workers, requests]);
 
     //functions
-    async function completeReq(_id, dateBegin, object, partsOption, dateNow, workerName){
-        return await axios.post('/api/requisition/completeReq', {_id:_id, dateBegin:dateBegin, object:object, partsOption:partsOption, dateNow:dateNow, workerName:workerName})
+    async function completeReq(_id, dateBegin, requests, dateNow, workersMap) {
+        try {
+            // Сначала получаем оригинальную заявку для информации о создателе
+            const originalReq = await axios.get(`/api/requisition/${_id}`);
+            const createdBy = originalReq.data.createdBy;
+
+            // Затем отправляем запрос на завершение
+            const response = await axios.post('/api/requisition/completeReq', {
+                _id: _id, 
+                dateBegin: dateBegin, 
+                requests: requests.map(req => ({
+                    ...req,
+                    workerName: workersMap[req._id]
+                })), 
+                dateNow: dateNow
+            });
+
+            // Отправляем уведомление с информацией о создателе
+            await sendCompletionNotification(dateBegin, requests, workersMap, parts, createdBy);
+
+            return response;
+        } catch (error) {
+            console.error('Error in completeReq:', error);
+            if (error.response?.data?.error) {
+                throw new Error(error.response.data.error);
+            }
+            throw new Error('Ошибка при завершении заявки');
+        }
     }
     
-    async function sendCompletionNotification(dateBegin, object, partsOption, workerName) {
-        const message = `
-<b>✅ Заявка выполнена и перемещена в архив</b>
+    async function sendCompletionNotification(dateBegin, requests, workersForObjects, partsData, createdBy) {
+        const message = `<b>✅ Заявка выполнена и перемещена в архив</b>
 
 📅 Дата создания: ${dateBegin}
 📅 Дата завершения: ${new Date().toLocaleDateString()}
-Объект: ${object.name}
-👨‍🔧 Выдано: ${workerName}
+👤 Создал: ${createdBy?.username || 'Неизвестно'} (${createdBy?.role || 'Неизвестно'})
 
-<b>Выданные запчасти:</b>
-${partsOption.map(part => `• ${part.countReq} ${part.description} ${part._doc.name}${part._doc.manufacturer ? ` (${part._doc.manufacturer})` : ''}`).join('\n')}
-`;
+${requests.map(request => `
+🏢 Объект: ${objects[request.obj]?.name || 'Бухгалтерия'}
+👨‍🔧 Исполнитель: ${workersForObjects[request._id]}
+<b>Запчасти:</b>
+${request.parts.map(part => {
+    const partInfo = partsData[part._id] || {};
+    return `• ${part.countReq} ${part.description} ${partInfo.name || 'Загрузка...'}`
+}).join('\n')}`).join('\n\n')}`;
 
         try {
             await axios.post('/api/telegram/sendNotification', { message, type: 'requests' });
@@ -51,74 +126,120 @@ ${partsOption.map(part => `• ${part.countReq} ${part.description} ${part._doc.
         }
     }
 
-    useEffect(()=>{
-        if(workers.length !== 0){
-            setWorker(workers[0].name)
-        }
-    })
-   
-    function validation(){
+    function validation() {
+        let hasError = false;
+        let totalNeeded = {};
+        arr = []; // Очищаем массив ошибок
 
-        partsOption.forEach((item,index)=>{
-            if(item._doc.count < item.countReq ){
-                arr.push(`Запчасть №${index+1}`)
-                //setErr(err.toSpliced(index,0,`Запчасть №${index+1}`))
+        // Сначала получим актуальные данные о запчастях
+        const checkParts = async () => {
+            try {
+                const uniquePartIds = [...new Set(requests.flatMap(req => 
+                    req.parts.map(part => part._id)
+                ))];
+                
+                const response = await axios.post('/api/parts/optionParts', {
+                    partsArr: uniquePartIds
+                });
+                
+                const partsData = response.data.reduce((acc, part) => {
+                    acc[part._id] = part;
+                    return acc;
+                }, {});
+
+                // Подсчитываем общее необходимое количество
+                requests.forEach(request => {
+                    request.parts.forEach(part => {
+                        if (!totalNeeded[part._id]) {
+                            totalNeeded[part._id] = {
+                                count: partsData[part._id]?.count || 0,
+                                needed: 0,
+                                name: partsData[part._id]?.name || 'Неизвестная запчасть'
+                            }
+                        }
+                        totalNeeded[part._id].needed += part.countReq;
+                    });
+                });
+
+                // Проверяем достаточно ли запчастей
+                Object.entries(totalNeeded).forEach(([partId, data]) => {
+                    if (data.count < data.needed) {
+                        arr.push(`Недостаточно запчастей "${data.name}": имеется ${data.count}, требуется ${data.needed}`);
+                        hasError = true;
+                    }
+                });
+
+                if (hasError) {
+                    setErr(arr);
+                } else {
+                    setErr([]);
+                    setVisible(true);
+                }
+            } catch (error) {
+                console.error('Ошибка при проверке запчастей:', error);
+                setErr(['Ошибка при проверке наличия запчастей']);
             }
-        })
+        };
 
-        if(arr.length !== 0){
-            setErr(arr)
-        }
-        else{
-            setErr([])
-            setVisible(true)
-            
-        }
-        //console.log(err)
+        checkParts();
     }
 
-    return !visible?<button onClick={()=>{
-        validation()
-        
-    }}>Завершить 
-        <Image src={'/components/complete.svg'} 
-        width={20} 
-        height={20} 
-        alt="completeReq"/>
-    </button>
-    :
-    <div className='addWorker'>
-        <div className='message'>
-            <p>Укажите работника,которому выдаете</p>
-            <select onClick={e=>setWorker(e.target.value)}>
-                {workers.map((item,index)=>{
-                    return <option key={index} value={item.name}>{item.name}</option>
-                })}
-            </select>
-
-            <div className='btns'>
-                <button onClick={()=>{
-                    completeReq(_id, dateBegin, object, partsOption, createDataEnd, worker)
-                    .then(res=>{
-                        // Отправляем уведомление после успешного завершения
-                        sendCompletionNotification(
-                            dateBegin,
-                            object,
-                            partsOption,
-                            worker
+    return !visible ? (
+        <button onClick={validation}>
+            Завершить 
+            <Image src={'/components/complete.svg'} 
+                width={20} 
+                height={20} 
+                alt="completeReq"/>
+        </button>
+    ) : (
+        <div className='addWorker'>
+            <div className='message'>
+                <h3>Укажите работников для каждого объекта</h3>
+                {requests.map((request, index) => (
+                    <div key={request._id} className="worker-selection">
+                        <p>{`Объект ${index+1}: `+objects[request.obj]?.name}</p>
+                        <select 
+                            value={workersForObjects[request._id] || ''} 
+                            onChange={e => setWorkersForObjects(prev => ({
+                                ...prev,
+                                [request._id]: e.target.value
+                            }))}
+                        >
+                            <option value="">Выберите работника</option>
+                            {workers.map((worker, idx) => (
+                                <option key={idx} value={worker.name}>
+                                    {worker.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                ))}
+                
+                <div className='btns'>
+                    <button onClick={() => {
+                        const allWorkersSelected = requests.every(request => 
+                            workersForObjects[request._id]
                         );
 
-                        arrActive.forEach((item,index)=>{
-                            if(item._id === res.data){
-                                setArrActive(arrActive.toSpliced(index,1)) 
-                            }
-                        })
-                        setVisible(false)
-                    })
-                    .catch(e=>console.log(e))
-                }}>Завершить</button>
-                <button onClick={()=>setVisible(false)}>Назад</button>
+                        if (!allWorkersSelected) {
+                            setErr(['Пожалуйста, выберите работников для всех объектов']);
+                            return;
+                        }
+
+                        completeReq(_id, dateBegin, requests, createDataEnd, workersForObjects)
+                            .then(res => {
+                                setArrActive(arrActive.filter(item => item._id !== res.data))
+                                setVisible(false)
+                            })
+                            .catch(e => {
+                                console.error(e)
+                                setErr(['Ошибка при завершении заявки'])
+                            })
+                    }}>Завершить</button>
+                    <button onClick={() => setVisible(false)}>Назад</button>
+                </div>
             </div>
         </div>
-    </div>
+    )
 }

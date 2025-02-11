@@ -138,6 +138,78 @@
     }
 }
 
+.objects-container {
+    margin-top: 20px;
+
+    .object-section {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        
+        &:last-child {
+            margin-bottom: 0;
+        }
+
+        h3 {
+            margin: 0 0 15px 0;
+            font-size: 16px;
+            color: #333;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            
+            &:hover {
+                color: #0056b3;
+            }
+
+            &:before {
+                content: '🏢';
+                margin-right: 8px;
+            }
+        }
+
+        .parts-list {
+            display: grid;
+            gap: 10px;
+        }
+    }
+}
+
+.partReq {
+    background: white;
+    border-radius: 6px;
+    padding: 12px;
+    transition: transform 0.2s ease;
+
+    &:hover {
+        transform: translateX(5px);
+    }
+
+    .count {
+        display: grid;
+        gap: 6px;
+
+        p {
+            margin: 0;
+            font-size: 14px;
+            
+            &:first-child {
+                color: #333;
+                font-weight: 500;
+            }
+            
+            &:nth-child(2) {
+                color: #0056b3;
+            }
+            
+            &:last-child {
+                color: #28a745;
+            }
+        }
+    }
+}
+
 // Медиа-запросы для адаптивности
 @media (max-width: 768px) {
     .reqActive {
@@ -157,6 +229,24 @@
                 width: 100%;
                 justify-content: center;
             }
+        }
+    }
+
+    .objects-container {
+        .object-section {
+            padding: 12px;
+            
+            h3 {
+                font-size: 14px;
+            }
+        }
+    }
+
+    .partReq {
+        padding: 10px;
+        
+        .count p {
+            font-size: 13px;
         }
     }
 }

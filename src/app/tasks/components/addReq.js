@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import '../scss/addReq.scss'
 import axios from 'axios'
+import { useSession } from 'next-auth/react'
 
 const URGENCY_TYPES = {
     'НЕ СРОЧНАЯ': {
@@ -18,6 +19,7 @@ const URGENCY_TYPES = {
 };
 
 export default function AddReq({setVisibleAdd, arrActive, objects, parts}){
+    const { data: session } = useSession()
 
     // Группируем объекты по категориям
     const categorizedObjects = objects.reduce((acc, obj) => {
@@ -74,28 +76,69 @@ export default function AddReq({setVisibleAdd, arrActive, objects, parts}){
     const [searchBindingParts, setSearchBindingParts] = useState('')
     const [searchOtherParts, setSearchOtherParts] = useState('')
 
+    // Добавляем состояние для хранения множества объектов и их запчастей
+    const [selectedObjects, setSelectedObjects] = useState([{
+        obj: JSON.parse(objectSt),
+        selectedParts: [],
+        partValues: {},
+        selectedDes: {}
+    }]);
+
+    // Функция добавления нового объекта
+    const addNewObject = () => {
+        setSelectedObjects([...selectedObjects, {
+            obj: firstObject,
+            selectedParts: [],
+            partValues: {},
+            selectedDes: {}
+        }]);
+    };
+
+    // Функция удаления объекта
+    const removeObject = (index) => {
+        setSelectedObjects(selectedObjects.filter((_, i) => i !== index));
+    };
+
     //logic
-    const handleCheckboxChange = (event, partId) => {
+    const handleCheckboxChange = (objectIndex, event, partId) => {
         const isChecked = event.target.checked;
-        if (isChecked) {
-          // Добавляем выбранную часть в состояние
-          setSelectedParts((prevSelected) => [...prevSelected, partId]);
-        } 
-        else {
-          // Удаляем часть из состояния
-          setSelectedParts((prevSelected) =>
-            prevSelected.filter((id) => id !== partId)
-          )
-        }
-    }
-    const handleNumberInputChange = (event, partId) => {
+        setSelectedObjects(prevObjects => {
+            const newObjects = [...prevObjects];
+            if (isChecked) {
+                // Проверяем, не выбрана ли уже эта запчасть
+                if (!newObjects[objectIndex].selectedParts.includes(partId)) {
+                    newObjects[objectIndex].selectedParts = [...newObjects[objectIndex].selectedParts, partId];
+                }
+            } else {
+                newObjects[objectIndex].selectedParts = newObjects[objectIndex].selectedParts.filter(id => id !== partId);
+            }
+            return newObjects;
+        });
+    };
+
+    const handleNumberInputChange = (objectIndex, event, partId) => {
         const value = event.target.value;
-        setPartValues((prevValues) => ({ ...prevValues, [partId]: value }));
-    }
-    const handleSelectChange = (e, partId) => {
-        const value = e.target.value;
-        setSelectedDes((prevSelectedDes) => ({ ...prevSelectedDes, [partId]: value }));
-    }
+        setSelectedObjects(prevObjects => {
+            const newObjects = [...prevObjects];
+            newObjects[objectIndex].partValues = {
+                ...newObjects[objectIndex].partValues,
+                [partId]: value
+            };
+            return newObjects;
+        });
+    };
+
+    const handleSelectChange = (objectIndex, event, partId) => {
+        const value = event.target.value;
+        setSelectedObjects(prevObjects => {
+            const newObjects = [...prevObjects];
+            newObjects[objectIndex].selectedDes = {
+                ...newObjects[objectIndex].selectedDes,
+                [partId]: value
+            };
+            return newObjects;
+        });
+    };
 
     if(parts.length !== 0){
         parts.forEach((part,index)=>{
@@ -120,54 +163,92 @@ export default function AddReq({setVisibleAdd, arrActive, objects, parts}){
     )
 
     //functions
-    async function createReq(selectedArr,urgencySt,date,objectID){
-        return await axios.post('/api/requisition/addActive',{selectedArr:selectedArr,urgencySt:urgencySt,date:date,objectID:objectID})
+    async function createReq(requests, urgencySt, date) {
+        return await axios.post('/api/requisition/addActive', {
+            requests,
+            urgencySt,
+            date
+        });
     }
     
-    async function sendTelegramNotification(reqData, object, selectedParts) {
-        // Определяем эмодзи и цвет в зависимости от срочности
-        let urgencyEmoji, urgencyColor;
-        switch(reqData.urgencySt) {
-            case 'СРОЧНАЯ':
-                urgencyEmoji = '🔴';
-                urgencyColor = '#FF0000';
-                break;
-            case 'СРЕДНЕЙ СРОЧНОСТИ':
-                urgencyEmoji = '🟡';
-                urgencyColor = '#FFA500';
-                break;
-            case 'НЕ СРОЧНАЯ':
-                urgencyEmoji = '🟢';
-                urgencyColor = '#008000';
-                break;
-            default:
-                urgencyEmoji = '⚪';
-                urgencyColor = '#000000';
-        }
+    async function sendTelegramNotification(reqData, selectedObjects, parts, session) {
+        const urgencyTypes = {
+            'НЕ СРОЧНАЯ': '🟢',
+            'СРЕДНЕЙ СРОЧНОСТИ': '🟡',
+            'СРОЧНАЯ': '🔴'
+        };
 
-        const partsWithNames = selectedParts.map(selectedPart => {
-            const partInfo = parts.find(p => p._id === selectedPart._id);
-            return {
-                ...selectedPart,
-                name: partInfo ? partInfo.name : 'Неизвестная запчасть'
-            };
-        });
+        const objectsInfo = selectedObjects.map(objData => {
+            const partsInfo = objData.selectedParts.map(partId => {
+                const part = parts.find(p => p._id === partId);
+                return `• ${objData.partValues[partId]} ${objData.selectedDes[partId]} ${part.name}`;
+            }).join('\n');
+
+            return `
+🏢 Объект: ${objData.obj.name}
+${partsInfo}`;
+        }).join('\n\n');
 
         const message = `
-        <b>🔔 Новая заявка создана</b>
+<b>🔔 Новая заявка создана</b>
 
 📅 Дата: ${reqData.date}
-🏢 Объект: ${object.name}
-⚡ Срочность: ${urgencyEmoji} <code>${reqData.urgencySt}</code>
+⚡ Срочность: ${urgencyTypes[reqData.urgencySt]} <code>${reqData.urgencySt}</code>
+👤 Создал: ${session.user.name} (${session.user.role})
 
-<b>Запчасти:</b>
-${partsWithNames.map(part => `• ${part.countReq} ${part.description} ${part.name}`).join('\n')}
-        `;
+${objectsInfo}`;
 
         return await axios.post('/api/telegram/sendNotification', { message, type: 'requests' });
     }
 
-    
+    // Обновляем функцию handleSubmit
+    const handleSubmit = async () => {
+        try {
+            if (!session) {
+                setErr('Необходимо авторизоваться');
+                return;
+            }
+
+            // Проверяем наличие выбранных запчастей
+            if (selectedObjects.some(obj => obj.selectedParts.length === 0)) {
+                setErr('Выберите запчасти для всех объектов');
+                return;
+            }
+
+            // Удаляем дубликаты запчастей для каждого объекта
+            const uniqueRequests = selectedObjects.map(objData => ({
+                obj: objData.obj._id,
+                parts: Array.from(new Set(objData.selectedParts)).map(partId => ({
+                    _id: partId,
+                    countReq: parseInt(objData.partValues[partId] || 0),
+                    description: objData.selectedDes[partId] || 'шт.'
+                }))
+            }));
+
+            // Отправляем запрос на создание заявки
+            const res = await createReq(uniqueRequests, urgencySt, date);
+            
+            // Если заявка успешно создана, отправляем уведомление
+            if (res.data) {
+                await sendTelegramNotification(
+                    { date, urgencySt },
+                    selectedObjects,
+                    parts,
+                    session
+                );
+                
+                // Закрываем окно добавления
+                setVisibleAdd(false);
+                
+                // Перезагружаем страницу вместо обновления состояния
+                window.location.reload();
+            }
+        } catch (e) {
+            console.error('Error creating requisition:', e);
+            setErr(e.response?.data?.error || 'Ошибка при создании заявки');
+        }
+    };
+
     return  <div className="addReq">
         <div className='message'>
             <div className="header">
@@ -177,229 +258,230 @@ ${partsWithNames.map(part => `• ${part.countReq} ${part.description} ${part.na
                 <h2>Создание новой заявки</h2>
             </div>
 
-            <div className="form-section">
-                <div className="form-group">
-                    <label>📅 Дата заявки</label>
-                    <input 
-                        type='date' 
-                        value={date} 
-                        onChange={e=>setSdate(e.target.value)}
-                        className="date-input"
-                    />
-                </div>
-
-                <div className="form-group">
-                    <label>⚡ Срочность</label>
-                    <select 
-                        onChange={e=>setUrgencySt(e.target.value)}
-                        className="urgency-select"
-                        style={{
-                            backgroundColor: URGENCY_TYPES[urgencySt].color,
-                            color: 'white'
-                        }}
-                    >
-                        {arrUrgency.map((urgency, index)=>(
-                            <option 
-                                key={index} 
-                                value={urgency}
-                                style={{
-                                    backgroundColor: 'white',
-                                    color: URGENCY_TYPES[urgency].color
-                                }}
-                            >
-                                {URGENCY_TYPES[urgency].emoji} {urgency}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-
-                <div className="form-group">
-                    <label>🚜 Выберите объект</label>
-                    <select 
-                        onChange={e=>setObjectSt(e.target.value)}
-                        className="object-select"
-                    >
-                        {Object.entries(categorizedObjects).map(([category, categoryObjects]) => (
-                            <optgroup key={category} label={category}>
-                                {categoryObjects.map((obj, index) => (
-                                    <option 
-                                        key={`${category}-${index}`} 
-                                        value={JSON.stringify(obj)}
-                                    >
-                                        {obj.name}
-                                    </option>
-                                ))}
-                            </optgroup>
-                        ))}
-                    </select>
-                </div>
-            </div>
-
-            <div className="parts-section">
-                <div className="parts-group">
-                    <div className="parts-header">
-                        <h3>📦 Запчасти, привязанные к объекту</h3>
-                        <div className="search-container">
-                            <input 
-                                type="text"
-                                placeholder="🔍 Поиск запчастей..."
-                                value={searchBindingParts}
-                                onChange={(e) => setSearchBindingParts(e.target.value)}
-                                className="search-input"
-                            />
-                            {searchBindingParts && (
+            <div className="objects-container">
+                {selectedObjects.map((objData, objectIndex) => (
+                    <div key={objectIndex} className="object-section">
+                        <div className="object-header">
+                            <h3>Объект {objectIndex + 1}</h3>
+                            {objectIndex > 0 && (
                                 <button 
-                                    className="clear-search"
-                                    onClick={() => setSearchBindingParts('')}
+                                    className="remove-object"
+                                    onClick={() => removeObject(objectIndex)}
                                 >
-                                    ✕
+                                    Удалить объект
                                 </button>
                             )}
                         </div>
-                    </div>
-                    <div className='parts-grid'>
-                        {filteredBindingParts.length > 0 ? (
-                            filteredBindingParts.map((item,index)=>(
-                                <div key={index} className='part-card'>
-                                    <div className="part-header">
+                        
+                        <div className="form-section">
+                            <div className="form-group">
+                                <label>📅 Дата заявки</label>
+                                <input 
+                                    type='date' 
+                                    value={date} 
+                                    onChange={e=>setSdate(e.target.value)}
+                                    className="date-input"
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label>⚡ Срочность</label>
+                                <select 
+                                    onChange={e=>setUrgencySt(e.target.value)}
+                                    className="urgency-select"
+                                    style={{
+                                        backgroundColor: URGENCY_TYPES[urgencySt].color,
+                                        color: 'white'
+                                    }}
+                                >
+                                    {arrUrgency.map((urgency, index)=>(
+                                        <option 
+                                            key={index} 
+                                            value={urgency}
+                                            style={{
+                                                backgroundColor: 'white',
+                                                color: URGENCY_TYPES[urgency].color
+                                            }}
+                                        >
+                                            {URGENCY_TYPES[urgency].emoji} {urgency}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="form-group">
+                                <label>🚜 Выберите объект</label>
+                                <select 
+                                    onChange={e=>setObjectSt(e.target.value)}
+                                    className="object-select"
+                                >
+                                    {Object.entries(categorizedObjects).map(([category, categoryObjects]) => (
+                                        <optgroup key={category} label={category}>
+                                            {categoryObjects.map((obj, index) => (
+                                                <option 
+                                                    key={`${category}-${index}`} 
+                                                    value={JSON.stringify(obj)}
+                                                >
+                                                    {obj.name}
+                                                </option>
+                                            ))}
+                                        </optgroup>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="parts-section">
+                            <div className="parts-group">
+                                <div className="parts-header">
+                                    <h3>📦 Запчасти, привязанные к объекту</h3>
+                                    <div className="search-container">
                                         <input 
-                                            type='checkbox' 
-                                            value={item._id} 
-                                            onChange={(e) => handleCheckboxChange(e, item._id)}
-                                            className="part-checkbox"
+                                            type="text"
+                                            placeholder="🔍 Поиск запчастей..."
+                                            value={searchBindingParts}
+                                            onChange={(e) => setSearchBindingParts(e.target.value)}
+                                            className="search-input"
                                         />
-                                        <div className="part-info">
-                                            <p className="part-name">{item.name}</p>
-                                            <p className="part-stock">На складе: {item.count} шт.</p>
-                                        </div>
-                                    </div>
-                                    
-                                    {selectedParts.includes(item._id) && (
-                                        <div className="part-details">
-                                            <input 
-                                                type="number" 
-                                                placeholder='Количество'
-                                                value={partValues[item._id] || ''} 
-                                                onChange={(e) => handleNumberInputChange(e, item._id)}
-                                                className="quantity-input"
-                                            />
-                                            <select 
-                                                onChange={e=>handleSelectChange(e, item._id)} 
-                                                value={selectedDes[item._id] || ''}
-                                                className="unit-select"
+                                        {searchBindingParts && (
+                                            <button 
+                                                className="clear-search"
+                                                onClick={() => setSearchBindingParts('')}
                                             >
-                                                <option value="">Ед. изм.</option>
-                                                {des.map((item, index)=>(
-                                                    <option key={index} value={item}>{item}</option>
-                                                ))}
-                                            </select>
+                                                ✕
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className='parts-grid'>
+                                    {filteredBindingParts.length > 0 ? (
+                                        filteredBindingParts.map((item,index)=>(
+                                            <div key={index} className='part-card'>
+                                                <div className="part-header">
+                                                    <input 
+                                                        type='checkbox' 
+                                                        value={item._id} 
+                                                        onChange={(e) => handleCheckboxChange(objectIndex, e, item._id)}
+                                                        checked={objData.selectedParts.includes(item._id)}
+                                                        className="part-checkbox"
+                                                    />
+                                                    <div className="part-info">
+                                                        <p className="part-name">{item.name}</p>
+                                                        <p className="part-stock">На складе: {item.count} шт.</p>
+                                                    </div>
+                                                </div>
+                                                
+                                                {objData.selectedParts.includes(item._id) && (
+                                                    <div className="part-details">
+                                                        <input 
+                                                            type="number" 
+                                                            placeholder='Количество'
+                                                            value={objData.partValues[item._id] || ''} 
+                                                            onChange={(e) => handleNumberInputChange(objectIndex, e, item._id)}
+                                                            className="quantity-input"
+                                                        />
+                                                        <select 
+                                                            onChange={(e) => handleSelectChange(objectIndex, e, item._id)} 
+                                                            value={objData.selectedDes[item._id] || ''}
+                                                            className="unit-select"
+                                                        >
+                                                            <option value="">Ед. изм.</option>
+                                                            {des.map((item, index)=>(
+                                                                <option key={index} value={item}>{item}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="no-results">
+                                            Запчасти не найдены
                                         </div>
                                     )}
                                 </div>
-                            ))
-                        ) : (
-                            <div className="no-results">
-                                Запчасти не найдены
                             </div>
-                        )}
-                    </div>
-                </div>
 
-                <div className="parts-group">
-                    <div className="parts-header">
-                        <h3>🔧 Другие запчасти</h3>
-                        <div className="search-container">
-                            <input 
-                                type="text"
-                                placeholder="🔍 Поиск запчастей..."
-                                value={searchOtherParts}
-                                onChange={(e) => setSearchOtherParts(e.target.value)}
-                                className="search-input"
-                            />
-                            {searchOtherParts && (
-                                <button 
-                                    className="clear-search"
-                                    onClick={() => setSearchOtherParts('')}
-                                >
-                                    ✕
-                                </button>
-                            )}
+                            <div className="parts-group">
+                                <div className="parts-header">
+                                    <h3>🔧 Другие запчасти</h3>
+                                    <div className="search-container">
+                                        <input 
+                                            type="text"
+                                            placeholder="🔍 Поиск запчастей..."
+                                            value={searchOtherParts}
+                                            onChange={(e) => setSearchOtherParts(e.target.value)}
+                                            className="search-input"
+                                        />
+                                        {searchOtherParts && (
+                                            <button 
+                                                className="clear-search"
+                                                onClick={() => setSearchOtherParts('')}
+                                            >
+                                                ✕
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className='parts-grid'>
+                                    {filteredOtherParts.length > 0 ? (
+                                        filteredOtherParts.map((item,index)=>{
+                                            return <div key={index} className='part-card'>
+                                                <div className="part-header">
+                                                    <input 
+                                                        type='checkbox' 
+                                                        value={item._id} 
+                                                        onChange={(e) => handleCheckboxChange(objectIndex, e, item._id)}
+                                                        checked={objData.selectedParts.includes(item._id)}
+                                                    />
+                                                    <div className="part-info">
+                                                        <p className="part-name">{item.name}</p>
+                                                        <p className="part-stock">На складе: {item.count} шт.</p>
+                                                    </div>
+                                                </div>
+                                                {objData.selectedParts.includes(item._id) && <div className="part-details">
+                                                    <input 
+                                                        type="number" 
+                                                        placeholder='Количество'
+                                                        value={objData.partValues[item._id] || ''} 
+                                                        onChange={(e) => handleNumberInputChange(objectIndex, e, item._id)}
+                                                    />
+                                                    <select 
+                                                        onChange={(e) => handleSelectChange(objectIndex, e, item._id)}
+                                                        value={objData.selectedDes[item._id] || ''}
+                                                    >
+                                                        <option value="">Ед. изм.</option>
+                                                        {des.map((item, index)=>{
+                                                            return <option key={index} value={item}>{item}</option>
+                                                        })}
+                                                    </select>
+                                                </div>}
+                                            </div>
+                                        })
+                                    ) : (
+                                        <div className="no-results">
+                                            Запчасти не найдены
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div className='parts-grid'>
-                        {filteredOtherParts.length > 0 ? (
-                            filteredOtherParts.map((item,index)=>{
-                                return <div key={index} className='part-card'>
-                                    <div className="part-header">
-                                        <input type='checkbox' value={item._id} onChange={(e) => handleCheckboxChange(e, item._id)}/>
-                                        <div className="part-info">
-                                            <p className="part-name">{item.name}</p>
-                                            <p className="part-stock">На складе: {item.count} шт.</p>
-                                        </div>
-                                    </div>
-                                    {selectedParts.includes(item._id) && <div className="part-details">
-                                        <input type="number" placeholder='Введите нужное кол-во' 
-                                        value={partValues[item._id] || ''} onChange={(e) => handleNumberInputChange(e, item._id)}/>
-                                        <select onChange={e=>handleSelectChange(e, item._id)} value={selectedDes[item._id] || ''}>
-                                            <option></option>
-                                            {des.map((item, index)=>{
-                                                return <option key={index} value={item}>{item}</option>
-                                            })}
-                                        </select>
-                                    </div>}
-                                </div>
-                            })
-                        ) : (
-                            <div className="no-results">
-                                Запчасти не найдены
-                            </div>
-                        )}
-                    </div>
-                </div>
+                ))}
+
+                <button 
+                    className="add-object-button"
+                    onClick={addNewObject}
+                >
+                    + Добавить объект
+                </button>
             </div>
 
-            {err && <div className="error-message">⚠️ {err}</div>}
+            {err && <div className="error-message">{err}</div>}
 
             <button 
                 className="submit-button"
-                onClick={()=>{
-                    let selectedArr = []
-                    selectedParts.forEach((partId) => {
-                        selectedArr.push({
-                            _id:partId, 
-                            countReq:Number(partValues[partId] !== undefined?partValues[partId]:''), 
-                            description:selectedDes[partId] !== undefined?selectedDes[partId]:''
-                        })
-                    })
-
-                    if(selectedArr.length === 0){
-                        setErr('Не выбраны запчасти')
-                    }
-                    else{
-                        selectedArr.forEach((item)=>{
-                            if(item.count <= 0){
-                                setErr('Не везде указано кол-во')        
-                            }
-                        })
-
-                        setErr('')
-                        createReq(selectedArr,urgencySt,date,JSON.parse(objectSt)._id)
-                        .then(res=>{
-                            arrActive.push(res.data)
-                            // Отправляем уведомление в Telegram
-                            sendTelegramNotification(
-                                { date, urgencySt, objectSt }, 
-                                JSON.parse(objectSt), 
-                                selectedArr
-                            ).catch(e => console.log('Failed to send notification:', e))
-                            
-                            setVisibleAdd(false)
-                            // Добавляем обновление страницы
-                            window.location.reload()
-                        })
-                        .catch(e=>console.log(e))
-                    }                
-                }}
+                onClick={handleSubmit}
             >
                 ✅ Создать заявку
             </button>
