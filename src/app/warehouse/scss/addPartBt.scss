@@ -19,3 +19,31 @@
         margin-top: 0.7em;
     }
 }
+
+.button-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.addPartFromReqBt {
+    background: #4CAF50;
+    border: none;
+    border-radius: 8px;
+    padding: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &:hover {
+        background: #45a049;
+        transform: scale(1.05);
+    }
+
+    img {
+        width: 34px;
+        height: 34px;
+    }
+}

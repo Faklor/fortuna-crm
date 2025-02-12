@@ -92,7 +92,7 @@ export default function WareHouse({parts, workers, objects}){
         });
     }, [parts]);
 
-    // Обработчик перехода на страницу добавления
+    // Обработчик перехода на страницу добавления запчасти
     const handleAddPartClick = () => {
         setIsLoading(true);
         anime({
@@ -105,20 +105,45 @@ export default function WareHouse({parts, workers, objects}){
         });
     };
 
+    // Обработчик перехода на страницу добавления запчасти из формы заявки
+    const handleAddPartFromReqClick = () => {
+        // Сохраняем текущий URL для возврата
+        sessionStorage.setItem('returnToReq', window.location.pathname);
+        router.push('/warehouse/addPart');
+    };
+
     return <>
         <div className='sidebar' ref={sidebarRef} style={{opacity: 0}}>
             <div className='controlls'>
                 <Search parts={JSON.parse(parts)} setVisibleParts={setVisibleParts}/>
-                <button className="addPartBt">
-                    <Image 
-                        src={'/components/add.svg'} 
-                        width={40} 
-                        height={40} 
-                        alt='addPartButton' 
+                <div className="button-group">
+                    <button 
+                        className="addPartBt"
                         onClick={handleAddPartClick}
-                        priority
-                    />
-                </button>
+                    >
+                        <Image 
+                            src={'/components/add.svg'} 
+                            width={40} 
+                            height={40} 
+                            alt='addPartButton' 
+                            priority
+                        />
+                    </button>
+                    {window.location.pathname.includes('/tasks') && (
+                        <button 
+                            className="addPartFromReqBt"
+                            onClick={handleAddPartFromReqClick}
+                            title="Добавить новую запчасть"
+                        >
+                            <Image 
+                                src={'/components/addPart.svg'} 
+                                width={34} 
+                                height={34} 
+                                alt='addNewPart'
+                            />
+                        </button>
+                    )}
+                </div>
             </div>
             <h2>Категории</h2>
             <SlyderCategory parts={JSON.parse(parts)} setVisibleParts={setVisibleParts}/>

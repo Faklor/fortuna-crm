@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import '../scss/addReq.scss'
 import axios from 'axios'
 import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 
 const URGENCY_TYPES = {
     'НЕ СРОЧНАЯ': {
@@ -20,6 +22,7 @@ const URGENCY_TYPES = {
 
 export default function AddReq({setVisibleAdd, arrActive, objects, parts}){
     const { data: session } = useSession()
+    const router = useRouter()
 
     // Группируем объекты по категориям
     const categorizedObjects = objects.reduce((acc, obj) => {
@@ -87,7 +90,7 @@ export default function AddReq({setVisibleAdd, arrActive, objects, parts}){
     // Функция добавления нового объекта
     const addNewObject = () => {
         setSelectedObjects([...selectedObjects, {
-            obj: firstObject,
+            obj: JSON.parse(objectSt),
             selectedParts: [],
             partValues: {},
             selectedDes: {}
@@ -311,23 +314,48 @@ ${objectsInfo}`;
 
                             <div className="form-group">
                                 <label>🚜 Выберите объект</label>
-                                <select 
-                                    onChange={e=>setObjectSt(e.target.value)}
-                                    className="object-select"
-                                >
-                                    {Object.entries(categorizedObjects).map(([category, categoryObjects]) => (
-                                        <optgroup key={category} label={category}>
-                                            {categoryObjects.map((obj, index) => (
-                                                <option 
-                                                    key={`${category}-${index}`} 
-                                                    value={JSON.stringify(obj)}
-                                                >
-                                                    {obj.name}
-                                                </option>
-                                            ))}
-                                        </optgroup>
-                                    ))}
-                                </select>
+                                <div className="object-select-container">
+                                    <select 
+                                        onChange={e => {
+                                            setObjectSt(e.target.value);
+                                            setSelectedObjects(prevObjects => {
+                                                const newObjects = [...prevObjects];
+                                                newObjects[objectIndex] = {
+                                                    ...newObjects[objectIndex],
+                                                    obj: JSON.parse(e.target.value)
+                                                };
+                                                return newObjects;
+                                            });
+                                        }}
+                                        className="object-select"
+                                        value={JSON.stringify(objData.obj)}
+                                    >
+                                        {Object.entries(categorizedObjects).map(([category, categoryObjects]) => (
+                                            <optgroup key={category} label={category}>
+                                                {categoryObjects.map((obj, index) => (
+                                                    <option 
+                                                        key={`${category}-${index}`} 
+                                                        value={JSON.stringify(obj)}
+                                                    >
+                                                        {obj.name}
+                                                    </option>
+                                                ))}
+                                            </optgroup>
+                                        ))}
+                                    </select>
+                                    <button 
+                                        className="add-part-button"
+                                        onClick={() => router.push('/warehouse/addPart')}
+                                        title="Добавить новую запчасть"
+                                    >
+                                        <Image 
+                                            src="/components/add.svg" 
+                                            width={24} 
+                                            height={24} 
+                                            alt="Добавить запчасть" 
+                                        />
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
