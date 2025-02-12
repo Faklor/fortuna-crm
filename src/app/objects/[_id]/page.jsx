@@ -16,6 +16,7 @@ import EditObject from './components/editObject'
 import ImageWithFallback from "./components/ImageWithFallback"
 import Workers from "@/models/workers";
 import Parts from "@/models/parts";
+import AddPartsWrapper from "./components/AddPartsWrapper";
 
 export const revalidate = 1
 export const dynamicParams = true
@@ -31,22 +32,24 @@ export async function generateStaticParams() {
         }))
     }
     catch(e){
-    
+        return []
     }
 }
 
-export default async function Page({params, searchParams}){
+export default async function Page({ params, searchParams }){
+    // Получаем параметры асинхронно
+    const paramsData = await Promise.resolve(params)
+    const searchParamsData = await Promise.resolve(searchParams)
+    const objectId = paramsData._id
+
     await dbConnect()
-    //other
-    const {_id} = await params
-    //db
     
-    const object = await Tech.findOne({_id})
-    const orders  = await Orders.find({objectID:_id}) 
-    const operations  = await Operations.find({objectID:_id})  
+    const object = await Tech.findOne({_id: objectId})
+    const orders = await Orders.find({objectID: objectId}) 
+    const operations = await Operations.find({objectID: objectId})  
     const workers = await Workers.find({}) 
     const parts = await Parts.find({})     
-    // Если объект не найден, можно показать сообщение об ошибке
+
     if (!object) {
         return (
             <div className="error-container">
@@ -71,7 +74,10 @@ export default async function Page({params, searchParams}){
         contentType: object.icon.contentType
     } : null
 
-    return (await searchParams).name !== 'editObj' ? (
+    // Получаем значение name из searchParams
+    const searchParamsName = searchParamsData?.name || ''
+
+    return searchParamsName !== 'editObj' ? (
         <div className="objInfo">
             <div className="objInfo-container">
                 {/* Левая часть (основная информация) */}
@@ -105,7 +111,7 @@ export default async function Page({params, searchParams}){
                         </div>
                     )}
 
-                    <ControllersObj _id={_id}/>
+                    <ControllersObj _id={objectId}/>
 
                     {/* Инспекции и привязанные запчасти */}
                     {object.catagory !== '🏢 Подразделения' && object.inspection && (
@@ -126,22 +132,40 @@ export default async function Page({params, searchParams}){
                 <div className="column history">
                     <div className='title'>    
                         <h2>История операций</h2>
-                        <Link className="addOperation" href={{pathname:`/objects/${_id}`,query: { name: 'addOperation' }}}>
+                        <Link className="addOperation" href={{pathname:`/objects/${objectId}`,query: { name: 'addOperation' }}}>
                             <Image src={'/components/add.svg'} width={5} height={5} alt='add_Operation'/>
                         </Link>
                     </div>
                     <HistoryOperation 
                         visibleOperation={visibleOperation} 
                         category={object.catagory} 
-                        objectID={_id}
+                        objectID={objectId}
                         visibleWorkers={visibleWorkers}
                         visibleParts={visibleParts}
                     />
                     
                     <div className='title orderTtile'>
                         <h2>История выданных запчастей</h2>
+                        <div>
+                            <Link 
+                                href={{
+                                    pathname: `/objects/${objectId}`,
+                                    query: { name: 'addParts' }
+                                }}
+                                className="add-parts-button"
+                            >
+                                Выдать запчасти
+                            </Link>
+                        </div>
                     </div>
-                    <HistoryParts visibleOrders={visibleOrders}/>    
+                    <HistoryParts visibleOrders={visibleOrders}/>
+
+                    {searchParamsName === 'addParts' && (
+                        <AddPartsWrapper
+                            objectId={objectId}
+                            objectName={object.name}
+                        />
+                    )}
                 </div>
             </div>
         </div>

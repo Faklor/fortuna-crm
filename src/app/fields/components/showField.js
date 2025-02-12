@@ -14,6 +14,7 @@ import PropTypes from 'prop-types';
 import DatePicker, { registerLocale } from 'react-datepicker'
 import "react-datepicker/dist/react-datepicker.css"
 import ru from 'date-fns/locale/ru'
+import { useSession } from 'next-auth/react';
 
 // Регистрируем русскую локаль
 registerLocale('ru', ru)
@@ -91,6 +92,7 @@ export default function ShowField({
     const urlSeason = searchParams.get('season');
     const showFieldRef = useRef(null);
     const [allWorkDates, setAllWorkDates] = useState([])
+    const { data: session } = useSession();
 
     const calculateAreaInHectares = (coordinates) => {
         try {
@@ -495,8 +497,7 @@ export default function ShowField({
                 status: 'planned'  // Добавляем статус по умолчанию
             };
 
-            console.log('Saving work with data:', dataToSave);
-
+           
             const response = await axios.post('/api/fields/works/add', dataToSave);
 
             if (response.data.success) {
@@ -543,7 +544,6 @@ export default function ShowField({
             });
             
             if (response.data) {
-                // Обновляем состояние работ локально
                 setFieldWorks(prevWorks => 
                     prevWorks.map(work => 
                         work._id === workId 
@@ -552,20 +552,17 @@ export default function ShowField({
                     )
                 );
 
-                // Находим информацию о работе
                 const work = fieldWorks.find(w => w._id === workId);
                 if (work) {
-                    // Форматируем дату
                     const date = new Date(work.plannedDate).toLocaleDateString('ru-RU', {
                         year: 'numeric',
                         month: '2-digit',
                         day: '2-digit'
                     });
 
-                    // Отправляем уведомление об изменении статуса
-                    const message = `
-<b>🔄 Статус работы изменен</b>
+                    const message = `<b>🔄 Статус работы изменен</b>
 
+👤 Изменил: <code>${session?.user?.name || 'Система'}</code>
 📅 Дата создания: ${date}
 🏢 Объект: ${field?.properties?.Name || 'Без названия'}
 📋 Работа: ${work.name}
@@ -576,7 +573,14 @@ export default function ShowField({
 • Площадь: ${work.area} га
 ${work.description ? `• Описание: ${work.description}` : ''}`;
 
-                    await axios.post('/api/telegram/sendNotification', { message, type: 'fields' });
+                    const chatId = process.env.NEXT_PUBLIC_TELEGRAM_CHAT_ID_FORTUNACRM;
+
+                    await axios.post('/api/telegram/sendNotification', { 
+                        message,
+                        chat_id: chatId,
+                        message_thread_id: 41,
+                        parse_mode: 'HTML'
+                    });
                 }
             }
         } catch (error) {
@@ -666,26 +670,23 @@ ${work.description ? `• Описание: ${work.description}` : ''}`;
         }
     }, [selectedField]);
 
-    // Добавим функцию для удаления работы с уведомлением
+    // Обновляем функцию удаления работы
     const handleDeleteWork = async (workId) => {
         try {
-            // Находим информацию о работе перед удалением
             const work = fieldWorks.find(w => w._id === workId) || archiveWorks.find(w => w._id === workId);
             
             const response = await axios.delete(`/api/fields/works/delete/${workId}`);
             
-            if (response.data.success) {
-                // Если работа найдена, отправляем уведомление
-                if (work) {
-                    const date = new Date(work.plannedDate).toLocaleDateString('ru-RU', {
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit'
-                    });
+            if (response.data.success && work) {
+                const date = new Date(work.plannedDate).toLocaleDateString('ru-RU', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                });
 
-                    const message = `
-<b>🗑️ Работа удалена</b>
+                const message = `<b>🗑️ Работа удалена</b>
 
+👤 Удалил: <code>${session?.user?.name || 'Система'}</code>
 📅 Дата создания: ${date}
 🏢 Объект: ${field?.properties?.Name || 'Без названия'}
 📋 Работа: ${work.name}
@@ -696,20 +697,18 @@ ${WORK_STATUSES[work.status].emoji} Статус: ${WORK_STATUSES[work.status].n
 • Площадь: ${work.area} га
 ${work.description ? `• Описание: ${work.description}` : ''}`;
 
-                    await axios.post('/api/telegram/sendNotification', { message, type: 'fields' });
-                }
+                const chatId = process.env.NEXT_PUBLIC_TELEGRAM_CHAT_ID_FORTUNACRM;
 
-                // Обновляем список активных работ
+                await axios.post('/api/telegram/sendNotification', { 
+                    message,
+                    chat_id: chatId,
+                    message_thread_id: 41,
+                    parse_mode: 'HTML'
+                });
+
                 setFieldWorks(prevWorks => prevWorks.filter(w => w._id !== workId));
-                
-                // Обновляем список архивных работ
                 setArchiveWorks(prevWorks => prevWorks.filter(w => w._id !== workId));
-
-                // Перезагружаем данные
-                await Promise.all([
-                    loadFieldWorks(),
-                    loadArchiveWorks()
-                ]);
+                await Promise.all([loadFieldWorks(), loadArchiveWorks()]);
             }
         } catch (error) {
             console.error('Error deleting work:', error);

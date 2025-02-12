@@ -24,6 +24,7 @@ import { FendtLayer } from './FendtLayer'
 import { FendtInfoPanel } from './FendtInfoPanel'
 import { RavenLayer } from './RavenLayer'
 import { RavenInfoPanel } from './RavenInfoPanel'
+import { useSession } from 'next-auth/react'
 
 function DrawingControl({ 
   selectedFieldData, 
@@ -387,6 +388,7 @@ function Map({ fields, currentSeason }) {
   const [subtaskTracks, setSubtaskTracks] = useState(null);
   const [fendtData, setFendtData] = useState(null);
   const [ravenData, setRavenData] = useState(null);
+  const { data: session } = useSession();
 
   useEffect(() => {
     // Здесь можно добавить логику загрузки полей с учетом сезона
@@ -585,54 +587,6 @@ function Map({ fields, currentSeason }) {
     }
   };
 
-  // Обработчик сохранения заметки
-  const handleSaveNote = async (noteData) => {
-    try {
-        const formData = new FormData();
-        formData.append('title', noteData.title);
-        formData.append('description', noteData.description);
-        formData.append('coordinates', JSON.stringify(noteData.coordinates));
-        formData.append('season', season || new Date().getFullYear().toString());
-        
-        if (noteData.image) {
-            formData.append('image', noteData.image);
-        }
-
-        const response = await fetch('/api/notes/add', {
-            method: 'POST',
-            body: formData
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-            setNotes(data.allNotes);
-            setIsAddingNote(false);
-            setSelectedPoint(null);
-            setIsCreatingNote(false);
-            
-            setDialog({
-                isOpen: true,
-                type: 'alert',
-                title: 'Успешно',
-                message: 'Заметка успешно добавлена',
-                onConfirm: () => setDialog(prev => ({ ...prev, isOpen: false }))
-            });
-        } else {
-            throw new Error(data.error || 'Ошибка при сохранении заметки');
-        }
-    } catch (error) {
-        console.error('Detailed error:', error);
-        setDialog({
-            isOpen: true,
-            type: 'alert',
-            title: 'Ошибка',
-            message: `Ошибка при сохранении заметки: ${error.message}`,
-            onConfirm: () => setDialog(prev => ({ ...prev, isOpen: false }))
-        });
-    }
-  };
-
   // Обновляем функцию загрузки заметок
   const fetchNotes = useCallback(async () => {
     try {
@@ -667,6 +621,8 @@ function Map({ fields, currentSeason }) {
 
   // Также обновим обработчик удаления заметки
   const handleDeleteNote = async (noteId) => {
+    const deletedNote = notes.find(note => note._id === noteId);
+
     setDialog({
         isOpen: true,
         type: 'confirm',
@@ -685,6 +641,21 @@ function Map({ fields, currentSeason }) {
                 const data = await response.json();
 
                 if (data.success) {
+                    // Отправляем уведомление в Telegram
+                    const message = `<b>🗑️ Заметка удалена</b>
+
+👤 Удалил: <code>${session?.user?.name || 'Система'}</code>
+📝 Название: ${deletedNote.title}
+${deletedNote.description ? `\n<b>Описание удаленной заметки:</b>\n${deletedNote.description}` : ''}
+${deletedNote.image ? '\n🖼 Было прикреплено изображение' : ''}`;
+
+                    await axios.post('/api/telegram/sendNotification', { 
+                        message,
+                        chat_id: process.env.NEXT_PUBLIC_TELEGRAM_CHAT_ID_FORTUNACRM,
+                        message_thread_id: 43,
+                        parse_mode: 'HTML'
+                    });
+
                     setNotes(prevNotes => prevNotes.filter(note => note._id !== noteId));
                     setDialog({
                         isOpen: true,
@@ -869,55 +840,6 @@ function Map({ fields, currentSeason }) {
             </React.Fragment>
         );
     });
-  };
-
-  const renderSubtaskTracks = (subtasks) => {
-    if (!subtasks || !Array.isArray(subtasks)) {
-        return null;
-    }
-
-    return subtasks.map((subtask, index) => {
-        if (!subtask?.coordinates || !Array.isArray(subtask.coordinates)) {
-            return null;
-        }
-
-        // Проверяем координаты
-        const validCoords = subtask.coordinates.filter(coord => 
-            Array.isArray(coord) && 
-            coord.length === 2 &&
-            !isNaN(coord[0]) && 
-            !isNaN(coord[1]) &&
-            coord[0] >= -90 && coord[0] <= 90 && 
-            coord[1] >= -180 && coord[1] <= 180
-        );
-
-        if (validCoords.length < 2) {
-            return null;
-        }
-
-        return (
-            <React.Fragment key={`subtask-track-${subtask.subtaskId || index}`}>
-                <Polyline
-                    positions={validCoords}
-                    pathOptions={{
-                        color: '#4CAF50', // Зеленый цвет для всех треков
-                        weight: 3,
-                        opacity: 0.7
-                    }}
-                />
-                {/* Маркер с номером трека */}
-                <Marker
-                    position={validCoords[Math.floor(validCoords.length / 2)]}
-                    icon={L.divIcon({
-                        className: 'track-label',
-                        html: `<div class="track-number">${index + 1}</div>`,
-                        iconSize: [24, 24],
-                        iconAnchor: [12, 12]
-                    })}
-                />
-            </React.Fragment>
-        );
-    }).filter(track => track !== null);
   };
 
   // Обработчик получения треков
@@ -1236,8 +1158,8 @@ function Map({ fields, currentSeason }) {
       {selectedPoint && isCreatingNote && (
         <NoteModal 
           coordinates={selectedPoint}
-          onSave={handleSaveNote}
           onClose={handleCloseModal}
+          onNoteAdded={(newNotes) => setNotes(newNotes)}
         />
       )}
 
@@ -1313,13 +1235,7 @@ function MapEvents({ onClick }) {
   return null;
 }
 
-// Функция для определения цвета точки в зависимости от расхода топлива
-function getColorByFuelConsumption(consumption) {
-    if (!consumption) return 'gray';
-    if (consumption < 10) return 'green';
-    if (consumption < 20) return 'yellow';
-    return 'red';
-}
+
 
 export default Map;
 

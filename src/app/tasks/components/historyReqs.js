@@ -108,26 +108,49 @@ export default function HistoryReqs({ visibleHistoryReq }){
 
     // Функция отправки уведомления об удалении
     const sendDeletionNotification = async (deletedReq) => {
-        const objectData = objects[deletedReq.obj] || {};
-        const message = `<b>🗑️ Заявка удалена из архива</b>
+        try {
+            const objectData = objects[deletedReq.obj] || {};
+            const urgencyTypes = {
+                'НЕ СРОЧНАЯ': '🟢',
+                'СРЕДНЕЙ СРОЧНОСТИ': '🟡',
+                'СРОЧНАЯ': '🔴'
+            };
+
+            const partsInfo = deletedReq.parts.map(part => {
+                const partData = parts[part._id] || {};
+                return `• ${part.countReq} ${part.description} - ${partData.name || 'Не найдено'}`;
+            }).join('\n');
+
+            const message = `<b>❌ Заявка удалена из архива</b>
+
+🆔 ID заявки: ${deletedReq._id}
+👤 Удалил: ${session?.user?.name || 'Неизвестный пользователь'}
 
 📅 Дата создания: ${deletedReq.dateBegin}
 📅 Дата завершения: ${deletedReq.dateEnd}
-🏢 Объект: ${objectData.name || 'Бухгалтерия'}
-👨‍🔧 Исполнитель: ${deletedReq.workerName}
-👤 Создал: ${deletedReq.createdBy?.username || 'Неизвестно'} (${deletedReq.createdBy?.role || 'Неизвестно'})
 ❌ Удалил: ${session?.user?.name || 'Неизвестно'} (${session?.user?.role || 'Неизвестно'})
 
-<b>Возвращенные запчасти:</b>
-${deletedReq.parts.map(part => {
-    const partInfo = parts[part._id] || {};
-    return `• ${part.countReq} ${part.description} ${partInfo.name || 'Загрузка...'}`
-}).join('\n')}`;
+🏢 Объект: ${objectData.name || 'Не найдено'}
 
-        try {
-            await axios.post('/api/telegram/sendNotification', { message, type: 'requests' });
+📦 Запчасти:
+${partsInfo}`;
+
+            const chatId = process.env.NEXT_PUBLIC_TELEGRAM_CHAT_ID_FORTUNACRM;
+
+            const response = await axios.post('/api/telegram/sendNotification', { 
+                message,
+                chat_id: chatId,
+                message_thread_id: 4
+            });
+
+            if (!response.data.success) {
+                throw new Error('Failed to send notification');
+            }
         } catch (error) {
             console.error('Failed to send deletion notification:', error);
+            if (error.response) {
+                console.error('Response data:', error.response.data);
+            }
         }
     };
 
@@ -186,7 +209,7 @@ ${deletedReq.parts.map(part => {
                         <div className="history-item" key={index}>
                             <div className="history-item-header">
                                 <div className="header-left">
-                                    <h3>Заявка #{index + 1}</h3>
+                                    <h3>Заявка #{item._id}</h3>
                                     <span className={`status ${item.urgency.toLowerCase()}`}>
                                         {item.urgency}
                                     </span>
@@ -197,9 +220,8 @@ ${deletedReq.parts.map(part => {
                                             <span>С {item.dateBegin}</span>
                                             <span>По {item.dateEnd}</span>
                                         </div>
-                                        <span className="worker-name">👨‍🔧 {item.workerName}</span>
                                         <span className="creator-info">
-                                            👤 Создал: {item.createdBy?.username} ({item.createdBy?.role})
+                                            👤 Выполнил: {item.createdBy?.username} ({item.createdBy?.role})
                                         </span>
                                     </div>
                                     <button 

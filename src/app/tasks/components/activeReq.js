@@ -3,15 +3,18 @@ import '../scss/activeReq.scss'
 import axios from "axios"
 import Image from "next/image"
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 //------------component--------------
 import CompleteReq from "./completeReq"
- 
+import EditReq from './editReq'
 
 export default function ActiveReq({_id, index, dateBegin, urgency, requests, setArrActive, arrActive, workers, createdBy}){
     const router = useRouter()
+    const { data: session } = useSession();
     const [objects, setObjects] = useState({})
     const [partsOptions, setPartsOptions] = useState({})
     const [err, setErr] = useState(null)
+    const [showEditModal, setShowEditModal] = useState(false)
 
     async function getObj(_id){
         return await axios.post('/api/teches/object',{_id:_id})
@@ -26,38 +29,51 @@ export default function ActiveReq({_id, index, dateBegin, urgency, requests, set
     }
 
     async function sendCancelNotification(reqData, objects, partsOptions) {
-        let urgencyEmoji;
-        switch(reqData.urgency) {
-            case 'СРОЧНАЯ':
-                urgencyEmoji = '🔴';
-                break;
-            case 'СРЕДНЕЙ СРОЧНОСТИ':
-                urgencyEmoji = '🟡';
-                break;
-            case 'НЕ СРОЧНАЯ':
-                urgencyEmoji = '🟢';
-                break;
-            default:
-                urgencyEmoji = '⚪';
-        }
+        try {
+            const urgencyTypes = {
+                'НЕ СРОЧНАЯ': '🟢',
+                'СРЕДНЕЙ СРОЧНОСТИ': '🟡',
+                'СРОЧНАЯ': '🔴'
+            };
 
-        const objectsInfo = Object.values(objects).map(obj => {
-            const parts = partsOptions[obj._id] || [];
-            return `
-🏢 Объект: ${obj.name}
-${parts.map(part => `• ${part.countReq} ${part.description} ${part._doc.name}`).join('\n')}`;
-        }).join('\n\n');
+            const objectsInfo = requests.map(request => {
+                const object = objects[request.obj];
+                const parts = partsOptions[request._id] || [];
+                
+                return `
+🏢 Объект: ${object?.name || 'Объект не указан'}
 
-        const message = `
-<b>❌ Заявка отменена</b>
+📦 Запчасти:
+${parts.map(part => `• ${part.countReq} ${part.description} - ${part._doc.name}`).join('\n')}`;
+            }).join('\n\n');
+
+            const message = `<b>❌ Заявка отменена</b>
+
+👤 Отменил: ${session?.user?.name || 'Неизвестный пользователь'}
+📧 Email: ${session?.user?.email || 'Не указан'}
 
 📅 Дата создания: ${reqData.dateBegin}
-⚡ Срочность: ${urgencyEmoji} <code>${reqData.urgency}</code>
+⚡ Срочность: ${urgencyTypes[reqData.urgency]} <code>${reqData.urgency}</code>
 
-${objectsInfo}
-`;
+${objectsInfo}`;
 
-        return await axios.post('/api/telegram/sendNotification', { message, type: 'requests' });
+            const chatId = process.env.NEXT_PUBLIC_TELEGRAM_CHAT_ID_FORTUNACRM;
+
+            const response = await axios.post('/api/telegram/sendNotification', { 
+                message,
+                chat_id: chatId,
+                message_thread_id: 4
+            });
+
+            if (!response.data.success) {
+                throw new Error('Failed to send notification');
+            }
+        } catch (error) {
+            console.error('Failed to send telegram notification:', error);
+            if (error.response) {
+                console.error('Response data:', error.response.data);
+            }
+        }
     }
 
     function getColor(){
@@ -122,7 +138,7 @@ ${objectsInfo}
         <div className="reqActive">
             <div style={{background:getColor()}} className="lineStatus"/>
             <div className="titleReq">
-                <h2 style={{color:getColor()}}>Заявка №{index+1}</h2>
+                <h2 style={{color:getColor()}}>Заявка №{_id}</h2>
                 <p>Дата начала: {dateBegin}</p>
                 <p>Срочность: {urgency}</p>
                 <p>Количество объектов: {requests.length}</p>
@@ -140,7 +156,7 @@ ${objectsInfo}
                     workers={workers}
                     objects={objects}
                 />
-                <button>
+                <button onClick={() => setShowEditModal(true)}>
                     Редактировать
                     <Image src={'/components/edit.svg'} width={20} height={20} alt="editReq"/>
                 </button>
@@ -162,6 +178,20 @@ ${objectsInfo}
                     <Image src={'/components/close.svg'} width={20} height={20} alt="cancelReq"/>
                 </button>
             </div>
+
+            {/* {showEditModal && (
+                <EditReq
+                    _id={_id}
+                    dateBegin={dateBegin}
+                    urgency={urgency}
+                    requests={requests}
+                    setArrActive={setArrActive}
+                    arrActive={arrActive}
+                    objects={objects}
+                    setErr={setErr}
+                    onClose={() => setShowEditModal(false)}
+                />
+            )} */}
 
             <div className="objects-container">
                 {requests.map((request, index) => {

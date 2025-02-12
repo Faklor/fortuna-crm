@@ -1,0 +1,208 @@
+.edit-req-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+
+    .edit-req-content {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 600px;
+        max-height: 80vh;
+        overflow-y: auto;
+
+        .edit-req-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+
+            h2 {
+                margin: 0;
+            }
+
+            .close-button {
+                background: none;
+                border: none;
+                font-size: 20px;
+                cursor: pointer;
+                padding: 5px;
+
+                &:hover {
+                    color: red;
+                }
+            }
+        }
+
+        .edit-req-body {
+            .urgency-section {
+                margin-bottom: 20px;
+
+                select {
+                    margin-left: 10px;
+                    padding: 5px;
+                    border-radius: 4px;
+                }
+            }
+
+            .requests-section {
+                .request-item {
+                    margin-bottom: 20px;
+                    padding: 15px;
+                    border: 1px solid #ddd;
+                    border-radius: 4px;
+
+                    .request-header {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        margin-bottom: 15px;
+
+                        select {
+                            flex: 1;
+                            margin-right: 10px;
+                            padding: 8px;
+                            border-radius: 4px;
+                            border: 1px solid #ddd;
+                        }
+
+                        .remove-object-btn {
+                            padding: 8px;
+                            background-color: #ff4444;
+                            color: white;
+                            border: none;
+                            border-radius: 4px;
+                            cursor: pointer;
+
+                            &:disabled {
+                                background-color: #cccccc;
+                                cursor: not-allowed;
+                            }
+                        }
+                    }
+
+                    .parts-section {
+                        .parts-list {
+                            margin-bottom: 15px;
+
+                            .part-item {
+                                display: flex;
+                                justify-content: space-between;
+                                align-items: center;
+                                padding: 8px;
+                                background: #f5f5f5;
+                                border-radius: 4px;
+                                margin-bottom: 8px;
+
+                                .part-name {
+                                    flex: 1;
+                                }
+
+                                .part-controls {
+                                    display: flex;
+                                    gap: 8px;
+                                    align-items: center;
+
+                                    input {
+                                        width: 80px;
+                                        padding: 4px;
+                                        border: 1px solid #ddd;
+                                        border-radius: 4px;
+                                    }
+
+                                    select {
+                                        padding: 4px;
+                                        border: 1px solid #ddd;
+                                        border-radius: 4px;
+                                    }
+
+                                    .remove-part-btn {
+                                        background: none;
+                                        border: none;
+                                        color: red;
+                                        cursor: pointer;
+                                        padding: 4px 8px;
+                                    }
+                                }
+                            }
+                        }
+
+                        .add-part-section {
+                            select {
+                                width: 100%;
+                                padding: 8px;
+                                border: 1px solid #ddd;
+                                border-radius: 4px;
+                            }
+                        }
+                    }
+                }
+
+                .add-object-btn {
+                    width: 100%;
+                    padding: 10px;
+                    background-color: #4CAF50;
+                    color: white;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    margin-top: 10px;
+
+                    &:hover {
+                        background-color: #45a049;
+                    }
+                }
+            }
+        }
+
+        .edit-req-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+
+            button {
+                padding: 8px 16px;
+                border-radius: 4px;
+                border: none;
+                cursor: pointer;
+
+                &.save-button {
+                    background-color: #4CAF50;
+                    color: white;
+
+                    &:hover {
+                        background-color: #45a049;
+                    }
+
+                    &:disabled {
+                        background-color: #cccccc;
+                        cursor: not-allowed;
+                    }
+                }
+
+                &.cancel-button {
+                    background-color: #f44336;
+                    color: white;
+
+                    &:hover {
+                        background-color: #da190b;
+                    }
+
+                    &:disabled {
+                        background-color: #cccccc;
+                        cursor: not-allowed;
+                    }
+                }
+            }
+        }
+    }
+} 

@@ -1,6 +1,7 @@
 import '../scss/moduleWindow.scss'
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
+import { useSession } from "next-auth/react"
 import axios from 'axios'
 
 export default function ModuleWindow({
@@ -21,7 +22,7 @@ export default function ModuleWindow({
 
     setVisibleParts
 }){
-
+    const { data: session } = useSession()
     //console.log(teches[0]?teches[0].name:'')
     //default 
    
@@ -116,6 +117,33 @@ export default function ModuleWindow({
     // Сортируем организации
     const sortedOrganizations = Object.keys(groupedWorkers).sort();
 
+    const sendTelegramNotification = async (objectName, workerName, count, description, remainingCount) => {
+        const message = `🔧 <b>Выдача запчасти</b>
+
+🏢 Объект: ${objectName}
+👨‍🔧 Работник: ${workerName}
+📅 Дата: ${new Date().toLocaleString('ru-RU')}
+👤 Выдал: ${session?.user?.name || 'Неизвестный пользователь'} 
+
+📦 Выданная запчасть:
+• ${count} ${description} - ${name} (Остаток: ${remainingCount} шт.)
+${manufacturer ? `Производитель: ${manufacturer}` : ''}
+${sellNumber ? `Товарный номер: ${sellNumber}` : ''}
+${serialNumber ? `Серийный номер: ${serialNumber}` : ''}
+${sum ? `Цена: ${sum}` : ''}`
+
+        try {
+            await axios.post('/api/telegram/sendNotification', {
+                message,
+                chat_id: process.env.NEXT_PUBLIC_TELEGRAM_CHAT_ID_FORTUNACRM,
+                message_thread_id: 30,
+                parse_mode: 'HTML'
+            })
+        } catch (error) {
+            console.error('Error sending Telegram notification:', error)
+        }
+    }
+
     return sendVisible?<div className="moduleWindow">
         <div className='message'>
             <div className='title'>
@@ -183,23 +211,40 @@ export default function ModuleWindow({
                 </div>
                 
                 <button onClick={async ()=>{
-                    SendPart(sendWorker,sendObject,part,Number(sendCount),sendDes)
-                    .then(res=>{
+                    try {
+                        const res = await SendPart(sendWorker, sendObject, part, Number(sendCount), sendDes)
+                        
+                        // Находим имя объекта
+                        const selectedObject = teches.find(tech => tech._id === sendObject)
+                        const objectName = selectedObject ? selectedObject.name : 'Неизвестный объект'
+                        
+                        // Обновляем состояние частей
                         setVisibleParts((prevParts) => {
-                            const updatedParts = [...prevParts];
-                            const index = updatedParts.findIndex((item) => item._id === _id);
+                            const updatedParts = [...prevParts]
+                            const index = updatedParts.findIndex((item) => item._id === _id)
                             if (index !== -1) {
-                              updatedParts[index] = { ...updatedParts[index], count: JSON.parse(res.data).data.count };
+                                updatedParts[index] = { 
+                                    ...updatedParts[index], 
+                                    count: JSON.parse(res.data).data.count 
+                                }
                             }
-                            return updatedParts;
-                        });
+                            return updatedParts
+                        })
+
+                        // Отправляем уведомление в Telegram
+                        await sendTelegramNotification(
+                            objectName,
+                            sendWorker,
+                            sendCount,
+                            sendDes,
+                            JSON.parse(res.data).data.count
+                        )
+
                         // Закрываем окно после успешной выдачи
-                        setSendVisible(false);
-                    })
-                    .catch(e=>{
-                        console.log(e)
-                    })
-                    
+                        setSendVisible(false)
+                    } catch (error) {
+                        console.error('Error:', error)
+                    }
                 }}>Выдать</button>
             </div>
         </div>

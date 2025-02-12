@@ -175,33 +175,52 @@ export default function AddReq({setVisibleAdd, arrActive, objects, parts}){
     }
     
     async function sendTelegramNotification(reqData, selectedObjects, parts, session) {
-        const urgencyTypes = {
-            'НЕ СРОЧНАЯ': '🟢',
-            'СРЕДНЕЙ СРОЧНОСТИ': '🟡',
-            'СРОЧНАЯ': '🔴'
-        };
+        try {
+            const urgencyTypes = {
+                'НЕ СРОЧНАЯ': '🟢',
+                'СРЕДНЕЙ СРОЧНОСТИ': '🟡',
+                'СРОЧНАЯ': '🔴'
+            };
 
-        const objectsInfo = selectedObjects.map(objData => {
-            const partsInfo = objData.selectedParts.map(partId => {
-                const part = parts.find(p => p._id === partId);
-                return `• ${objData.partValues[partId]} ${objData.selectedDes[partId]} ${part.name}`;
-            }).join('\n');
+            const objectsInfo = selectedObjects.map(objData => {
+                const partsInfo = objData.selectedParts.map(partId => {
+                    const part = parts.find(p => p._id === partId);
+                    return `• ${objData.partValues[partId]} ${objData.selectedDes[partId]} - ${part.name}`;
+                }).join('\n');
 
-            return `
+                return `
 🏢 Объект: ${objData.obj.name}
+
+📦 Запчасти:
 ${partsInfo}`;
-        }).join('\n\n');
+            }).join('\n\n');
 
-        const message = `
-<b>🔔 Новая заявка создана</b>
+            const message = `<b>🆕 Новая заявка создана</b>
 
-📅 Дата: ${reqData.date}
+👤 Создал: ${session.user.name}
+
+📅 Дата создания: ${reqData.date}
 ⚡ Срочность: ${urgencyTypes[reqData.urgencySt]} <code>${reqData.urgencySt}</code>
-👤 Создал: ${session.user.name} (${session.user.role})
 
 ${objectsInfo}`;
 
-        return await axios.post('/api/telegram/sendNotification', { message, type: 'requests' });
+            const chatId = process.env.NEXT_PUBLIC_TELEGRAM_CHAT_ID_FORTUNACRM;
+
+            const response = await axios.post('/api/telegram/sendNotification', { 
+                message,
+                chat_id: chatId,
+                message_thread_id: 4
+            });
+
+            if (!response.data.success) {
+                throw new Error('Failed to send notification');
+            }
+        } catch (error) {
+            console.error('Failed to send telegram notification:', error);
+            if (error.response) {
+                console.error('Response data:', error.response.data);
+            }
+        }
     }
 
     // Обновляем функцию handleSubmit

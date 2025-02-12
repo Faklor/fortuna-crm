@@ -1,6 +1,7 @@
 import axios from "axios"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react"
 
 export default function AddInspection({ 
     period, 
@@ -15,6 +16,7 @@ export default function AddInspection({
     
     //navigation
     const router = useRouter()
+    const { data: session } = useSession()
     //default
     const defaultDate = new Date().toLocaleDateString()
     const UNITS = ['шт.', 'л.', 'см.', 'м.']
@@ -83,19 +85,91 @@ export default function AddInspection({
     )
 
     //functions
-    async function setInspection(objectID, period, beginDate, date, type, description, executors, usedParts){
-        return await axios.post('/api/operations/add',{
-            objectID, 
-            period: period, 
-            beginDate: beginDate, 
-            date: date, 
-            type: type, 
-            description: description, 
-            executors: executors, 
-            usedParts: usedParts,
-            createdBy: currentUser?.login || 'unknown'
-        })
+    const sendTelegramNotification = async (operation) => {
+        const usedPartsInfo = operation.usedParts.map(part => 
+            `• ${part.count} ${part.description} - ${part.name}`
+        ).join('\n')
+
+        const executorsInfo = [
+            ...selectedExecutors,
+            ...customExecutors.filter(exec => exec.trim() !== '')
+        ].join(', ')
+
+        const message = `🔧 <b>Новая операция добавлена</b>
+
+📅 Дата: ${new Date(operation.beginDate).toLocaleDateString('ru-RU')}
+🔄 Период: ${operation.period} год(а)
+👨‍🔧 Исполнители: ${executorsInfo}
+👤 Добавил: ${session?.user?.name || 'Неизвестный пользователь'}
+
+📝 Описание:
+${operation.description}
+
+${operation.usedParts.length > 0 ? `\n📦 Использованные запчасти:\n${usedPartsInfo}` : ''}`
+
+        try {
+            await axios.post('/api/telegram/sendNotification', {
+                message,
+                chat_id: process.env.NEXT_PUBLIC_TELEGRAM_CHAT_ID_FORTUNACRM,
+                message_thread_id: 47,
+                parse_mode: 'HTML'
+            })
+        } catch (error) {
+            console.error('Error sending Telegram notification:', error)
+        }
     }
+
+    async function setInspection(objectID, period, beginDate, date, type, description, executors, usedParts){
+        try {
+            // Подготавливаем массив использованных запчастей с единицами измерения
+            const formattedUsedParts = selectedParts.map(partId => {
+                const part = parts.find(p => p._id === partId);
+                return {
+                    _id: partId,
+                    name: part.name,
+                    count: Number(partValues[partId] || 0),
+                    description: selectedUnits[partId] || 'шт.', // Добавляем единицу измерения
+                    catagory: part.catagory
+                }
+            }).filter(part => part.count > 0);
+
+            const response = await axios.post('/api/operations/add', {
+                objectID, 
+                period: period, 
+                beginDate: beginDate, 
+                date: date, 
+                type: type, 
+                description: description, 
+                executors: executors, 
+                usedParts: formattedUsedParts, // Используем обновленный массив
+                createdBy: session?.user?.login || 'unknown'
+            })
+
+            if (response.data.success) {
+                // Отправляем уведомление в Telegram
+                await sendTelegramNotification({
+                    beginDate,
+                    period,
+                    description,
+                    usedParts: formattedUsedParts.map(part => ({
+                        name: part.name,
+                        count: part.count,
+                        description: part.description // Теперь description будет доступен здесь
+                    }))
+                })
+
+                // Обновляем список операций
+                setOperations(response.data.operations)
+                router.refresh()
+            }
+
+            return response
+        } catch (error) {
+            console.error('Error adding operation:', error)
+            throw error
+        }
+    }
+    
 
     return(
         <div className="add">

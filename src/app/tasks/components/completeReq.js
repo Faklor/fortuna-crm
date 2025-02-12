@@ -2,6 +2,7 @@ import Image from 'next/image'
 import axios from 'axios'
 import { useState, useEffect } from 'react';
 import '../scss/completeReq.scss'
+import { useSession } from "next-auth/react";
 
 export default function CompleteReq({
     requests, 
@@ -13,26 +14,13 @@ export default function CompleteReq({
     workers,
     objects
 }){
+    const { data: session } = useSession();
     //default
-    let arr = []
-    let defaultDate = new Date().toLocaleDateString()
     const [parts, setParts] = useState({}) // Состояние для запчастей
-    const [visible, setVisible] = useState(false)
     const [workersForObjects, setWorkersForObjects] = useState({})
     const [isLoading, setIsLoading] = useState(false);
 
-    function formatDate(inputDate) {
-        const parts = inputDate.split('.');
-        if (parts.length !== 3) {
-            return 'Некорректный формат даты';
-        }
-        const day = parts[0];
-        const month = parts[1];
-        const year = parts[2];
-        const formattedDate = `${year}-${month}-${day}`;
-        return formattedDate;
-    }
-    let createDataEnd = formatDate(defaultDate)
+   
 
     // Получение данных запчастей
     async function getPartsData(partsIds) {
@@ -75,24 +63,58 @@ export default function CompleteReq({
 
     //functions
     async function sendCompletionNotification(dateBegin, requests) {
-        const message = `<b>❌ Заявка выполнена, запчасти занесены на склад</b>
+        try {
+            const partsData = await Promise.all(requests.map(async request => {
+                // Получаем данные о запчастях
+                const parts = await Promise.all(request.parts.map(async part => {
+                    const fullPart = await axios.post('/api/parts/optionParts', { 
+                        partsArr: [part._id] 
+                    });
+                    return {
+                        ...part,
+                        name: fullPart.data[0]?.name
+                    };
+                }));
+
+                // Получаем объект из пропсов objects по ID
+                const objectName = objects[request.obj]?.name || 'Объект не указан';
+
+                return {
+                    ...request,
+                    parts,
+                    objectName
+                };
+            }));
+
+            const message = `<b>❌ Заявка выполнена, запчасти занесенны на склад ❌</b>
+
+👤 Выполнил: ${session?.user?.name || 'Неизвестный пользователь'}
 
 📅 Дата создания: ${dateBegin}
 📅 Дата завершения: ${new Date().toLocaleDateString()}
 
-${requests.map(request => `
-🏢 Объект: ${request.obj.name}
+${partsData.map(request => `
+🏢 Объект: ${request.objectName}
 
 📦 Запчасти:
 ${request.parts.map(part => `• ${part.countReq} шт. - ${part.name}`).join('\n')}`).join('\n\n')}`;
 
-        try {
-            await axios.post('/api/telegram/sendNotification', { 
+            const chatId = process.env.NEXT_PUBLIC_TELEGRAM_CHAT_ID_FORTUNACRM;
+
+            const response = await axios.post('/api/telegram/sendNotification', { 
                 message,
-                type: 'requests' 
+                chat_id: chatId,
+                message_thread_id: 4
             });
+
+            if (!response.data.success) {
+                throw new Error('Failed to send notification');
+            }
         } catch (error) {
             console.error('Failed to send telegram notification:', error);
+            if (error.response) {
+                console.error('Response data:', error.response.data);
+            }
         }
     }
 
@@ -120,63 +142,7 @@ ${request.parts.map(part => `• ${part.countReq} шт. - ${part.name}`).join('\
         }
     }
 
-    function validation() {
-        let hasError = false;
-        let totalNeeded = {};
-        arr = []; // Очищаем массив ошибок
-
-        // Сначала получим актуальные данные о запчастях
-        const checkParts = async () => {
-            try {
-                const uniquePartIds = [...new Set(requests.flatMap(req => 
-                    req.parts.map(part => part._id)
-                ))];
-                
-                const response = await axios.post('/api/parts/optionParts', {
-                    partsArr: uniquePartIds
-                });
-                
-                const partsData = response.data.reduce((acc, part) => {
-                    acc[part._id] = part;
-                    return acc;
-                }, {});
-
-                // Подсчитываем общее необходимое количество
-                requests.forEach(request => {
-                    request.parts.forEach(part => {
-                        if (!totalNeeded[part._id]) {
-                            totalNeeded[part._id] = {
-                                count: partsData[part._id]?.count || 0,
-                                needed: 0,
-                                name: partsData[part._id]?.name || 'Неизвестная запчасть'
-                            }
-                        }
-                        totalNeeded[part._id].needed += part.countReq;
-                    });
-                });
-
-                // Проверяем достаточно ли запчастей
-                Object.entries(totalNeeded).forEach(([partId, data]) => {
-                    if (data.count < data.needed) {
-                        arr.push(`Недостаточно запчастей "${data.name}": имеется ${data.count}, требуется ${data.needed}`);
-                        hasError = true;
-                    }
-                });
-
-                if (hasError) {
-                    setErr(arr);
-                } else {
-                    setErr([]);
-                    setVisible(true);
-                }
-            } catch (error) {
-                console.error('Ошибка при проверке запчастей:', error);
-                setErr(['Ошибка при проверке наличия запчастей']);
-            }
-        };
-
-        checkParts();
-    }
+    
 
     return (
         <button 

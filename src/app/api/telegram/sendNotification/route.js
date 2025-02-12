@@ -2,48 +2,59 @@ import { NextResponse } from 'next/server'
 
 export async function POST(req) {
     try {
-        const { message, type } = await req.json()
-        const botToken = process.env.TELEGRAM_BOT_TOKEN
+        const { message, chat_id, message_thread_id } = await req.json()
+      
+        const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
+        const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`
+
+        // Убедимся, что chat_id это число
+        const numericChatId = Number(chat_id)
         
-        // Выбираем ID чата в зависимости от типа уведомления
-        let chatId
-        switch (type) {
-            case 'fields':
-                chatId = process.env.TELEGRAM_CHAT_ID_FIELDS
-                break
-            case 'requests':
-                chatId = process.env.TELEGRAM_CHAT_ID_REQUESTS
-                break
-            case 'inspections':
-                chatId = process.env.TELEGRAM_CHAT_ID_INSPECTIONS
-                break
-            default:
-                chatId = process.env.TELEGRAM_CHAT_ID_MAIN // Используем основной чат как fallback
+        if (isNaN(numericChatId)) {
+            throw new Error('Invalid chat_id format')
         }
 
-        if (!chatId) {
-            throw new Error('Chat ID not found for the specified type')
+        const bodyData = {
+            chat_id: numericChatId,
+            text: message,
+            parse_mode: 'HTML'
         }
-        
-        const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+
+        if (message_thread_id) {
+            bodyData.message_thread_id = message_thread_id
+        }
+
+
+        const response = await fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                chat_id: chatId,
-                text: message,
-                parse_mode: 'HTML'
-            })
+            body: JSON.stringify(bodyData)
         })
 
+        const data = await response.json()
+    
+        
         if (!response.ok) {
-            throw new Error('Failed to send telegram message')
+            console.error('Telegram API error response:', data)
+            throw new Error(`Telegram API error: ${data.description}`)
         }
 
-        return NextResponse.json({ success: true })
+        return NextResponse.json({ 
+            success: true, 
+            data: data 
+        })
     } catch (error) {
-        console.error('Error:', error)
-        return NextResponse.json({ error: 'Failed to send notification' }, { status: 500 })
+        console.error('Error in sendNotification:', {
+            message: error.message,
+            stack: error.stack
+        })
+        return NextResponse.json({ 
+            success: false, 
+            error: error.message || 'Unknown error'
+        }, { 
+            status: 500 
+        })
     }
 } 

@@ -5,6 +5,7 @@ import * as turf from '@turf/turf';
 import axios from 'axios';
 import { WORK_TYPES } from '../constants/workTypes';
 import WialonControl from './WialonControl';
+import { useSession } from 'next-auth/react';
 
 
 // Определяем функцию вне компонента
@@ -30,6 +31,8 @@ function CreateWork({
     subFields,
     onWialonTrackSelect
 }) {
+    const { data: session } = useSession();
+
     const [workData, setWorkData] = useState({
         name: '',
         type: '',
@@ -202,9 +205,9 @@ function CreateWork({
                 .map(e => `${e.catagory ? `${e.catagory.split(' ')[0]} ` : ''}${e.name}`);
 
             // Формируем сообщение для Telegram
-            const message = `
-<b>🌱 Новая работа создана</b>
+            const message = `<b>🌱 Новая работа создана</b>
 
+👤 Создал: <code>${session?.user?.name || 'Система'}</code>
 📅 Планируемая дата: ${workData.plannedDate}
 🏢 Поле: ${selectedField?.properties?.Name || 'Без названия'}
 📋 Название: ${workData.name}
@@ -215,8 +218,13 @@ ${workData.description ? `<b>Описание:</b>\n${workData.description}\n` :
 ${selectedWorkers.length > 0 ? `\n<b>Работники:</b>\n${selectedWorkers.map(w => `• ${w}`).join('\n')}` : ''}
 ${selectedEquipment.length > 0 ? `\n<b>Техника:</b>\n${selectedEquipment.map(e => `• ${e}`).join('\n')}` : ''}`;
 
-            // Отправляем уведомление
-            await axios.post('/api/telegram/sendNotification', { message, type: 'fields' });
+            // Отправляем уведомление с новыми параметрами
+            await axios.post('/api/telegram/sendNotification', { 
+                message,
+                chat_id: process.env.NEXT_PUBLIC_TELEGRAM_CHAT_ID_FORTUNACRM,
+                message_thread_id: 39,
+                parse_mode: 'HTML'
+            });
 
             // Сохраняем работу
             onSave(dataToSave);
