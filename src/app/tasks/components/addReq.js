@@ -343,19 +343,18 @@ ${objectsInfo}`;
                                             </optgroup>
                                         ))}
                                     </select>
-                                    <button 
-                                        className="add-part-button"
-                                        onClick={() => router.push('/warehouse/addPart')}
-                                        title="Добавить новую запчасть"
-                                    >
-                                        <Image 
-                                            src="/components/add.svg" 
-                                            width={24} 
-                                            height={24} 
-                                            alt="Добавить запчасть" 
-                                        />
-                                    </button>
+                                    
                                 </div>
+                            </div>
+                            <div className="form-group">
+                                <button 
+                                    className="add-part-button"
+                                    onClick={() => router.push('/warehouse/addPart')}
+                                    title="Добавить новую запчасть"
+                                >
+                                    <Image src="/components/add.svg" width={24} height={24} alt="Добавить запчасть" />
+                                    <span>Добавить запчасть</span>
+                                </button>
                             </div>
                         </div>
 
