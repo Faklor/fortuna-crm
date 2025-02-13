@@ -206,7 +206,8 @@ ${objectsInfo}`;
 
             const chatId = process.env.NEXT_PUBLIC_TELEGRAM_CHAT_ID_FORTUNACRM;
 
-            const response = await axios.post('/api/telegram/sendNotification', { 
+            // Используем новый роут для отправки уведомления с кнопками
+            const response = await axios.post('/api/telegram/sendNotificationWithButtons', { 
                 message,
                 chat_id: chatId,
                 message_thread_id: 4
