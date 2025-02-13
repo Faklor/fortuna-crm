@@ -1,5 +1,5 @@
 'use client'
-import { useRef,useState } from 'react';
+import { useRef,useState, useEffect } from 'react';
 import '../scss/historyOperations.scss'
 
 //-------------components-----------
@@ -71,6 +71,9 @@ export default function HistoryOperation({
 
     let sortArray = Object.values(uniqueDates).reverse()
     
+    useEffect(() => {
+        setOperations(JSON.parse(visibleOperation))
+    }, [visibleOperation])
 
     return <div className="historyOperations" > 
         <AddOperation 

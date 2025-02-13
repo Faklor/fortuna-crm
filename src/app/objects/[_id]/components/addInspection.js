@@ -119,53 +119,73 @@ ${operation.usedParts.length > 0 ? `\n📦 Использованные запч
         }
     }
 
-    async function setInspection(objectID, period, beginDate, date, type, description, executors, usedParts){
+    async function setInspection(objectID, period, beginDate, date, type, description, executors, usedParts) {
         try {
-            // Подготавливаем массив использованных запчастей с единицами измерения
-            const formattedUsedParts = selectedParts.map(partId => {
-                const part = parts.find(p => p._id === partId);
-                return {
-                    _id: partId,
-                    name: part.name,
-                    count: Number(partValues[partId] || 0),
-                    description: selectedUnits[partId] || 'шт.', // Добавляем единицу измерения
-                    catagory: part.catagory
-                }
-            }).filter(part => part.count > 0);
+            // Подготавливаем данные о запчастях
+            const formattedUsedParts = usedParts.map(part => ({
+                _id: part._id,
+                name: part.name,
+                catagory: part.catagory,
+                serialNumber: part.serialNumber || '',
+                manufacturer: part.manufacturer || '',
+                count: Number(part.count),
+                unit: part.unit,
+                sum: part.sum || 0
+            }))
 
-            const response = await axios.post('/api/operations/add', {
-                objectID, 
-                period: period, 
-                beginDate: beginDate, 
-                date: date, 
-                type: type, 
-                description: description, 
-                executors: executors, 
-                usedParts: formattedUsedParts, // Используем обновленный массив
+            // Получаем информацию об объекте
+            const techResponse = await axios.post('/api/teches/object', { _id: objectID })
+            const techObject = techResponse.data
+            const objectName = `${techObject.catagory} ${techObject.name}`
+
+            // Создаем операцию
+            const operationResponse = await axios.post('/api/operations/add', {
+                objectID,
+                period,
+                beginDate,
+                date,
+                type,
+                description,
+                executors,
+                usedParts: formattedUsedParts,
                 createdBy: session?.user?.login || 'unknown'
             })
 
-            if (response.data.success) {
-                // Отправляем уведомление в Telegram
-                await sendTelegramNotification({
-                    beginDate,
-                    period,
-                    description,
-                    usedParts: formattedUsedParts.map(part => ({
-                        name: part.name,
-                        count: part.count,
-                        description: part.description // Теперь description будет доступен здесь
-                    }))
+            // Если есть запчасти, списываем их
+            if (formattedUsedParts.length > 0) {
+                await axios.post('/api/parts/writeOff', {
+                    parts: formattedUsedParts,
+                    objectID,
+                    date,
+                    workerName: executors[0] || 'unknown',
+                    description
                 })
-
-                // Обновляем список операций
-                setOperations(response.data.operations)
-                router.refresh()
             }
 
-            return response
+            // Отправляем уведомление в Telegram
+            const message = `🔍 <b>Новый технический осмотр</b>
+
+📅 Дата: ${new Date(beginDate).toLocaleDateString('ru-RU')}
+🚜 Объект: ${objectName}
+🔄 Период: ${period} год(а)
+👨‍🔧 Исполнители: ${executors.join(', ')}
+✍️ Описание: ${description || '-'}
+👤 Создал: ${session?.user?.name || 'Система'}
+
+${formattedUsedParts.length > 0 ? `\n📦 Использованные запчасти:\n${formattedUsedParts.map(part => 
+    `• ${part.count} ${part.unit} - ${part.name}${part.manufacturer ? ` (${part.manufacturer})` : ''}`
+).join('\n')}` : ''}`
+
+            await axios.post('/api/telegram/sendNotification', {
+                message,
+                chat_id: process.env.NEXT_PUBLIC_TELEGRAM_CHAT_ID_FORTUNACRM,
+                message_thread_id: 47,
+                parse_mode: 'HTML'
+            })
+
+            return operationResponse
         } catch (error) {
-            console.error('Error adding operation:', error)
+            console.error('Error adding inspection:', error)
             throw error
         }
     }

@@ -10,18 +10,14 @@ export async function POST(req){
 
     try {
         const { _id, dateBegin, requests, dateEnd } = await req.json()
-        console.log('Received request:', { _id, dateBegin, requests, dateEnd });
-
         // Получаем оригинальную заявку для информации о создателе
         const originalReq = await Requisition.findById(_id)
         if (!originalReq) {
             throw new Error('Заявка не найдена')
         }
-        console.log('Original request found:', originalReq);
 
         // Обрабатываем каждый запрос
         for (const request of requests) {
-            console.log('Processing request:', request);
 
             // Находим объект в БД по ID
             const currentObject = await Objects.findById(request.obj);
@@ -29,11 +25,9 @@ export async function POST(req){
                 console.error(`Объект не найден: ${request.obj}`);
                 continue;
             }
-            console.log('Found object:', currentObject);
 
             // Для каждой запчасти в запросе
             for (const part of request.parts) {
-                console.log('Processing part:', part);
 
                 // Находим запчасть в БД
                 const currentPart = await Parts.findById(part._id);
@@ -41,7 +35,6 @@ export async function POST(req){
                     console.error(`Запчасть не найдена: ${part._id}`);
                     continue;
                 }
-                console.log('Found part:', currentPart);
 
                 // 1. Привязываем запчасть к объекту
                 if (!currentObject.bindingParts) {
@@ -55,7 +48,6 @@ export async function POST(req){
                         _id: part._id,
                         name: currentPart.name
                     });
-                    console.log('Added part to object bindingParts');
                 }
 
                 // 2. Привязываем объект к запчасти
@@ -70,21 +62,17 @@ export async function POST(req){
                         _id: currentObject._id,
                         name: currentObject.name
                     });
-                    console.log('Added object to part bindingObj');
                 }
 
                 // 3. Увеличиваем количество запчастей на складе
                 currentPart.count += part.countReq;
-                console.log('Updated part count:', currentPart.count);
 
                 // Сохраняем изменения в запчасти
                 await currentPart.save();
-                console.log('Part saved successfully');
             }
 
             // Сохраняем изменения в объекте
             await currentObject.save();
-            console.log('Object saved successfully');
 
             // Создаем запись в истории с полной информацией об объекте и запчастях
             const historyRecord = await HistoryReq.create({
@@ -121,12 +109,10 @@ export async function POST(req){
                 })),
                 createdBy: originalReq.createdBy
             });
-            console.log('History record created:', historyRecord);
         }
 
         // Удаляем активную заявку
         const deletedReq = await Requisition.findOneAndDelete({_id: _id});
-        console.log('Original request deleted:', deletedReq);
         
         return NextResponse.json(_id);
     }

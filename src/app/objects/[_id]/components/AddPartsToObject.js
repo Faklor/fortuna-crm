@@ -67,10 +67,16 @@ export default function AddPartsToObject({
     }
 
     const handleNumberInputChange = (partId, value) => {
-        setPartValues(prev => ({
-            ...prev,
-            [partId]: value
-        }))
+        // Находим запчасть
+        const part = parts.find(p => p._id === partId)
+        
+        // Проверяем, что значение пустое или в допустимом диапазоне
+        if (value === '' || (Number(value) >= 0 && Number(value) <= part.count)) {
+            setPartValues(prev => ({
+                ...prev,
+                [partId]: value
+            }))
+        }
     }
 
     const handleSelectChange = (partId, value) => {
@@ -221,7 +227,8 @@ ${partsInfo}`
                                 <div className="part-details">
                                     <input 
                                         type="number"
-                                        min="1"
+                                        min="0"
+                                        max={part.count}
                                         placeholder="Количество"
                                         value={partValues[part._id] || ''}
                                         onChange={(e) => handleNumberInputChange(part._id, e.target.value)}

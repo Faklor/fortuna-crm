@@ -53,8 +53,16 @@ export default function Operation({
     },[refsdescriptions])
 
     //function
-    async function deleteOperation(_id){
-        return await axios.post('/api/operations/delete', {_id:_id})
+    const handleDelete = async () => {
+        try {
+            const response = await axios.post('/api/operations/delete', { _id })
+            if (response.data.success) {
+                // Обновляем состояние, удаляя операцию из списка
+                setOperations(prev => prev.filter(op => op._id !== _id))
+            }
+        } catch (error) {
+            console.error('Ошибка при удалении операции:', error)
+        }
     }
 
     function getColor(){
@@ -81,13 +89,7 @@ export default function Operation({
                     <button onClick={() => setVisibleEdit(true)}>
                         <Image src={'/components/edit.svg'} width={34} height={34} alt='editOperation'/>
                     </button>
-                    <button onClick={() => {
-                        deleteOperation(_id)
-                            .then(res => {
-                                setOperations((prevParts) => prevParts.filter((part) => part._id !== res.data))
-                            })
-                            .catch(e => console.log(e))
-                    }}>
+                    <button onClick={handleDelete}>
                         <Image src={'/components/delete.svg'} width={34} height={34} alt='deleteOperation'/>
                     </button>
                 </div>

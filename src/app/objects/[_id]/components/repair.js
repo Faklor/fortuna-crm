@@ -145,6 +145,11 @@ export default function Repair({
         }).filter(part => part.count > 0)
 
         try {
+            // Получаем информацию об объекте
+            const techResponse = await axios.post('/api/teches/object', { _id: objectID })
+            const techObject = techResponse.data
+            const objectName = `${techObject.catagory} ${techObject.name}`
+
             // Отправляем запрос на создание операции
             const operationResponse = await axios.post('/api/operations/add', {
                 objectID,
@@ -152,7 +157,7 @@ export default function Repair({
                 type,
                 description: data.description,
                 periodMotor: data.periodMotor,
-                executors: finalExecutors, // Убедимся, что передаем массив исполнителей
+                executors: finalExecutors,
                 createdBy: currentUser?.login || 'unknown',
                 usedParts
             })
@@ -168,9 +173,36 @@ export default function Repair({
                 })
             }
 
+            // Формируем сообщение для Telegram
+            const message = `🔧 <b>Новая операция ремонта</b>
+
+📅 Дата: ${new Date(data.date).toLocaleDateString('ru-RU')}
+🚜 Объект: ${objectName}
+${data.periodMotor ? `⏱ Моточасы: ${data.periodMotor}` : ''}
+👨‍🔧 Исполнители: ${finalExecutors.join(', ')}
+✍️ Описание: ${data.description || '-'}
+👤 Создал: ${currentUser?.name || 'Система'}
+
+${usedParts.length > 0 ? `\n📦 Использованные запчасти:\n${usedParts.map(part => 
+    `• ${part.count} ${part.unit} - ${part.name}${part.manufacturer ? ` (${part.manufacturer})` : ''}`
+).join('\n')}` : ''}`
+
+            // Отправляем уведомление в Telegram
+            await axios.post('/api/telegram/sendNotification', {
+                message,
+                chat_id: process.env.NEXT_PUBLIC_TELEGRAM_CHAT_ID_FORTUNACRM,
+                message_thread_id: 47,
+                parse_mode: 'HTML'
+            })
+
+            setOperations(prev => [...prev, operationResponse.data])
+            router.push(`/objects/${objectID}`)
+            setTypeOperation(listTypesOperations[0])
+            
             return operationResponse
         } catch (error) {
             console.error('Ошибка при добавлении операции:', error)
+            setErr(error.response?.data?.error || 'Ошибка при добавлении операции')
             throw error
         }
     }

@@ -16,6 +16,7 @@ const operationsSchema = new mongoose.Schema({
         manufacturer: String,
         count: Number,
         sum: Number,
+        unit: String
     }]
 })
 

@@ -102,19 +102,78 @@ export default function AddMaintance({
     )
 
     // Функция добавления ТО
-    async function setInspection(objectID, period, periodMotor, beginDate, date, type, description, executors, usedParts){
-        return await axios.post('/api/operations/add', {
-            objectID, 
-            period: period, 
-            periodMotor: periodMotor, 
-            beginDate: beginDate, 
-            date: date, 
-            type: type, 
-            description: description,
-            executors: executors,
-            usedParts: usedParts,
-            createdBy: currentUser?.login || 'unknown'
-        })
+    async function setInspection(objectID, period, periodMotor, beginDate, date, type, description, executors, usedParts) {
+        try {
+            // Подготавливаем данные о запчастях
+            const formattedUsedParts = usedParts.map(part => ({
+                _id: part._id,
+                name: part.name,
+                catagory: part.catagory,
+                serialNumber: part.serialNumber || '',
+                manufacturer: part.manufacturer || '',
+                count: Number(part.count),
+                unit: part.unit,
+                sum: part.sum || 0
+            }))
+
+            // Получаем информацию об объекте
+            const techResponse = await axios.post('/api/teches/object', { _id: objectID })
+            const techObject = techResponse.data
+            const objectName = `${techObject.catagory} ${techObject.name}`
+
+            // Создаем операцию
+            const operationResponse = await axios.post('/api/operations/add', {
+                objectID,
+                period,
+                periodMotor,
+                beginDate,
+                date,
+                type,
+                description,
+                executors,
+                usedParts: formattedUsedParts,
+                createdBy: currentUser?.login || 'unknown'
+            })
+
+            // Если есть запчасти, списываем их
+            if (formattedUsedParts.length > 0) {
+                await axios.post('/api/parts/writeOff', {
+                    parts: formattedUsedParts,
+                    objectID,
+                    date,
+                    workerName: executors[0] || 'unknown',
+                    description
+                })
+            }
+
+            // Формируем сообщение для Telegram
+            const message = `🔧 <b>Новое техническое обслуживание</b>
+
+📅 Дата: ${new Date(beginDate).toLocaleDateString('ru-RU')}
+🚜 Объект: ${objectName}
+${categoryTech ? '⏱ Моточасы' : '🚗 Пробег'}: ${periodMotor}
+${categoryTech ? '⚙️ Период моточасов' : '🛣 Период пробега'}: ${period}
+👨‍🔧 Исполнители: ${executors.join(', ')}
+✍️ Описание: ${description || '-'}
+👤 Создал: ${currentUser?.name || 'Система'}
+
+${formattedUsedParts.length > 0 ? `\n📦 Использованные запчасти:\n${formattedUsedParts.map(part => 
+    `• ${part.count} ${part.unit} - ${part.name}${part.manufacturer ? ` (${part.manufacturer})` : ''}`
+).join('\n')}` : ''}`
+
+            // Отправляем уведомление в Telegram
+            await axios.post('/api/telegram/sendNotification', {
+                message,
+                chat_id: process.env.NEXT_PUBLIC_TELEGRAM_CHAT_ID_FORTUNACRM,
+                message_thread_id: 47,
+                parse_mode: 'HTML'
+            })
+
+            return operationResponse
+        } catch (error) {
+            console.error('Error adding maintenance:', error)
+            throw error
+        }
     }
 
     return (

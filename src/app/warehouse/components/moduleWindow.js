@@ -159,7 +159,12 @@ ${sum ? `Цена: ${sum}` : ''}`
             <hr/>
             <br/>
             <p>Выберите работника</p>
-            <select className='workers' onChange={(e)=>{setWorker(e.target.value)}}>
+            <select 
+                className='workers' 
+                onChange={(e)=>{setWorker(e.target.value)}}
+                value={sendWorker || ""}
+            >
+                <option value="" disabled>Выберите работника</option>
                 {sortedOrganizations.map(organization => (
                     <optgroup key={organization} label={organization}>
                         {groupedWorkers[organization]
@@ -174,7 +179,12 @@ ${sum ? `Цена: ${sum}` : ''}`
                 ))}
             </select>
             <p>Выберите Объект</p>
-            <select className='objects' onChange={(e)=>{setObject(e.target.value)}}>
+            <select 
+                className='objects' 
+                onChange={(e)=>{setObject(e.target.value)}}
+                value={sendObject || ""}
+            >
+                <option value="" disabled>Выберите объект</option>
                 {sortedCategories.map(category => (
                     <optgroup key={category} label={category}>
                         {groupedTeches[category]

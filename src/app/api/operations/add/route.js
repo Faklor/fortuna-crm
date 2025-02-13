@@ -1,6 +1,7 @@
 import dbConnet from "@/lib/db"
 import Operations from '@/models/operations'
 import Tech from '@/models/tech'
+import Parts from '@/models/parts'
 import { NextRequest, NextResponse } from "next/server"
 
 
@@ -22,6 +23,56 @@ export async function POST(req,res){
             createdBy
         } = await req.json();
 
+        // Получаем объект для привязки
+        const currentObject = await Tech.findById(objectID)
+        if (!currentObject) {
+            throw new Error('Объект не найден')
+        }
+
+        // Обрабатываем привязки для каждой запчасти
+        for (const part of usedParts) {
+            // Находим запчасть в БД
+            const currentPart = await Parts.findById(part._id)
+            if (!currentPart) {
+                console.error(`Запчасть не найдена: ${part._id}`)
+                continue
+            }
+
+            // 1. Привязываем запчасть к объекту
+            if (!currentObject.bindingParts) {
+                currentObject.bindingParts = []
+            }
+            const partExistsInObj = currentObject.bindingParts.some(
+                p => p._id.toString() === part._id.toString()
+            )
+            if (!partExistsInObj) {
+                currentObject.bindingParts.push({
+                    _id: part._id,
+                    name: currentPart.name
+                })
+            }
+
+            // 2. Привязываем объект к запчасти
+            if (!currentPart.bindingObj) {
+                currentPart.bindingObj = []
+            }
+            const objExistsInPart = currentPart.bindingObj.some(
+                obj => obj._id.toString() === currentObject._id.toString()
+            )
+            if (!objExistsInPart) {
+                currentPart.bindingObj.push({
+                    _id: currentObject._id,
+                    name: currentObject.name
+                })
+            }
+
+            // Сохраняем изменения в запчасти
+            await currentPart.save()
+        }
+
+        // Сохраняем изменения в объекте
+        await currentObject.save()
+
         if(type === 'Ремонт' || type === 'Навигация'){
             const operationAdd = await Operations.create({
                 objectID, 
@@ -31,7 +82,15 @@ export async function POST(req,res){
                 periodMotor,
                 executors,
                 createdBy,
-                usedParts
+                usedParts: usedParts.map(part => ({
+                    _id: part._id,
+                    name: part.name,
+                    serialNumber: part.serialNumber,
+                    manufacturer: part.manufacturer,
+                    count: part.count,
+                    sum: part.sum,
+                    unit: part.unit
+                }))
             })
             return NextResponse.json(operationAdd)
         }
@@ -42,24 +101,27 @@ export async function POST(req,res){
                 type, 
                 description,
                 executors,
-                usedParts,
+                usedParts: usedParts.map(part => ({
+                    _id: part._id,
+                    name: part.name,
+                    serialNumber: part.serialNumber,
+                    manufacturer: part.manufacturer,
+                    count: part.count,
+                    sum: part.sum,
+                    unit: part.unit
+                })),
                 createdBy
             })
             
-            // Получаем информацию об объекте
-            const techObject = await Tech.findById(objectID)
-            
             // Проверяем категорию объекта
-            const specialCategories = ['🚜 Трактора', '💧 Опрыскиватели', '🔆 Комбайны', '📦 Погрущики'] // Комбайны, Опрыскиватели, Погрузчики, Трактора
+            const specialCategories = ['🚜 Трактора', '💧 Опрыскиватели', '🔆 Комбайны', '📦 Погрущики']
             
-            if (specialCategories.includes(techObject.catagory)) {
-                // Для специальных категорий обновляем все объекты той же категории
+            if (specialCategories.includes(currentObject.catagory)) {
                 await Tech.updateMany(
-                    { catagory: techObject.catagory },
+                    { catagory: currentObject.catagory },
                     { $set: { inspection: { dateBegin: beginDate, period: Number(period) } } }
                 )
             } else {
-                // Для остальных категорий обновляем только текущий объект
                 await Tech.findByIdAndUpdate(
                     { _id: objectID },
                     { $set: { inspection: { dateBegin: beginDate, period: Number(period) } } }
@@ -76,7 +138,15 @@ export async function POST(req,res){
                 description, 
                 periodMotor,
                 executors,
-                usedParts,
+                usedParts: usedParts.map(part => ({
+                    _id: part._id,
+                    name: part.name,
+                    serialNumber: part.serialNumber,
+                    manufacturer: part.manufacturer,
+                    count: part.count,
+                    sum: part.sum,
+                    unit: part.unit
+                })),
                 createdBy
             })
             
