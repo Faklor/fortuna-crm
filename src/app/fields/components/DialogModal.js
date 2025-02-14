@@ -11,9 +11,13 @@ export default function DialogModal({
     type = 'alert', // 'alert', 'prompt', 'confirm'
     defaultValue = '',
     confirmText = 'OK',
-    cancelText = 'Отмена'
+    cancelText = 'Отмена',
+    showNotificationCheckbox,
+    defaultNotificationState
 }) {
-    const [inputValue, setInputValue] = useState(defaultValue);
+    
+    const [inputValue, setInputValue] = useState(defaultValue || '');
+    const [sendNotification, setSendNotification] = useState(defaultNotificationState || false);
 
     useEffect(() => {
         setInputValue(defaultValue);
@@ -25,7 +29,7 @@ export default function DialogModal({
         if (type === 'prompt') {
             onConfirm(inputValue);
         } else {
-            onConfirm();
+            onConfirm(sendNotification);
         }
     };
 
@@ -43,6 +47,16 @@ export default function DialogModal({
                             className="dialog-modal__input"
                             autoFocus
                         />
+                    )}
+                    {showNotificationCheckbox && (
+                        <label className="checkbox-label">
+                            <input
+                                type="checkbox"
+                                checked={sendNotification}
+                                onChange={(e) => setSendNotification(e.target.checked)}
+                            />
+                            Отправить уведомление в Telegram
+                        </label>
                     )}
                 </div>
                 <div className="dialog-modal__actions">

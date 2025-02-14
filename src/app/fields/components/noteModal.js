@@ -8,7 +8,8 @@ export default function NoteModal({ coordinates, onClose, onNoteAdded }) {
     const [noteData, setNoteData] = useState({
         title: '',
         description: '',
-        image: null
+        image: null,
+        sendNotification: true
     });
 
     const handleImageChange = (e) => {
@@ -41,34 +42,34 @@ export default function NoteModal({ coordinates, onClose, onNoteAdded }) {
                     onNoteAdded(data.allNotes);
                 }
 
-                // Формируем сообщение для Telegram
-                const message = `<b>📍 Новая заметка создана</b>
+                // Отправляем уведомление только если включен чекбокс
+                if (noteData.sendNotification) {
+                    const message = `<b>📍 Новая заметка создана</b>
 
 👤 Создал: <code>${session?.user?.name || 'Система'}</code>
 📝 Название: ${noteData.title}
 ${noteData.description ? `\n<b>Описание:</b>\n${noteData.description}` : ''}`;
 
-                // Если есть изображение, отправляем через API роут
-                if (noteData.image) {
-                    const fileExtension = noteData.image.name.split('.').pop().toLowerCase();
-                    const fileName = `${data.note._id}.${fileExtension}`; // Используем ID из полученной заметки
+                    if (noteData.image) {
+                        const fileExtension = noteData.image.name.split('.').pop().toLowerCase();
+                        const fileName = `${data.note._id}.${fileExtension}`;
 
-                    const telegramFormData = new FormData();
-                    telegramFormData.append('photo', fileName);
-                    telegramFormData.append('caption', message);
+                        const telegramFormData = new FormData();
+                        telegramFormData.append('photo', fileName);
+                        telegramFormData.append('caption', message);
 
-                    await axios.post('/api/telegram/sendPhoto', telegramFormData);
-                } else {
-                    // Если изображения нет, отправляем только текстовое сообщение
-                    await axios.post('/api/telegram/sendNotification', { 
-                        message,
-                        chat_id: process.env.NEXT_PUBLIC_TELEGRAM_CHAT_ID_FORTUNACRM,
-                        message_thread_id: 43,
-                        parse_mode: 'HTML'
-                    });
+                        await axios.post('/api/telegram/sendPhoto', telegramFormData);
+                    } else {
+                        await axios.post('/api/telegram/sendNotification', { 
+                            message,
+                            chat_id: process.env.NEXT_PUBLIC_TELEGRAM_CHAT_ID_FORTUNACRM,
+                            message_thread_id: 43,
+                            parse_mode: 'HTML'
+                        });
+                    }
                 }
 
-                onClose(); // Закрываем модальное окно после успешного сохранения
+                onClose();
             } else {
                 throw new Error(data.error || 'Ошибка при сохранении заметки');
             }
@@ -116,6 +117,20 @@ ${noteData.description ? `\n<b>Описание:</b>\n${noteData.description}` :
                             accept="image/*"
                             onChange={handleImageChange}
                         />
+                    </div>
+
+                    <div className="form-group">
+                        <label className="checkbox-label">
+                            <input 
+                                type="checkbox"
+                                checked={noteData.sendNotification}
+                                onChange={(e) => setNoteData(prev => ({
+                                    ...prev,
+                                    sendNotification: e.target.checked
+                                }))}
+                            />
+                            Отправить уведомление в Telegram
+                        </label>
                     </div>
 
                     <div className="modal-actions">

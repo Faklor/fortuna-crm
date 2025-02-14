@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 
 export async function POST(req) {
     try {
-        const { message, chat_id, message_thread_id } = await req.json()
+        const { message, chat_id, message_thread_id, reqId } = await req.json()
       
         const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
         const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`
@@ -13,11 +13,11 @@ export async function POST(req) {
                 [
                     {
                         text: "✅ Завершить заявку",
-                        callback_data: "complete_request"
+                        callback_data: `complete_request_${reqId}`
                     },
                     {
                         text: "❌ Отменить заявку",
-                        callback_data: "cancel_request"
+                        callback_data: `cancel_request_${reqId}`
                     }
                 ]
             ]

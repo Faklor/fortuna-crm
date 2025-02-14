@@ -377,11 +377,14 @@ function Map({ fields, currentSeason }) {
   const [isCreateWorkModalOpen, setIsCreateWorkModalOpen] = useState(false);
   const [dialog, setDialog] = useState({
     isOpen: false,
-    type: 'alert',
+    type: '',
     title: '',
     message: '',
-    onConfirm: () => {},
-    defaultValue: ''
+    onConfirm: null,
+    onClose: null,
+    defaultValue: '',
+    showNotificationCheckbox: false,
+    defaultNotificationState: false
   });
   const [wialonTracks, setWialonTracks] = useState([]);
   const [showWialonControl, setShowWialonControl] = useState(false);
@@ -628,7 +631,11 @@ function Map({ fields, currentSeason }) {
         type: 'confirm',
         title: 'Подтверждение',
         message: 'Вы уверены, что хотите удалить эту заметку?',
-        onConfirm: async () => {
+        showNotificationCheckbox: true,
+        defaultNotificationState: false,
+        confirmText: 'Удалить',
+        cancelText: 'Отмена',
+        onConfirm: async (sendNotification) => {
             try {
                 const response = await fetch('/api/notes/delete', {
                     method: 'DELETE',
@@ -641,20 +648,21 @@ function Map({ fields, currentSeason }) {
                 const data = await response.json();
 
                 if (data.success) {
-                    // Отправляем уведомление в Telegram
-                    const message = `<b>🗑️ Заметка удалена</b>
+                    if (sendNotification) {
+                        const message = `<b>🗑️ Заметка удалена</b>
 
 👤 Удалил: <code>${session?.user?.name || 'Система'}</code>
 📝 Название: ${deletedNote.title}
 ${deletedNote.description ? `\n<b>Описание удаленной заметки:</b>\n${deletedNote.description}` : ''}
 ${deletedNote.image ? '\n🖼 Было прикреплено изображение' : ''}`;
 
-                    await axios.post('/api/telegram/sendNotification', { 
-                        message,
-                        chat_id: process.env.NEXT_PUBLIC_TELEGRAM_CHAT_ID_FORTUNACRM,
-                        message_thread_id: 43,
-                        parse_mode: 'HTML'
-                    });
+                        await axios.post('/api/telegram/sendNotification', { 
+                            message,
+                            chat_id: process.env.NEXT_PUBLIC_TELEGRAM_CHAT_ID_FORTUNACRM,
+                            message_thread_id: 43,
+                            parse_mode: 'HTML'
+                        });
+                    }
 
                     setNotes(prevNotes => prevNotes.filter(note => note._id !== noteId));
                     setDialog({
@@ -1199,7 +1207,7 @@ ${deletedNote.image ? '\n🖼 Было прикреплено изображен
         />
       )}
 
-      <DialogModal
+      {dialog && <DialogModal
         isOpen={dialog.isOpen}
         type={dialog.type}
         title={dialog.title}
@@ -1207,7 +1215,9 @@ ${deletedNote.image ? '\n🖼 Было прикреплено изображен
         onConfirm={dialog.onConfirm}
         onClose={() => setDialog({ ...dialog, isOpen: false })}
         defaultValue={dialog.defaultValue}
-      />
+        showNotificationCheckbox={dialog.showNotificationCheckbox}
+        defaultNotificationState={dialog.defaultNotificationState}
+      />}
 
       {/* Добавляем панель информации */}
       {fendtData && <FendtInfoPanel data={fendtData} />}
@@ -1234,8 +1244,6 @@ function MapEvents({ onClick }) {
   
   return null;
 }
-
-
 
 export default Map;
 

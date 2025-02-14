@@ -174,7 +174,7 @@ export default function AddReq({setVisibleAdd, arrActive, objects, parts}){
         });
     }
     
-    async function sendTelegramNotification(reqData, selectedObjects, parts, session) {
+    async function sendTelegramNotification(reqData, selectedObjects, parts, session,reqId) {
         try {
             const urgencyTypes = {
                 'НЕ СРОЧНАЯ': '🟢',
@@ -210,7 +210,8 @@ ${objectsInfo}`;
             const response = await axios.post('/api/telegram/sendNotificationWithButtons', { 
                 message,
                 chat_id: chatId,
-                message_thread_id: 4
+                message_thread_id: 4,
+                reqId: reqId
             });
 
             if (!response.data.success) {
@@ -257,7 +258,8 @@ ${objectsInfo}`;
                     { date, urgencySt },
                     selectedObjects,
                     parts,
-                    session
+                    session,
+                    res.data._id
                 );
                 
                 // Закрываем окно добавления

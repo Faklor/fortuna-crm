@@ -37,7 +37,7 @@ function CreateWork({
         name: '',
         type: '',
         fieldId: selectedField?._id || '',
-        plannedDate: '',
+        plannedDate: new Date().toISOString().split('T')[0],
         description: '',
         processingArea: processingArea,
         area: 0,
@@ -47,6 +47,7 @@ function CreateWork({
         workers: [],
         equipment: [],
         useWialon: false,
+        sendNotification: true
     });
 
     const [workers, setWorkers] = useState([]);
@@ -204,8 +205,9 @@ function CreateWork({
                 .filter(e => workData.equipment.includes(e._id))
                 .map(e => `${e.catagory ? `${e.catagory.split(' ')[0]} ` : ''}${e.name}`);
 
-            // Формируем сообщение для Telegram
-            const message = `<b>🌱 Новая работа создана</b>
+            // Отправляем уведомление только если включен чекбокс
+            if (workData.sendNotification) {
+                const message = `<b>🌱 Новая работа создана</b>
 
 👤 Создал: <code>${session?.user?.name || 'Система'}</code>
 📅 Планируемая дата: ${workData.plannedDate}
@@ -218,13 +220,13 @@ ${workData.description ? `<b>Описание:</b>\n${workData.description}\n` :
 ${selectedWorkers.length > 0 ? `\n<b>Работники:</b>\n${selectedWorkers.map(w => `• ${w}`).join('\n')}` : ''}
 ${selectedEquipment.length > 0 ? `\n<b>Техника:</b>\n${selectedEquipment.map(e => `• ${e}`).join('\n')}` : ''}`;
 
-            // Отправляем уведомление с новыми параметрами
-            await axios.post('/api/telegram/sendNotification', { 
-                message,
-                chat_id: process.env.NEXT_PUBLIC_TELEGRAM_CHAT_ID_FORTUNACRM,
-                message_thread_id: 39,
-                parse_mode: 'HTML'
-            });
+                await axios.post('/api/telegram/sendNotification', { 
+                    message,
+                    chat_id: process.env.NEXT_PUBLIC_TELEGRAM_CHAT_ID_FORTUNACRM,
+                    message_thread_id: 39,
+                    parse_mode: 'HTML'
+                });
+            }
 
             // Сохраняем работу
             onSave(dataToSave);
@@ -465,6 +467,20 @@ ${selectedEquipment.length > 0 ? `\n<b>Техника:</b>\n${selectedEquipment.
                                 </option>
                             ))}
                         </select>
+                    </div>
+
+                    <div className="form-group">
+                        <label className="checkbox-label">
+                            <input 
+                                type="checkbox"
+                                checked={workData.sendNotification}
+                                onChange={(e) => setWorkData(prev => ({
+                                    ...prev,
+                                    sendNotification: e.target.checked
+                                }))}
+                            />
+                            Отправить уведомление в Telegram
+                        </label>
                     </div>
 
                     <div className="button-group">

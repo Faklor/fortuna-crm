@@ -537,30 +537,101 @@ export default function ShowField({
         }
     }, [selectedField]);
 
+    const handleDeleteWork = async (workId) => {
+        try {
+            const work = fieldWorks.find(w => w._id === workId) || archiveWorks.find(w => w._id === workId);
+            
+            setDialog({
+                isOpen: true,
+                type: 'confirm',
+                title: 'Подтверждение удаления',
+                message: 'Вы уверены, что хотите удалить эту работу?',
+                showNotificationCheckbox: true,
+                defaultNotificationState: true,
+                onConfirm: async (sendNotification) => {
+                    try {
+                        const response = await axios.delete(`/api/fields/works/delete/${workId}`);
+                        
+                        if (response.data.success) {
+                            if (sendNotification) {
+                                const date = new Date(work.plannedDate).toLocaleDateString('ru-RU', {
+                                    year: 'numeric',
+                                    month: '2-digit',
+                                    day: '2-digit'
+                                });
+
+                                const message = `<b>❌ Работа удалена</b>
+
+👤 Удалил: <code>${session?.user?.name || 'Система'}</code>
+📅 Дата создания: ${date}
+🏢 Объект: ${field?.properties?.Name || 'Без названия'}
+📋 Работа: ${work.name}`;
+
+                                await axios.post('/api/telegram/sendNotification', { 
+                                    message,
+                                    chat_id: process.env.NEXT_PUBLIC_TELEGRAM_CHAT_ID_FORTUNACRM,
+                                    message_thread_id: 41,
+                                    parse_mode: 'HTML'
+                                });
+                            }
+
+                            setFieldWorks(prev => prev.filter(w => w._id !== workId));
+                            setArchiveWorks(prev => prev.filter(w => w._id !== workId));
+                            setDialog(null);
+                        }
+                    } catch (error) {
+                        console.error('Error deleting work:', error);
+                        setDialog({
+                            isOpen: true,
+                            type: 'alert',
+                            title: 'Ошибка',
+                            message: 'Ошибка при удалении работы',
+                            onConfirm: () => setDialog(null)
+                        });
+                    }
+                },
+                onClose: () => setDialog(null)
+            });
+        } catch (error) {
+            console.error('Error in handleDeleteWork:', error);
+            alert('Ошибка при удалении работы');
+        }
+    };
+
     const updateWorkStatus = async (workId, newStatus) => {
         try {
-            const response = await axios.put(`/api/fields/works/updateStatus/${workId}`, {
-                status: newStatus
-            });
-            
-            if (response.data) {
-                setFieldWorks(prevWorks => 
-                    prevWorks.map(work => 
-                        work._id === workId 
-                            ? { ...work, status: newStatus }
-                            : work
-                    )
-                );
+            setDialog({
+                isOpen: true,
+                type: 'confirm',
+                title: 'Подтверждение изменения статуса',
+                message: `Вы уверены, что хотите изменить статус работы на "${WORK_STATUSES[newStatus].name}"?`,
+                showNotificationCheckbox: true,
+                defaultNotificationState: true,
+                onConfirm: async (sendNotification) => {
+                    try {
+                        const response = await axios.put(`/api/fields/works/updateStatus/${workId}`, {
+                            status: newStatus
+                        });
+                        
+                        if (response.data) {
+                            setFieldWorks(prevWorks => 
+                                prevWorks.map(work => 
+                                    work._id === workId 
+                                        ? { ...work, status: newStatus }
+                                        : work
+                                )
+                            );
 
-                const work = fieldWorks.find(w => w._id === workId);
-                if (work) {
-                    const date = new Date(work.plannedDate).toLocaleDateString('ru-RU', {
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit'
-                    });
+                            if (sendNotification) {
+                                const work = fieldWorks.find(w => w._id === workId);
+                                if (work) {
+                                    const date = new Date(work.plannedDate).toLocaleDateString('ru-RU', {
+                                        year: 'numeric',
+                                        month: '2-digit',
+                                        day: '2-digit'
+                                    });
 
-                    const message = `<b>🔄 Статус работы изменен</b>
+                                    const message = `<b>🔄 Статус работы изменен</b>
 
 👤 Изменил: <code>${session?.user?.name || 'Система'}</code>
 📅 Дата создания: ${date}
@@ -573,18 +644,31 @@ export default function ShowField({
 • Площадь: ${work.area} га
 ${work.description ? `• Описание: ${work.description}` : ''}`;
 
-                    const chatId = process.env.NEXT_PUBLIC_TELEGRAM_CHAT_ID_FORTUNACRM;
-
-                    await axios.post('/api/telegram/sendNotification', { 
-                        message,
-                        chat_id: chatId,
-                        message_thread_id: 41,
-                        parse_mode: 'HTML'
-                    });
-                }
-            }
+                                    await axios.post('/api/telegram/sendNotification', { 
+                                        message,
+                                        chat_id: process.env.NEXT_PUBLIC_TELEGRAM_CHAT_ID_FORTUNACRM,
+                                        message_thread_id: 41,
+                                        parse_mode: 'HTML'
+                                    });
+                                }
+                            }
+                            setDialog(null);
+                        }
+                    } catch (error) {
+                        console.error('Error updating work status:', error);
+                        setDialog({
+                            isOpen: true,
+                            type: 'alert',
+                            title: 'Ошибка',
+                            message: 'Ошибка при обновлении статуса работы',
+                            onConfirm: () => setDialog(null)
+                        });
+                    }
+                },
+                onClose: () => setDialog(null)
+            });
         } catch (error) {
-            console.error('Error updating work status:', error);
+            console.error('Error in updateWorkStatus:', error);
             alert('Ошибка при обновлении статуса работы');
         }
     };
@@ -669,120 +753,6 @@ ${work.description ? `• Описание: ${work.description}` : ''}`;
             loadArchiveWorks();
         }
     }, [selectedField]);
-
-    // Обновляем функцию удаления работы
-    const handleDeleteWork = async (workId) => {
-        try {
-            const work = fieldWorks.find(w => w._id === workId) || archiveWorks.find(w => w._id === workId);
-            
-            const response = await axios.delete(`/api/fields/works/delete/${workId}`);
-            
-            if (response.data.success && work) {
-                const date = new Date(work.plannedDate).toLocaleDateString('ru-RU', {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit'
-                });
-
-                const message = `<b>🗑️ Работа удалена</b>
-
-👤 Удалил: <code>${session?.user?.name || 'Система'}</code>
-📅 Дата создания: ${date}
-🏢 Объект: ${field?.properties?.Name || 'Без названия'}
-📋 Работа: ${work.name}
-${WORK_STATUSES[work.status].emoji} Статус: ${WORK_STATUSES[work.status].name}
-
-<b>Детали удаленной работы:</b>
-• Тип: ${getWorkTypeName(work.type)}
-• Площадь: ${work.area} га
-${work.description ? `• Описание: ${work.description}` : ''}`;
-
-                const chatId = process.env.NEXT_PUBLIC_TELEGRAM_CHAT_ID_FORTUNACRM;
-
-                await axios.post('/api/telegram/sendNotification', { 
-                    message,
-                    chat_id: chatId,
-                    message_thread_id: 41,
-                    parse_mode: 'HTML'
-                });
-
-                setFieldWorks(prevWorks => prevWorks.filter(w => w._id !== workId));
-                setArchiveWorks(prevWorks => prevWorks.filter(w => w._id !== workId));
-                await Promise.all([loadFieldWorks(), loadArchiveWorks()]);
-            }
-        } catch (error) {
-            console.error('Error deleting work:', error);
-            alert('Ошибка при удалении работы');
-        }
-    };
-
-    // Обработчик удаления основного поля
-    const handleDeleteField = async () => {
-        setDialog({
-            isOpen: true,
-            type: 'confirm',
-            title: 'Подтверждение',
-            message: 'Вы уверены, что хотите удалить это поле?',
-            onConfirm: async () => {
-                try {
-                    // Изменяем URL запроса, чтобы id был в пути
-                    const response = await axios.delete(`/api/fields/delete/${selectedField}`);
-
-                    if (response.data.success) {
-                        setDialog({
-                            isOpen: true,
-                            type: 'alert',
-                            title: 'Успешно',
-                            message: 'Поле успешно удалено',
-                            onConfirm: () => {
-                                setDialog(prev => ({ ...prev, isOpen: false }));
-                                setShowFieldVisible(false);
-                                window.location.reload();
-                            }
-                        });
-                    } else {
-                        throw new Error(response.data.error || 'Ошибка при удалении поля');
-                    }
-                } catch (error) {
-                    console.error('Error deleting field:', error);
-                    setDialog({
-                        isOpen: true,
-                        type: 'alert',
-                        title: 'Ошибка',
-                        message: error.response?.data?.error || error.message || 'Ошибка при удалении поля',
-                        onConfirm: () => setDialog(prev => ({ ...prev, isOpen: false }))
-                    });
-                }
-            },
-            onClose: () => setDialog(prev => ({ ...prev, isOpen: false }))
-        });
-    };
-
-    useEffect(() => {
-        // Когда модальное окно открыто, блокируем прокрутку showField
-        const showFieldElement = showFieldRef.current;
-        
-        // Добавляем проверку на существование элемента
-        if (!showFieldElement) {
-            return; // Выходим из эффекта, если элемент не существует
-        }
-        
-        if (isCreateWorkModalOpen) {
-            showFieldElement.style.overflow = 'hidden';
-            showFieldElement.style.paddingRight = '17px';
-        } else {
-            showFieldElement.style.overflow = '';
-            showFieldElement.style.paddingRight = '';
-        }
-
-        return () => {
-            // В cleanup также проверяем существование элемента
-            if (showFieldElement) {
-                showFieldElement.style.overflow = '';
-                showFieldElement.style.paddingRight = '';
-            }
-        };
-    }, [isCreateWorkModalOpen]);
 
     // Получаем все даты с работами при загрузке поля
     useEffect(() => {
