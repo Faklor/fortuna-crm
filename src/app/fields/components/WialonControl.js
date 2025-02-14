@@ -4,7 +4,7 @@ import axios from 'axios';
 import '../scss/wialonControl.scss';
 import * as turf from '@turf/turf';
 
-export default function WialonControl({ onSelectTrack, onClose, workArea }) {
+export default function WialonControl({ onSelectTrack, onClose, workArea, isSubtaskMode = false }) {
     const [sid, setSid] = useState(null);
     const [units, setUnits] = useState([]);
     const [selectedUnit, setSelectedUnit] = useState(null);
@@ -252,6 +252,15 @@ export default function WialonControl({ onSelectTrack, onClose, workArea }) {
         }
     };
 
+    const handlePlaceSegments = () => {
+        if (workSegments.length > 0) {
+            onSelectTrack(workSegments);
+            if (!isSubtaskMode) {
+                onClose();
+            }
+        }
+    };
+
     const handleTrackSelect = (tracks) => {
         // Если есть зона работы, фильтруем точки
         if (workArea) {
@@ -344,6 +353,16 @@ export default function WialonControl({ onSelectTrack, onClose, workArea }) {
                     </div>
                 )}
             </div>
+
+            {workSegments.length > 0 && (
+                <button 
+                    type="button"
+                    onClick={handlePlaceSegments}
+                    className="place-segments-button"
+                >
+                    Разместить сегменты
+                </button>
+            )}
 
             {/* Добавляем диалоговое окно */}
             {dialog.isOpen && (

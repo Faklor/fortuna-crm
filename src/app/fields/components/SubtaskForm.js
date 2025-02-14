@@ -3,23 +3,36 @@ import WialonControl from './WialonControl';
 import * as turf from '@turf/turf';
 import axios from 'axios';
 
-export default function SubtaskForm({ onSubmit, onCancel, maxArea, workArea, onWialonTrackSelect }) {
+export default function SubtaskForm({ 
+    onSubmit, 
+    onCancel, 
+    workArea,
+    maxArea,
+    onWialonTrackSelect,
+    preselectedWorkers = [],
+    preselectedEquipment = []
+}) {
     const [formData, setFormData] = useState({
         plannedDate: new Date().toISOString().split('T')[0],
-        workers: [],
-        equipment: [],
-        processingArea: null,
+        workers: preselectedWorkers.map(w => w._id),
+        equipment: preselectedEquipment.map(e => e._id),
         area: '',
         tracks: []
     });
-    const [showWialonControl, setShowWialonControl] = useState(false);
-    const [useWialon, setUseWialon] = useState(false);
+
     const [workers, setWorkers] = useState([]);
     const [equipment, setEquipment] = useState([]);
+    const [showWialonControl, setShowWialonControl] = useState(false);
     const [tracks, setTracks] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
 
     // Добавим функцию сортировки оборудования
     const sortEquipment = (equipment) => {
+        if (!Array.isArray(equipment)) {
+            console.error('Equipment is not an array:', equipment);
+            return [];
+        }
+
         // Определяем порядок категорий
         const categoryOrder = {
             '🚜 Трактора': 1,  // Тракторы
@@ -29,10 +42,10 @@ export default function SubtaskForm({ onSubmit, onCancel, maxArea, workArea, onW
             '🌾 Другое': 5   // Другое
         };
 
-        return equipment.sort((a, b) => {
+        return [...equipment].sort((a, b) => {
             // Получаем первый эмодзи из категории или присваиваем последний приоритет
             const getCategoryPriority = (item) => {
-                const emoji = item.catagory?.split(' ')[0] || '🌾';
+                const emoji = item?.catagory?.split(' ')[0] || '🌾';
                 return categoryOrder[emoji] || 999;
             };
 
@@ -45,28 +58,60 @@ export default function SubtaskForm({ onSubmit, onCancel, maxArea, workArea, onW
             }
 
             // Если категории одинаковые, сортируем по имени
-            return (a.name || '').localeCompare(b.name || '');
+            return (a?.name || '').localeCompare(b?.name || '');
         });
     };
 
-    // В компоненте обновляем useEffect для загрузки данных
+    // Загружаем полный список работников и техники
     useEffect(() => {
         const loadData = async () => {
+            setIsLoading(true);
             try {
-                const [workersRes, equipmentRes] = await Promise.all([
+                
+                const [workersRes, techesRes] = await Promise.all([
                     axios.get('/api/workers'),
                     axios.get('/api/teches')
                 ]);
-                setWorkers(workersRes.data || []);
-                // Сортируем оборудование перед установкой в state
-                const sortedEquipment = sortEquipment(equipmentRes.data.tech || []);
-                setEquipment(sortedEquipment);
+                
+                // Устанавливаем работников
+                if (Array.isArray(workersRes.data)) {
+                    setWorkers(workersRes.data);
+                } else {
+                    console.error('Workers data is not valid:', workersRes.data);
+                    setWorkers([]);
+                }
+                
+                // Устанавливаем технику
+                const techArray = techesRes.data.tech || [];
+                if (Array.isArray(techArray)) {
+                    const sortedEquipment = techArray.sort((a, b) => {
+                        const catA = a.catagory || '🌾 Другое';
+                        const catB = b.catagory || '🌾 Другое';
+                        return catA.localeCompare(catB);
+                    });
+                    setEquipment(sortedEquipment);
+                } else {
+                    console.error('Tech array is not valid:', techArray);
+                    setEquipment([]);
+                }
+
+                // Устанавливаем предвыбранные значения
+                setFormData(prev => ({
+                    ...prev,
+                    workers: preselectedWorkers.map(w => w._id),
+                    equipment: preselectedEquipment.map(e => e._id)
+                }));
             } catch (error) {
-                console.error('Ошибка загрузки данных:', error);
+                console.error('Error loading data:', error);
+                setWorkers([]);
+                setEquipment([]);
+            } finally {
+                setIsLoading(false);
             }
         };
+
         loadData();
-    }, []);
+    }, [preselectedWorkers, preselectedEquipment]);
 
     // Расчет площади при изменении треков или оборудования
     useEffect(() => {
@@ -177,34 +222,40 @@ export default function SubtaskForm({ onSubmit, onCancel, maxArea, workArea, onW
         }
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!formData.plannedDate) {
-            alert('Укажите дату выполнения');
-            return;
-        }
-        if (formData.equipment.length === 0) {
-            alert('Выберите хотя бы один объект');
-            return;
-        }
-        if (parseFloat(formData.area) > maxArea) {
-            alert(`Площадь не может превышать ${maxArea} га`);
-            return;
-        }
+        
+        // Получаем полные данные о работниках и технике
+        const selectedWorkers = workers.filter(w => formData.workers.includes(w._id));
+        const selectedEquipment = equipment.filter(e => formData.equipment.includes(e._id));
 
-        // Фильтруем только рабочие сегменты перед отправкой
-        const workingTracks = tracks.filter(segment => 
-            Array.isArray(segment) && segment[0]?.isWorking
-        );
-
-        onSubmit({
+        const subtaskData = {
             ...formData,
-            tracks: workingTracks // Передаем только рабочие сегменты
-        });
+            // Сохраняем полные объекты вместо просто ID
+            workers: selectedWorkers.map(worker => ({
+                _id: worker._id,
+                name: worker.name || worker.properties?.Name || 'Без имени'
+            })),
+            equipment: selectedEquipment.map(tech => ({
+                _id: tech._id,
+                name: tech.name,
+                category: tech.catagory || '🌾 Другое',
+                captureWidth: tech.captureWidth
+            })),
+            area: formData.area || null,
+            tracks: tracks
+        };
+
+        try {
+            await onSubmit(subtaskData);
+        } catch (error) {
+            console.error('Error submitting subtask:', error);
+        }
     };
 
     // В рендере группируем оборудование по категориям
     const renderEquipmentOptions = () => {
+        // Группируем оборудование по категориям
         const groupedEquipment = equipment.reduce((acc, tech) => {
             const category = tech.catagory || '🌾 Другое';
             if (!acc[category]) {
@@ -214,16 +265,30 @@ export default function SubtaskForm({ onSubmit, onCancel, maxArea, workArea, onW
             return acc;
         }, {});
 
-        return Object.entries(groupedEquipment).map(([category, items]) => (
-            <optgroup key={category} label={category}>
-                {items.map(tech => (
-                    <option key={tech._id} value={tech._id}>
-                        {tech.name}
-                        {tech.captureWidth ? ` (${tech.captureWidth}м)` : ''}
-                    </option>
-                ))}
-            </optgroup>
-        ));
+        // Сортируем категории по приоритету
+        const categoryOrder = {
+            '🚜': 1, // Тракторы
+            '🚛': 2, // Грузовики
+            '🚃': 3, // Прицепы
+            '🌾': 999 // Другое
+        };
+
+        return Object.entries(groupedEquipment)
+            .sort((a, b) => {
+                const priorityA = categoryOrder[a[0].split(' ')[0]] || 999;
+                const priorityB = categoryOrder[b[0].split(' ')[0]] || 999;
+                return priorityA - priorityB;
+            })
+            .map(([category, items]) => (
+                <optgroup key={category} label={category}>
+                    {items.map(tech => (
+                        <option key={tech._id} value={tech._id}>
+                            {tech.name}
+                            {tech.captureWidth ? ` (${tech.captureWidth}м)` : ''}
+                        </option>
+                    ))}
+                </optgroup>
+            ));
     };
 
     return (
@@ -244,7 +309,7 @@ export default function SubtaskForm({ onSubmit, onCancel, maxArea, workArea, onW
             </div>
 
             <div className="form-group workers-group">
-                <label>Работники:</label>
+                <label>Работники (предвыбраны из основной работы):</label>
                 <select
                     multiple
                     value={formData.workers}
@@ -254,7 +319,10 @@ export default function SubtaskForm({ onSubmit, onCancel, maxArea, workArea, onW
                     }))}
                 >
                     {workers.map(worker => (
-                        <option key={worker._id} value={worker._id}>
+                        <option 
+                            key={worker._id} 
+                            value={worker._id}
+                        >
                             {worker.name || worker.properties?.Name || 'Без имени'}
                         </option>
                     ))}
@@ -262,18 +330,27 @@ export default function SubtaskForm({ onSubmit, onCancel, maxArea, workArea, onW
             </div>
 
             <div className="form-group equipment-group">
-                <label>Объекты*:</label>
-                <select
-                    multiple
-                    value={formData.equipment}
-                    onChange={(e) => setFormData(prev => ({
-                        ...prev,
-                        equipment: Array.from(e.target.selectedOptions, option => option.value)
-                    }))}
-                    required
-                >
-                    {renderEquipmentOptions()}
-                </select>
+                <label>Объекты* (предвыбраны из основной работы):</label>
+                {isLoading ? (
+                    <div>Загрузка объектов...</div>
+                ) : (
+                    <select
+                        multiple
+                        value={formData.equipment}
+                        onChange={(e) => setFormData(prev => ({
+                            ...prev,
+                            equipment: Array.from(e.target.selectedOptions, option => option.value)
+                        }))}
+                        required
+                    >
+                        {equipment.map(tech => (
+                            <option key={tech._id} value={tech._id}>
+                                {tech.name}
+                                {tech.captureWidth ? ` (${tech.captureWidth}м)` : ''}
+                            </option>
+                        ))}
+                    </select>
+                )}
             </div>
 
             <div className="form-group area-selection">
@@ -292,6 +369,7 @@ export default function SubtaskForm({ onSubmit, onCancel, maxArea, workArea, onW
                         onSelectTrack={handleWialonTrackSelect}
                         onClose={() => setShowWialonControl(false)}
                         workArea={workArea}
+                        isSubtaskMode={true}
                     />
                 )}
 

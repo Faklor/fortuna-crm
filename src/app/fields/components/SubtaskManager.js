@@ -117,10 +117,41 @@ export default function SubtaskManager({ work, onUpdate, onWialonTrackSelect }) 
                         />
                         <div className="subtask-info">
                             <h4>Подработа от {new Date(subtask.plannedDate).toLocaleDateString()}</h4>
-                            <span>Площадь: {subtask.area} га</span>
-                            {subtask.tracks && (
-                                <span>Треков: {subtask.tracks.length}</span>
-                            )}
+                            <div className="subtask-details">
+                                <div className="subtask-area">
+                                    <span>Площадь: {subtask.area} га</span>
+                                </div>
+                                <div className="subtask-workers">
+                                    <span>Работники:</span>
+                                    <ul>
+                                        {subtask.workers.map(worker => (
+                                            <li key={`${subtask._id}-worker-${worker._id}`}>
+                                                {worker.name}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                                <div className="subtask-equipment">
+                                    <span>Техника:</span>
+                                    <ul>
+                                        {subtask.equipment.map(tech => (
+                                            <li key={`${subtask._id}-tech-${tech._id}`}>
+                                                {tech.name}
+                                                {tech.category && ` (${tech.category})`}
+                                                {tech.captureWidth && ` - ${tech.captureWidth}м`}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                                {subtask.tracks && (
+                                    <div className="subtask-tracks">
+                                        <span>Треки: {subtask.tracks.length}</span>
+                                        <span>Рабочие сегменты: {
+                                            subtask.tracks.filter(track => track.some(point => point.isWorking)).length
+                                        }</span>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                         <div className="subtask-actions">
                             <button 
@@ -141,6 +172,9 @@ export default function SubtaskManager({ work, onUpdate, onWialonTrackSelect }) 
                     maxArea={remainingArea}
                     workArea={work.processingArea}
                     onWialonTrackSelect={handleWialonTrackSelect}
+                    parentWork={work}
+                    preselectedWorkers={work.workers}
+                    preselectedEquipment={work.equipment}
                 />
             )}
         </div>

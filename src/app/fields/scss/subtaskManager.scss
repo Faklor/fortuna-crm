@@ -25,30 +25,67 @@
     }
 
     .subtask-item {
-        background: white;
-        padding: 1rem;
-        border-radius: 6px;
-        border-left: 4px solid #4F8DE3;
+        display: flex;
+        align-items: flex-start;
+        padding: 15px;
+        margin-bottom: 10px;
+        background-color: #f5f5f5;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         
         &.completed {
             border-left-color: #4CAF50;
         }
 
-        .subtask-content {
+        .subtask-info {
+            flex-grow: 1;
+            
             h4 {
-                margin: 0 0 0.5rem 0;
+                margin: 0 0 10px 0;
+                color: #333;
             }
 
-            p {
-                margin: 0.25rem 0;
-                font-size: 0.9rem;
+            .subtask-details {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 15px;
+                
+                > div {
+                    margin-bottom: 10px;
+                    
+                    span {
+                        font-weight: 500;
+                        color: #666;
+                    }
+                    
+                    ul {
+                        margin: 5px 0;
+                        padding-left: 20px;
+                        
+                        li {
+                            color: #444;
+                            margin: 3px 0;
+                        }
+                    }
+                }
             }
         }
 
         .subtask-actions {
-            margin-top: 1rem;
-            display: flex;
-            justify-content: flex-end;
+            margin-left: 15px;
+            
+            .delete-subtask-btn {
+                padding: 6px 12px;
+                background-color: #ff4444;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                
+                &:hover {
+                    background-color: #cc0000;
+                }
+            }
         }
     }
 

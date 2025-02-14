@@ -34,12 +34,15 @@ export async function POST(request, { params: paramsPromise }) {
         const { workId } = params;
         const data = await request.json();
         
-        // Convert plannedDate string to Date object
+        // Сохраняем полные данные в БД
         const subtaskData = {
             ...data,
             workId,
             plannedDate: new Date(data.plannedDate),
-            tracks: data.tracks || [], // Add tracks array
+            // Сохраняем полные объекты работников и техники
+            workers: data.workers, // Теперь тут полные объекты
+            equipment: data.equipment, // Теперь тут полные объекты
+            tracks: data.tracks || [],
             createdAt: new Date()
         };
 
