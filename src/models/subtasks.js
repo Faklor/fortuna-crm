@@ -2,44 +2,23 @@ import mongoose from 'mongoose'
 const ObjectId = mongoose.Schema.ObjectId
 
 const subtasksSchema = new mongoose.Schema({
-    workId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'works',
-    },
-    area: {
-        type: Number,
-    },
-    status: {
-        type: String,
-        enum: ['in_progress', 'completed'],
-        default: 'in_progress'
-    },
-    tracks: [{
-        type: Array
-    }],
-    plannedDate: {
-        type: Date
-    },
+    workId: { type: mongoose.Schema.Types.ObjectId, required: true },
+    plannedDate: { type: Date, required: true },
+    area: { type: Number, default: null },
+    status: { type: String, default: 'in_progress' },
     workers: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Worker'
+        _id: { type: mongoose.Schema.Types.ObjectId, required: true },
+        name: { type: String, required: true }
     }],
     equipment: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Tech'
+        _id: { type: mongoose.Schema.Types.ObjectId, required: true },
+        name: { type: String, required: true },
+        category: { type: String },
+        captureWidth: { type: Number }
     }],
-    completedDate: {
-        type: Date
-    },
-    notes: String,
-    createdAt: {
-        type: Date,
-        default: Date.now
-    },
-    updatedAt: {
-        type: Date,
-        default: Date.now
-    }
+    tracks: { type: Array, default: [] },
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now }
 }, { timestamps: true });
 
 // Добавляем хук для проверки общей площади подработ
