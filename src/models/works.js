@@ -67,6 +67,12 @@ const worksSchema = new mongoose.Schema({
             return statusMap[status] || status;
         }
     },
+    completedDate: {
+        type: Date,
+        default: function() {
+            return this.status === 'completed' ? new Date() : null;
+        }
+    },
     area: { type: Number, required: true },
     areaSelectionType: {
         type: String,
@@ -99,7 +105,18 @@ const worksSchema = new mongoose.Schema({
 })
 
 worksSchema.pre('save', function(next) {
-    this.updatedAt = Date.now();
+    if (this.status === 'completed' && !this.completedDate) {
+        this.completedDate = new Date();
+    }
+    this.updatedAt = new Date();
+    next();
+});
+
+worksSchema.pre('findOneAndUpdate', function(next) {
+    const update = this.getUpdate();
+    if (update.status === 'completed' && !update.completedDate) {
+        update.completedDate = new Date();
+    }
     next();
 });
 

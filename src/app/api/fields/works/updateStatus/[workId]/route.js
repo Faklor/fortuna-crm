@@ -8,11 +8,18 @@ export async function PUT(request, { params: paramsPromise }) {
     try {
         const params = await paramsPromise;
         const workId = params.workId;
-        const { status } = await request.json();
+        const { status, completedDate } = await request.json();
+
+        const updateData = { status };
+        
+        // Если статус "completed", добавляем дату завершения
+        if (status === 'completed' && completedDate) {
+            updateData.completedDate = new Date(completedDate);
+        }
 
         const work = await Work.findByIdAndUpdate(
             workId,
-            { status },
+            updateData,
             { new: true }
         );
 

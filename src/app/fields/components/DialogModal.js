@@ -13,7 +13,8 @@ export default function DialogModal({
     confirmText = 'OK',
     cancelText = 'Отмена',
     showNotificationCheckbox,
-    defaultNotificationState
+    defaultNotificationState,
+    additionalContent
 }) {
     
     const [inputValue, setInputValue] = useState(defaultValue || '');
@@ -38,7 +39,20 @@ export default function DialogModal({
             <div className="dialog-modal">
                 <h3 className="dialog-modal__title">{title}</h3>
                 <div className="dialog-modal__content">
-                    {message && <p className="dialog-modal__message">{message}</p>}
+                    <div className="dialog-modal__message-wrapper">
+                        {typeof message === 'string' ? (
+                            <div className="dialog-modal__message">{message}</div>
+                        ) : (
+                            message
+                        )}
+                    </div>
+                    
+                    {additionalContent && (
+                        <div className="dialog-modal__additional">
+                            {additionalContent}
+                        </div>
+                    )}
+                    
                     {type === 'prompt' && (
                         <input
                             type="text"
@@ -48,15 +62,18 @@ export default function DialogModal({
                             autoFocus
                         />
                     )}
+                    
                     {showNotificationCheckbox && (
-                        <label className="checkbox-label">
-                            <input
-                                type="checkbox"
-                                checked={sendNotification}
-                                onChange={(e) => setSendNotification(e.target.checked)}
-                            />
-                            Отправить уведомление в Telegram
-                        </label>
+                        <div className="dialog-modal__checkbox">
+                            <label className="checkbox-label">
+                                <input
+                                    type="checkbox"
+                                    checked={sendNotification}
+                                    onChange={(e) => setSendNotification(e.target.checked)}
+                                />
+                                Отправить уведомление в Telegram
+                            </label>
+                        </div>
                     )}
                 </div>
                 <div className="dialog-modal__actions">

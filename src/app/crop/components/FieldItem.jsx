@@ -11,7 +11,14 @@ const WorkDetails = memo(({ work, subFields }) => (
                 {workStatusTranslations[work.status] || work.status}
             </div>
         )}
-        {work.plannedDate && <div>Дата: {work.plannedDate}</div>}
+        {/* Дата планирования (создания) */}
+        {work.plannedDate && (
+            <div>Дата создания: {new Date(work.plannedDate).toLocaleDateString('ru-RU')}</div>
+        )}
+        {/* Дата завершения для завершенных работ */}
+        {work.status === 'completed' && work.completedDate && (
+            <div>Дата завершения: {new Date(work.completedDate).toLocaleDateString('ru-RU')}</div>
+        )}
         {work.area && <div className="crop-rotation__work-area-type">
             <span className="crop-rotation__work-item area-type">
                 {work.areaSelectionType === 'full' && 'Обработка всего поля'}

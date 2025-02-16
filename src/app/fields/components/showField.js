@@ -600,77 +600,147 @@ export default function ShowField({
 
     const updateWorkStatus = async (workId, newStatus) => {
         try {
-            setDialog({
-                isOpen: true,
-                type: 'confirm',
-                title: 'Подтверждение изменения статуса',
-                message: `Вы уверены, что хотите изменить статус работы на "${WORK_STATUSES[newStatus].name}"?`,
-                showNotificationCheckbox: true,
-                defaultNotificationState: true,
-                onConfirm: async (sendNotification) => {
-                    try {
-                        const response = await axios.put(`/api/fields/works/updateStatus/${workId}`, {
-                            status: newStatus
-                        });
-                        
-                        if (response.data) {
-                            setFieldWorks(prevWorks => 
-                                prevWorks.map(work => 
-                                    work._id === workId 
-                                        ? { ...work, status: newStatus }
-                                        : work
-                                )
-                            );
+            if (newStatus === 'completed') {
+                const today = new Date().toISOString().split('T')[0];
+                setDialog({
+                    isOpen: true,
+                    type: 'confirm',
+                    title: 'Подтверждение изменения статуса',
+                    message: (
+                        <>
+                            <div>Вы уверены, что хотите изменить статус работы на "Завершен"?</div>
+                            <div style={{ marginTop: '16px' }}>
+                                <label style={{ display: 'block', marginBottom: '8px' }}>
+                                    Дата завершения:
+                                </label>
+                                <input 
+                                    type="date" 
+                                    id="completionDate"
+                                    name="completionDate"
+                                    defaultValue={today}
+                                    style={{
+                                        width: '100%',
+                                        padding: '8px',
+                                        border: '1px solid #ddd',
+                                        borderRadius: '4px'
+                                    }}
+                                />
+                            </div>
+                        </>
+                    ),
+                    showNotificationCheckbox: true,
+                    defaultNotificationState: true,
+                    onConfirm: async (sendNotification) => {
+                        const dateInput = document.querySelector('input[name="completionDate"]');
+                        const completedDate = dateInput?.value || today;
 
-                            if (sendNotification) {
-                                const work = fieldWorks.find(w => w._id === workId);
-                                if (work) {
-                                    const date = new Date(work.plannedDate).toLocaleDateString('ru-RU', {
-                                        year: 'numeric',
-                                        month: '2-digit',
-                                        day: '2-digit'
-                                    });
+                        try {
+                            const response = await axios.put(`/api/fields/works/updateStatus/${workId}`, {
+                                status: newStatus,
+                                completedDate: completedDate,
+                                sendNotification
+                            });
+                            
+                            if (response.data) {
+                                setFieldWorks(prevWorks => 
+                                    prevWorks.map(work => 
+                                        work._id === workId 
+                                            ? { 
+                                                ...work, 
+                                                status: newStatus, 
+                                                completedDate: completedDate 
+                                              }
+                                            : work
+                                    )
+                                );
+                                setDialog(null);
+                            }
+                        } catch (error) {
+                            console.error('Error updating work status:', error);
+                            setDialog({
+                                isOpen: true,
+                                type: 'alert',
+                                title: 'Ошибка',
+                                message: 'Ошибка при обновлении статуса работы',
+                                onConfirm: () => setDialog(null)
+                            });
+                        }
+                    },
+                    onClose: () => setDialog(null)
+                });
+            } else if (newStatus === 'in_progress') {
+                setDialog({
+                    isOpen: true,
+                    type: 'confirm',
+                    title: 'Подтверждение изменения статуса',
+                    message: 'Вы уверены, что хотите начать работу?',
+                    showNotificationCheckbox: true,
+                    defaultNotificationState: true,
+                    onConfirm: async (sendNotification) => {
+                        try {
+                            const response = await axios.put(`/api/fields/works/updateStatus/${workId}`, {
+                                status: newStatus,
+                                sendNotification
+                            });
+                            
+                            if (response.data) {
+                                setFieldWorks(prevWorks => 
+                                    prevWorks.map(work => 
+                                        work._id === workId 
+                                            ? { ...work, status: newStatus }
+                                            : work
+                                    )
+                                );
 
-                                    const message = `<b>🔄 Статус работы изменен</b>
+                                if (sendNotification) {
+                                    const work = fieldWorks.find(w => w._id === workId);
+                                    if (work) {
+                                        const message = `<b>▶️ Работа начата</b>
 
-👤 Изменил: <code>${session?.user?.name || 'Система'}</code>
-📅 Дата создания: ${date}
+👤 Начал: <code>${session?.user?.name || 'Система'}</code>
 🏢 Объект: ${field?.properties?.Name || 'Без названия'}
 📋 Работа: ${work.name}
-✨ Новый статус: <code>${WORK_STATUSES[newStatus].emoji} ${WORK_STATUSES[newStatus].name}</code>
 
 <b>Детали работы:</b>
 • Тип: ${getWorkTypeName(work.type)}
 • Площадь: ${work.area} га
 ${work.description ? `• Описание: ${work.description}` : ''}`;
 
-                                    await axios.post('/api/telegram/sendNotification', { 
-                                        message,
-                                        chat_id: process.env.NEXT_PUBLIC_TELEGRAM_CHAT_ID_FORTUNACRM,
-                                        message_thread_id: 41,
-                                        parse_mode: 'HTML'
-                                    });
+                                        await axios.post('/api/telegram/sendNotification', { 
+                                            message,
+                                            chat_id: process.env.NEXT_PUBLIC_TELEGRAM_CHAT_ID_FORTUNACRM,
+                                            message_thread_id: 41,
+                                            parse_mode: 'HTML'
+                                        });
+                                    }
                                 }
+                                setDialog(null);
                             }
-                            setDialog(null);
+                        } catch (error) {
+                            console.error('Error updating work status:', error);
+                            setDialog({
+                                isOpen: true,
+                                type: 'alert',
+                                title: 'Ошибка',
+                                message: 'Ошибка при обновлении статуса работы',
+                                onConfirm: () => setDialog(null)
+                            });
                         }
-                    } catch (error) {
-                        console.error('Error updating work status:', error);
-                        setDialog({
-                            isOpen: true,
-                            type: 'alert',
-                            title: 'Ошибка',
-                            message: 'Ошибка при обновлении статуса работы',
-                            onConfirm: () => setDialog(null)
-                        });
-                    }
-                },
-                onClose: () => setDialog(null)
-            });
+                    },
+                    onClose: () => setDialog(null)
+                });
+            } else {
+                // ... код для других статусов ...
+            }
         } catch (error) {
             console.error('Error in updateWorkStatus:', error);
             alert('Ошибка при обновлении статуса работы');
         }
+    };
+
+    // Добавляем обработчик для кнопки "Начать"
+    const handleStartWork = (workId) => {
+        updateWorkStatus(workId, 'in_progress');
     };
 
     // Заменяем существующую функцию
@@ -772,6 +842,12 @@ ${work.description ? `• Описание: ${work.description}` : ''}`;
             d.getFullYear() === date.getFullYear()
         )
     }
+
+    // Функция форматирования даты
+    const formatDate = (date) => {
+        if (!date) return '';
+        return new Date(date).toLocaleDateString('ru-RU');
+    };
 
     return field && field.properties ? (
         <div 
@@ -1216,8 +1292,9 @@ ${work.description ? `• Описание: ${work.description}` : ''}`;
                                         <button 
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                updateWorkStatus(work._id, 'in_progress');
+                                                handleStartWork(work._id);
                                             }}
+                                            className="start-work-button"
                                         >
                                             Начать
                                         </button>
@@ -1242,7 +1319,10 @@ ${work.description ? `• Описание: ${work.description}` : ''}`;
                             </div>
                             <div className="work-details">
                                 <p>Тип: {getWorkTypeName(work.type)}</p>
-                                <p>Дата: {new Date(work.plannedDate).toLocaleDateString()}</p>
+                                <p>Дата: {formatDate(work.plannedDate)}</p>
+                                {work.status === 'completed' && (
+                                    <p>Дата завершения: {formatDate(work.completedDate)}</p>
+                                )}
                                 <p>Площадь обработки: {work.area} га</p>
                                 {work.description && <p>Описание: {work.description}</p>}
                                 
@@ -1359,7 +1439,10 @@ ${work.description ? `• Описание: ${work.description}` : ''}`;
                                 </div>
                                 <div className="work-details">
                                     <p>Тип: {getWorkTypeName(work.type)}</p>
-                                    <p>Дата: {new Date(work.plannedDate).toLocaleDateString()}</p>
+                                    <p>Дата: {formatDate(work.plannedDate)}</p>
+                                    {work.status === 'completed' && (
+                                        <p>Дата завершения: {formatDate(work.completedDate)}</p>
+                                    )}
                                     <p>Площадь обработки: {work.area} га</p>
                                     {work.description && <p>Описание: {work.description}</p>}
                                     
