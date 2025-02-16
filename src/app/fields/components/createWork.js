@@ -183,6 +183,25 @@ function CreateWork({
         }
 
         try {
+            // Получаем полную информацию о выбранных работниках и технике
+            const selectedWorkers = workData.workers.map(workerId => {
+                const worker = sortedWorkers.find(w => w._id === workerId);
+                return {
+                    _id: workerId,
+                    name: worker?.name || worker?.properties?.Name || 'Без имени'
+                };
+            });
+
+            const selectedEquipment = workData.equipment.map(equipId => {
+                const equip = sortedEquipment.find(e => e._id === equipId);
+                return {
+                    _id: equipId,
+                    name: equip?.name || '',
+                    category: equip?.catagory || '',
+                    captureWidth: equip?.captureWidth || null
+                };
+            });
+
             const dataToSave = {
                 ...workData,
                 processingArea: {
@@ -191,19 +210,9 @@ function CreateWork({
                                 workData.processingArea.coordinates
                 },
                 area: workData.useFullField ? fieldArea : workData.area,
-                areaSelectionType: workData.useFullField ? 'full' : 
-                                 workData.useSubField ? 'subfield' : 
-                                 'custom'
+                workers: selectedWorkers,
+                equipment: selectedEquipment
             };
-
-            // Получаем информацию о работниках и технике
-            const selectedWorkers = sortedWorkers
-                .filter(w => workData.workers.includes(w._id))
-                .map(w => w.name || w.properties?.Name || 'Без имени');
-
-            const selectedEquipment = sortedEquipment
-                .filter(e => workData.equipment.includes(e._id))
-                .map(e => `${e.catagory ? `${e.catagory.split(' ')[0]} ` : ''}${e.name}`);
 
             // Отправляем уведомление только если включен чекбокс
             if (workData.sendNotification) {
@@ -217,8 +226,8 @@ function CreateWork({
 📏 Площадь: ${dataToSave.area} га
 
 ${workData.description ? `<b>Описание:</b>\n${workData.description}\n` : ''}
-${selectedWorkers.length > 0 ? `\n<b>Работники:</b>\n${selectedWorkers.map(w => `• ${w}`).join('\n')}` : ''}
-${selectedEquipment.length > 0 ? `\n<b>Техника:</b>\n${selectedEquipment.map(e => `• ${e}`).join('\n')}` : ''}`;
+${selectedWorkers.length > 0 ? `\n<b>Работники:</b>\n${selectedWorkers.map(w => `• ${w.name}`).join('\n')}` : ''}
+${selectedEquipment.length > 0 ? `\n<b>Техника:</b>\n${selectedEquipment.map(e => `• ${e.name} (${e.category})`).join('\n')}` : ''}`;
 
                 await axios.post('/api/telegram/sendNotification', { 
                     message,

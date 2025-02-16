@@ -1,11 +1,10 @@
 'use client'
 import { workTypeTranslations, workStatusTranslations } from './translations'
-import { memo, useMemo } from 'react'
+import { memo, useMemo, useState } from 'react'
 import '../scss/field-item.scss'
 
 // Выносим подкомпоненты для оптимизации ререндеров
 const WorkDetails = memo(({ work, subFields }) => (
-    
     <div className="crop-rotation__work-info"> 
         {work.status && (
             <div className={`status ${work.status}`}>
@@ -29,7 +28,7 @@ const WorkDetails = memo(({ work, subFields }) => (
                 <div className="crop-rotation__work-items">
                     {work.workers.map(worker => (
                         <span key={worker._id} className="crop-rotation__work-item worker">
-                            {worker.name || worker.properties?.Name || 'Без имени'}
+                            {worker.name || 'Без имени'}
                         </span>
                     ))}
                 </div>
@@ -39,9 +38,11 @@ const WorkDetails = memo(({ work, subFields }) => (
             <div className="crop-rotation__work-equipment">
                 <div className="crop-rotation__work-section-title">Техника:</div>
                 <div className="crop-rotation__work-items">
-                    {work.equipment.map((tech, techIndex) => (
-                        <span key={techIndex} className="crop-rotation__work-item equipment">
+                    {work.equipment.map((tech, index) => (
+                        <span key={`${tech._id}-${index}`} className="crop-rotation__work-item equipment">
+                            {tech.category && `${tech.category} `}
                             {tech.displayName || tech.name}
+                            {tech.captureWidth && ` (${tech.captureWidth.toFixed(1)}м)`}
                         </span>
                     ))}
                 </div>
@@ -81,64 +82,60 @@ const SubField = memo(({ subField }) => (
     </div>
 ));
 
-const WorksGroup = memo(({ works, workType, seasonYear, subFields }) => {
-    // Порядок типов работ для сортировки
-    const workTypeOrder = {
-        'plowing': 1,        // Вспашка
-        'chiseling': 2,      // Чизелевание
-        'deep_loosening': 3, // Глубокое рыхление
-        'cultivation': 4,    // Культивация
-        'disking': 5,        // Дискование
-        'peeling': 6,        // Лущение
-        'harrowing': 7,      // Боронование
-        'rolling': 8,        // Прокатывание
-        'fertilizing': 9,    // Внесение удобрений
-        'seeding': 10,       // Посев
-        'spraying': 11,      // Опрыскивание
-        'harvesting': 12     // Уборка
+const WorksGroup = memo(({ works, workType, seasonYear, subFields, subFieldId = '' }) => {
+    const [isOpen, setIsOpen] = useState(false);
+
+    // Сортируем работы по дате (будущие даты вверху)
+    const sortedWorks = useMemo(() => {
+        return [...works].sort((a, b) => {
+            // Преобразуем строки дат в объекты Date
+            const dateA = a.plannedDate ? new Date(a.plannedDate.split('.').reverse().join('-')) : new Date(0);
+            const dateB = b.plannedDate ? new Date(b.plannedDate.split('.').reverse().join('-')) : new Date(0);
+            // Сравниваем даты (более поздние даты будут вверху)
+            return dateB - dateA;
+        });
+    }, [works]);
+
+    const handleToggle = (e) => {
+        e.preventDefault();
+        setIsOpen(!isOpen);
     };
 
-    const sortedWorks = useMemo(() => 
-        [...works].sort((a, b) => {
-            // Сначала сортируем по типу работы
-            const typeOrderDiff = (workTypeOrder[a.type] || 99) - (workTypeOrder[b.type] || 99);
-            if (typeOrderDiff !== 0) return typeOrderDiff;
-            
-            // Преобразуем строки дат в массивы [день, месяц, год]
-            const dateA = a.plannedDate.split('.').reverse().join('-');
-            const dateB = b.plannedDate.split('.').reverse().join('-');
-            
-            // Сравниваем даты (от будущей к прошлой)
-            return new Date(dateB) - new Date(dateA);
-        }),
-        [works]
-    );
-
     return (
-        <details 
-            key={`worktype-${workType}-${seasonYear}`} 
-            className="crop-rotation__works-group"
+        <div 
+            className={`crop-rotation__works-group ${isOpen ? 'open' : ''}`}
             data-type={workType}
         >
-            <summary className="crop-rotation__works-type">
+            <div 
+                className="crop-rotation__works-type"
+                onClick={handleToggle}
+                role="button"
+                tabIndex={0}
+                data-type={workType}
+            >
                 {workTypeTranslations[workType] || workType}
                 <span className="crop-rotation__works-count">{works.length}</span>
-            </summary>
-            <div className="crop-rotation__works-list">
-                {sortedWorks.map(work => (
-                    <div 
-                        key={`work-${work.id}-${seasonYear}`}
-                        className="crop-rotation__work"
-                        data-type={work.type}
-                    >
-                        <div className="crop-rotation__work-name">
-                            {work.name || workTypeTranslations[work.type] || 'Без названия'}
-                        </div>
-                        <WorkDetails work={work} subFields={subFields} />
-                    </div>
-                ))}
             </div>
-        </details>
+            {isOpen && (
+                <div 
+                    className="crop-rotation__works-list"
+                    data-type={workType}
+                >
+                    {sortedWorks.map(work => ( // Используем отсортированный массив
+                        <div 
+                            key={`work-${work.id}-${seasonYear}-${subFieldId}`}
+                            className="crop-rotation__work"
+                            data-type={workType}
+                        >
+                            <div className="crop-rotation__work-name">
+                                {work.name || workTypeTranslations[work.type] || 'Без названия'}
+                            </div>
+                            <WorkDetails work={work} subFields={subFields} />
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
     );
 });
 
@@ -180,7 +177,7 @@ const FieldItem = memo(({ field, subFields }) => {
                         </thead>
                         <tbody>
                             {sortedSeasons.map((season, index) => (
-                                <tr key={`${field.name}-season-${index}`}>
+                                <tr key={`${field.id}-season-${season.year}-${index}`}>
                                     <td>{season.year || 'Не указан'}</td>
                                     <td>
                                         <div className="crop-rotation__crop-info">
@@ -236,7 +233,7 @@ const FieldItem = memo(({ field, subFields }) => {
                                                     
                                                     return worksOfType.length ? (
                                                         <WorksGroup 
-                                                            key={`${workType}-${season.year}`}
+                                                            key={`worktype-${workType}-${season.year}`}
                                                             works={worksOfType}
                                                             workType={workType}
                                                             seasonYear={season.year}
@@ -264,11 +261,12 @@ const FieldItem = memo(({ field, subFields }) => {
                                                         
                                                         return worksOfType.length ? (
                                                             <WorksGroup 
-                                                                key={`${workType}-${season.year}-${subField.id}`}
+                                                                key={`worktype-${workType}-${season.year}-${subField.id}`}
                                                                 works={worksOfType}
                                                                 workType={workType}
                                                                 seasonYear={season.year}
                                                                 subFields={subFields}
+                                                                subFieldId={subField.id}
                                                             />
                                                         ) : null;
                                                     })}

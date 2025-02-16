@@ -81,12 +81,20 @@ const worksSchema = new mongoose.Schema({
         default: Date.now
     },
     workers: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Worker'
+        _id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Worker'
+        },
+        name: String
     }],
     equipment: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Tech'
+        _id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Tech'
+        },
+        name: String,
+        category: String,
+        captureWidth: Number
     }]
 })
 

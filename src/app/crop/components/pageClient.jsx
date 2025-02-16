@@ -132,21 +132,19 @@ export default function PageClient({
                             area: work.area,
                             areaSelectionType: work.areaSelectionType,
                             processingArea: work.processingArea,
-                            workers: work.workers?.map(workerId => 
-                                parsedWorkers.find(w => w._id === workerId)
-                            ).filter(Boolean) || [],
-                            equipment: work.equipment?.map(techId => {
-                                const tech = parsedTech.find(t => t._id === techId);
-                                if (tech) {
-                                    return {
-                                        ...tech,
-                                        displayName: tech.catagory === '🚃 Прицепы' && tech.captureWidth ? 
-                                            `${tech.name} (${tech.captureWidth.toFixed(1)}м)` : 
-                                            tech.name
-                                    };
-                                }
-                                return null;
-                            }).filter(Boolean) || []
+                            workers: work.workers?.map(worker => ({
+                                _id: worker._id,
+                                name: worker.name
+                            })) || [],
+                            equipment: work.equipment?.map(tech => ({
+                                _id: tech._id,
+                                name: tech.name,
+                                category: tech.category,
+                                captureWidth: tech.captureWidth,
+                                displayName: tech.category === '🚃 Прицепы' && tech.captureWidth ? 
+                                    `${tech.name} (${tech.captureWidth.toFixed(1)}м)` : 
+                                    tech.name
+                            })) || []
                         })),
                         subFields: fieldSubFields
                     };

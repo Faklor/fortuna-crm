@@ -53,7 +53,16 @@ export async function POST(req) {
                 areaInHectares = workData.area;
             }
 
-            // Создаем новую работу
+            // Преобразуем массивы работников и техники
+            const workers = await mongoose.model('workers').find({
+                _id: { $in: workData.workers }
+            }).lean();
+
+            const equipment = await mongoose.model('tech').find({
+                _id: { $in: workData.equipment }
+            }).lean();
+
+            // Создаем новую работу с расширенной информацией
             const work = new Work({
                 name: workData.name,
                 type: workData.type,
@@ -67,35 +76,25 @@ export async function POST(req) {
                 selectedSubFieldId: workData.selectedSubFieldId,
                 areaSelectionType: areaSelectionType,
                 status: workData.status || 'planned',
-                workers: workData.workers || [],
-                equipment: workData.equipment || []
+                workers: workers.map(worker => ({
+                    _id: worker._id,
+                    name: worker.name || worker.properties?.Name || 'Без имени'
+                })),
+                equipment: equipment.map(tech => ({
+                    _id: tech._id,
+                    name: tech.name,
+                    category: tech.catagory || '',
+                    captureWidth: tech.captureWidth || null
+                }))
             });
 
             await work.save();
 
-            // Получаем сохраненную работу
-            const savedWork = await Work.findById(work._id).lean();
-
-            // Получаем работников и технику
-            const workers = await mongoose.model('workers').find({
-                _id: { $in: savedWork.workers }
-            }).lean();
-
-            const equipment = await mongoose.model('tech').find({
-                _id: { $in: savedWork.equipment }
-            }).lean();
-
-            // Собираем финальный результат
-            const populatedWork = {
-                ...savedWork,
-                workers: workers,
-                equipment: equipment
-            };
-
+            // Возвращаем сохраненную работу без дополнительных запросов
             return NextResponse.json({
                 success: true,
                 message: 'Work created successfully',
-                work: populatedWork
+                work: work
             });
 
         } catch (error) {
