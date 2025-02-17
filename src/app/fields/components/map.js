@@ -936,6 +936,7 @@ ${deletedNote.image ? '\n🖼 Было прикреплено изображен
         key={key}
         center={defaultCenter} 
         zoom={13} 
+        maxZoom={22}
         className='map'
         onClick={handleMapClick}
       >
