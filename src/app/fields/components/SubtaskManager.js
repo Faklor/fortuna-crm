@@ -34,6 +34,18 @@ export default function SubtaskManager({ work, onUpdate, onWialonTrackSelect }) 
             const loadedSubtasks = response.data.subtasks || [];
             setSubtasks(loadedSubtasks);
             
+            // Формируем массив треков с цветами для каждой подработы
+            const allTracks = loadedSubtasks.map((subtask, index) => ({
+                tracks: subtask.tracks || [],
+                color: SUBTASK_COLORS[index % SUBTASK_COLORS.length],
+                subtaskId: subtask._id
+            })).filter(track => track.tracks.length > 0);
+
+            // Передаем все треки в родительский компонент
+            if (typeof onWialonTrackSelect === 'function') {
+                onWialonTrackSelect(allTracks);
+            }
+            
             // Вычисляем оставшуюся площадь
             const completedArea = loadedSubtasks.reduce((sum, task) => 
                 sum + (task.area || 0), 0
@@ -119,7 +131,7 @@ export default function SubtaskManager({ work, onUpdate, onWialonTrackSelect }) 
                             <h4>Подработа от {new Date(subtask.plannedDate).toLocaleDateString()}</h4>
                             <div className="subtask-details">
                                 <div className="subtask-area">
-                                    <span>Площадь: {subtask.area} га</span>
+                                    <span>Площадь: {subtask.area || 'Не указана'} га</span>
                                 </div>
                                 <div className="subtask-workers">
                                     <span>Работники:</span>
@@ -145,10 +157,7 @@ export default function SubtaskManager({ work, onUpdate, onWialonTrackSelect }) 
                                 </div>
                                 {subtask.tracks && (
                                     <div className="subtask-tracks">
-                                        <span>Треки: {subtask.tracks.length}</span>
-                                        <span>Рабочие сегменты: {
-                                            subtask.tracks.filter(track => track.some(point => point.isWorking)).length
-                                        }</span>
+                                        <span>Количество точек трека: {subtask.tracks.length}</span>
                                     </div>
                                 )}
                             </div>

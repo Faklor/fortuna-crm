@@ -747,45 +747,54 @@ ${work.description ? `• Описание: ${work.description}` : ''}`;
     const getWorkTypeName = (type) => {
         return WORK_TYPES[type] || type;
     };
-
-    const handleWorkClick = async (work, e) => {
-        e.stopPropagation();
-        const newSelectedWork = selectedWork?._id === work._id ? null : work;
-        setSelectedWork(newSelectedWork);
+    // const handleWorkClick = async (work, e) => {
+    //     e.stopPropagation();
+    //     const newSelectedWork = selectedWork?._id === work._id ? null : work;
+    //     setSelectedWork(newSelectedWork);
         
-        if (newSelectedWork) {
-            try {
-                const response = await axios.get(`/api/fields/works/${newSelectedWork._id}/subtasks`);
+    //     if (newSelectedWork) {
+    //         try {
+    //             const response = await axios.get(`/api/fields/works/${newSelectedWork._id}/subtasks`);
                 
-                if (response.data.success && response.data.subtasks && Array.isArray(response.data.subtasks)) {
-                    const allTracks = response.data.subtasks
-                        .filter(subtask => subtask && Array.isArray(subtask.tracks))
-                        .flatMap((subtask, subtaskIndex) => 
-                            subtask.tracks.map((track, trackIndex) => {
-                                if (!Array.isArray(track)) return null;
+    //             if (response.data.success && response.data.subtasks && Array.isArray(response.data.subtasks)) {
+    //                 const allTracks = response.data.subtasks
+    //                     .filter(subtask => subtask && Array.isArray(subtask.tracks))
+    //                     .flatMap((subtask, subtaskIndex) => 
+    //                         subtask.tracks.map((track, trackIndex) => {
+    //                             if (!Array.isArray(track)) return null;
                                 
-                                const coordinates = track
-                                    .filter(point => point && typeof point.lat === 'number' && typeof point.lon === 'number')
-                                    .map(point => [point.lat, point.lon]);
+    //                             const coordinates = track
+    //                                 .filter(point => point && typeof point.lat === 'number' && typeof point.lon === 'number')
+    //                                 .map(point => [point.lat, point.lon]);
                                 
-                                return coordinates.length >= 2 ? {
-                                    coordinates: coordinates,
-                                    subtaskId: `${subtask._id}_track_${trackIndex}`,
-                                    originalSubtaskId: subtask._id
-                                } : null;
-                            }).filter(track => track !== null)
-                        );
+    //                             return coordinates.length >= 2 ? {
+    //                                 coordinates: coordinates,
+    //                                 subtaskId: `${subtask._id}_track_${trackIndex}`,
+    //                                 originalSubtaskId: subtask._id
+    //                             } : null;
+    //                         }).filter(track => track !== null)
+    //                     );
 
-                    if (allTracks.length > 0) {
-                        onSubtaskTracksSelect(allTracks);
-                    }
-                }
-            } catch (error) {
-                console.error('Error loading subtask tracks:', error);
-                onSubtaskTracksSelect(null);
-            }
-        } else {
+    //                 if (allTracks.length > 0) {
+    //                     onSubtaskTracksSelect(allTracks);
+    //                 }
+    //             }
+    //         } catch (error) {
+    //             console.error('Error loading subtask tracks:', error);
+    //             onSubtaskTracksSelect(null);
+    //         }
+    const handleWorkClick = (work) => {
+        if (selectedWork?._id === work._id) {
+            // Если кликнули по той же работе - отменяем выбор
+            setSelectedWork(null);
+            onWorkSelect(null); // Передаем null чтобы очистить область
+            // Очищаем треки через пропсы
+            onWialonTrackSelect(null);
             onSubtaskTracksSelect(null);
+        } else {
+            setSelectedWork(work);
+            onWorkSelect(work.processingArea);
+            // Загружаем треки для выбранной работы...
         }
     };
 
@@ -1278,7 +1287,7 @@ ${work.description ? `• Описание: ${work.description}` : ''}`;
                             key={work._id} 
                             data-type={work.type}
                             className={`work-item ${selectedWork?._id === work._id ? 'selected' : ''}`}
-                            onClick={(e) => handleWorkClick(work, e)}
+                            onClick={(e) => handleWorkClick(work)}
                         >
                             <div className="work-header">
                                 <h4>{work.name}</h4>
@@ -1423,7 +1432,7 @@ ${work.description ? `• Описание: ${work.description}` : ''}`;
                             <div 
                                 key={work._id} 
                                 className={`archive-work-item ${selectedWork?._id === work._id ? 'selected' : ''}`}
-                                onClick={(e) => handleWorkClick(work, e)}
+                                onClick={(e) => handleWorkClick(work)}
                             >
                                 <div className="work-header">
                                     <h4>{work.name}</h4>

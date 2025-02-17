@@ -4,33 +4,15 @@ import axios from 'axios';
 import '../scss/wialonControl.scss';
 import * as turf from '@turf/turf';
 
-export default function WialonControl({ onSelectTrack, onClose, workArea, isSubtaskMode = false }) {
+export default function WialonControl({ onSelectTrack, onClose, workArea }) {
     const [sid, setSid] = useState(null);
     const [units, setUnits] = useState([]);
     const [selectedUnit, setSelectedUnit] = useState(null);
-    const [tracks, setTracks] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [selectedDate, setSelectedDate] = useState(() => {
         const today = new Date();
-        return today.toISOString().split('T')[0]; // Формат YYYY-MM-DD
+        return today.toISOString().split('T')[0];
     });
-    const [workSegments, setWorkSegments] = useState([]);
-    const [isMarkingMode, setIsMarkingMode] = useState(false);
-
-    //console.log(fields);
-    // Добавляем функцию проверки точки в полигоне
-    const isPointInPolygon = (point, polygon) => {
-        let inside = false;
-        for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-            const xi = polygon[i][0], yi = polygon[i][1];
-            const xj = polygon[j][0], yj = polygon[j][1];
-            
-            const intersect = ((yi > point[1]) !== (yj > point[1]))
-                && (point[0] < (xj - xi) * (point[1] - yi) / (yj - yi) + xi);
-            if (intersect) inside = !inside;
-        }
-        return inside;
-    };
 
     // Авторизация в Wialon при монтировании компонента
     useEffect(() => {
@@ -77,127 +59,7 @@ export default function WialonControl({ onSelectTrack, onClose, workArea, isSubt
         }
     };
 
-    const analyzeTrackSegments = (tracks) => {
-        if (!tracks || tracks.length < 2) return tracks;
-
-        const segments = [];
-        let currentSegment = [];
-        let lastDirection = null;
-        const DIRECTION_THRESHOLD = 15; // градусов
-        const MIN_SPEED = 5; // км/ч
-        const MAX_SPEED = 15; // км/ч
-        const MIN_SEGMENT_LENGTH = 5; // минимальная длина сегмента в точках
-
-        for (let i = 2; i < tracks.length; i++) {
-            const point0 = tracks[i - 2];
-            const point1 = tracks[i - 1];
-            const point2 = tracks[i];
-
-            // Вычисляем направление движения
-            const currentDirection = turf.bearing(
-                turf.point([point1.lon, point1.lat]),
-                turf.point([point2.lon, point2.lat])
-            );
-
-            // Нормализуем направление в диапазоне 0-360
-            const normalizedDirection = (currentDirection + 360) % 360;
-
-            // Проверяем скорость
-            const speed = point2.speed || 0;
-            const isSpeedInRange = speed >= MIN_SPEED && speed <= MAX_SPEED;
-
-            // Проверяем изменение направления
-            const directionChange = lastDirection !== null ? 
-                Math.abs(normalizedDirection - lastDirection) : 0;
-            const isDirectionSteady = directionChange <= DIRECTION_THRESHOLD;
-
-            // Определяем, является ли точка частью рабочего сегмента
-            const isWorkingPoint = isSpeedInRange && isDirectionSteady;
-
-            if (currentSegment.length === 0) {
-                currentSegment.push({
-                    ...point2,
-                    isWorking: isWorkingPoint
-                });
-            } else if (currentSegment[0].isWorking === isWorkingPoint) {
-                currentSegment.push({
-                    ...point2,
-                    isWorking: isWorkingPoint
-                });
-            } else {
-                // Проверяем длину сегмента перед добавлением
-                if (currentSegment.length >= MIN_SEGMENT_LENGTH) {
-                    segments.push([...currentSegment]);
-                } else {
-                    // Если сегмент слишком короткий, присоединяем его к предыдущему
-                    if (segments.length > 0) {
-                        segments[segments.length - 1].push(...currentSegment);
-                    } else {
-                        segments.push([...currentSegment]);
-                    }
-                }
-                currentSegment = [{
-                    ...point2,
-                    isWorking: isWorkingPoint
-                }];
-            }
-
-            lastDirection = normalizedDirection;
-        }
-
-        // Добавляем последний сегмент
-        if (currentSegment.length >= MIN_SEGMENT_LENGTH) {
-            segments.push(currentSegment);
-        } else if (segments.length > 0) {
-            segments[segments.length - 1].push(...currentSegment);
-        }
-
-        return segments;
-    };
-
-    const calculateTurnAngle = (point1, point2, point0) => {
-        if (!point0) return 0;
-        
-        const bearing1 = turf.bearing(
-            turf.point(point0),
-            turf.point(point1)
-        );
-        const bearing2 = turf.bearing(
-            turf.point(point1),
-            turf.point(point2)
-        );
-        
-        let angle = Math.abs(bearing2 - bearing1);
-        if (angle > 180) angle = 360 - angle;
-        return angle;
-    };
-
-    const isWorkingCondition = (speed, turnAngle) => {
-        // Примерные условия для определения рабочего режима:
-        // 1. Скорость в рабочем диапазоне (например, 5-15 км/ч)
-        // 2. Нет резких поворотов (угол < 45 градусов)
-        return speed >= 5 && speed <= 15 && turnAngle < 45;
-    };
-
-    // Добавляем ручное управление сегментами
-    const [selectedSegmentIndex, setSelectedSegmentIndex] = useState(null);
-
-    const toggleSegmentType = (segmentIndex) => {
-        const newSegments = workSegments.map((segment, index) => {
-            if (index === segmentIndex) {
-                return segment.map(point => ({
-                    ...point,
-                    isWorking: !point.isWorking
-                }));
-            }
-            return segment;
-        });
-        setWorkSegments(newSegments);
-        // Передаем обновленные сегменты наверх
-        onSelectTrack(newSegments);
-    };
-
-    // Модифицируем функцию загрузки треков
+    // Загрузка треков
     const loadTracks = async (unitId, date) => {
         setIsLoading(true);
         try {
@@ -220,74 +82,24 @@ export default function WialonControl({ onSelectTrack, onClose, workArea, isSubt
                 // Если есть рабочая зона, фильтруем точки
                 if (workArea && workArea.coordinates) {
                     const workPolygon = turf.polygon(workArea.coordinates);
-                    
-                    // Фильтруем точки, которые находятся внутри рабочей зоны
                     tracks = tracks.filter(point => {
                         const pt = turf.point([point.lon, point.lat]);
                         return turf.booleanPointInPolygon(pt, workPolygon);
                     });
-
-                    // Добавляем флаг для точек внутри зоны
-                    tracks = tracks.map(point => ({
-                        ...point,
-                        isInWorkArea: true
-                    }));
                 }
 
-                // Анализируем треки и разбиваем на сегменты
-                const segments = analyzeTrackSegments(tracks);
-                setWorkSegments(segments);
-                onSelectTrack(segments);
+                onSelectTrack(tracks);
             } else {
                 console.warn('No tracks data in response:', response.data);
-                setTracks([]);
                 onSelectTrack([]);
             }
         } catch (error) {
             console.error('Ошибка загрузки треков:', error);
-            setTracks([]);
             onSelectTrack([]);
         } finally {
             setIsLoading(false);
         }
     };
-
-    const handlePlaceSegments = () => {
-        if (workSegments.length > 0) {
-            onSelectTrack(workSegments);
-            if (!isSubtaskMode) {
-                onClose();
-            }
-        }
-    };
-
-    const handleTrackSelect = (tracks) => {
-        // Если есть зона работы, фильтруем точки
-        if (workArea) {
-            const filteredTracks = tracks.map(track => ({
-                ...track,
-                intersectsWork: isPointInWorkArea([track.lon, track.lat], workArea.coordinates[0])
-            }));
-            onSelectTrack(filteredTracks);
-        } else {
-            onSelectTrack(tracks);
-        }
-    };
-
-    const isPointInWorkArea = (point, polygonCoords) => {
-        const pt = point([point[0], point[1]]);
-        const poly = turf.polygon([polygonCoords]);
-        return turf.booleanPointInPolygon(pt, poly);
-    };
-
-    // Добавляем состояние для диалогового окна
-    const [dialog, setDialog] = useState({
-        isOpen: false,
-        type: 'alert',
-        title: '',
-        message: '',
-        onConfirm: () => {}
-    });
 
     return (
         <div className="wialon-control">
@@ -329,51 +141,6 @@ export default function WialonControl({ onSelectTrack, onClose, workArea, isSubt
                 ))}
             </div>
             {isLoading && <div className="loading">Загрузка треков...</div>}
-
-            <div className="segment-controls">
-                <button 
-                    onClick={() => setIsMarkingMode(!isMarkingMode)}
-                    className={`mode-btn ${isMarkingMode ? 'active' : ''}`}
-                >
-                    {isMarkingMode ? 'Завершить разметку' : 'Разметить сегменты'}
-                </button>
-                
-                {isMarkingMode && workSegments.length > 0 && (
-                    <div className="segments-list">
-                        {workSegments.map((segment, index) => (
-                            <div 
-                                key={index}
-                                className={`segment-item ${segment[0].isWorking ? 'working' : 'non-working'}`}
-                                onClick={() => toggleSegmentType(index)}
-                            >
-                                Сегмент {index + 1}: 
-                                {segment[0].isWorking ? ' Рабочий' : ' Нерабочий'}
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
-
-            {workSegments.length > 0 && (
-                <button 
-                    type="button"
-                    onClick={handlePlaceSegments}
-                    className="place-segments-button"
-                >
-                    Разместить сегменты
-                </button>
-            )}
-
-            {/* Добавляем диалоговое окно */}
-            {dialog.isOpen && (
-                <div className="dialog-overlay">
-                    <div className="dialog-content">
-                        <h4>{dialog.title}</h4>
-                        <p>{dialog.message}</p>
-                        <button onClick={dialog.onConfirm}>OK</button>
-                    </div>
-                </div>
-            )}
         </div>
     );
 } 

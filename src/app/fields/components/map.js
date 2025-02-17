@@ -732,7 +732,17 @@ ${deletedNote.image ? '\n🖼 Было прикреплено изображен
 
   // Обработчик выбора работы
   const handleWorkSelect = (area) => {
-    setProcessingArea(area);
+    // Если выбираем ту же самую область (повторный клик), очищаем выбор
+    if (JSON.stringify(processingArea) === JSON.stringify(area)) {
+        setProcessingArea(null);
+        // Очищаем все треки
+        setWialonTracks(null);
+        setSubtaskTracks(null);
+        setFendtData(null);
+        setRavenData(null);
+    } else {
+        setProcessingArea(area);
+    }
   };
 
   // Обработчик закрытия модального окна
@@ -800,33 +810,59 @@ ${deletedNote.image ? '\n🖼 Было прикреплено изображен
     setWialonTracks(tracks || []);
   };
 
-  const renderWialonTrack = (segments) => {
-    if (!segments || !Array.isArray(segments)) return null;
+  const renderWialonTrack = (tracksData) => {
+    if (!tracksData || !Array.isArray(tracksData)) {
+        console.log('No tracks or invalid tracks data');
+        return null;
+    }
 
-    return segments.map((segment, segmentIndex) => {
-        if (!Array.isArray(segment)) return null;
+    return tracksData.map((trackInfo, trackIndex) => {
+        const { tracks, color } = trackInfo;
+        
+        if (!tracks || !Array.isArray(tracks)) return null;
 
-        // Создаем массив координат для линии трека
-        const trackCoords = segment.map(point => {
-            if (!point || typeof point.lat === 'undefined' || typeof point.lon === 'undefined') {
-                return null;
-            }
-            return [point.lat, point.lon];
-        }).filter(coord => coord !== null);
+        // Проверяем, является ли tracks массивом сегментов или массивом точек
+        const isSegmentedTracks = Array.isArray(tracks[0]) && Array.isArray(tracks[0][0]);
+        
+        if (isSegmentedTracks) {
+            // Обработка сегментированных треков
+            return tracks.map((segment, segmentIndex) => {
+                const trackCoords = segment.map(point => {
+                    if (!point || typeof point.lat === 'undefined' || typeof point.lon === 'undefined') {
+                        return null;
+                    }
+                    return [point.lat, point.lon];
+                }).filter(coord => coord !== null);
 
-        if (trackCoords.length < 2) return null;
+                if (trackCoords.length < 2) return null;
 
-        // Определяем цвет линии в зависимости от типа сегмента
-        const isWorking = segment[0]?.isWorking;
-        const color = isWorking ? '#4CAF50' : '#9e9e9e';
+                return (
+                    <React.Fragment key={`track-${trackIndex}-segment-${segmentIndex}`}>
+                        <Polyline
+                            positions={trackCoords}
+                            pathOptions={{
+                                color: color,
+                                weight: 3,
+                                opacity: 0.7
+                            }}
+                        />
+                    </React.Fragment>
+                );
+            });
+        } else {
+            // Обработка простого массива точек
+            const trackCoords = tracks.map(point => {
+                if (!point || typeof point.lat === 'undefined' || typeof point.lon === 'undefined') {
+                    return null;
+                }
+                return [point.lat, point.lon];
+            }).filter(coord => coord !== null);
 
-        // Находим центральную точку сегмента для размещения метки
-        const centerIndex = Math.floor(trackCoords.length / 2);
-        const centerPoint = trackCoords[centerIndex];
+            if (trackCoords.length < 2) return null;
 
-        return (
-            <React.Fragment key={`segment-${segmentIndex}`}>
+            return (
                 <Polyline
+                    key={`track-${trackIndex}`}
                     positions={trackCoords}
                     pathOptions={{
                         color: color,
@@ -834,19 +870,8 @@ ${deletedNote.image ? '\n🖼 Было прикреплено изображен
                         opacity: 0.7
                     }}
                 />
-                <Marker
-                    position={centerPoint}
-                    icon={L.divIcon({
-                        className: 'segment-label',
-                        html: `<div class="segment-number ${isWorking ? 'working' : 'non-working'}">
-                                ${segmentIndex + 1}
-                              </div>`,
-                        iconSize: [24, 24],
-                        iconAnchor: [12, 12]
-                    })}
-                />
-            </React.Fragment>
-        );
+            );
+        }
     });
   };
 
