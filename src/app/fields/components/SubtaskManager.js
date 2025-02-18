@@ -21,9 +21,9 @@ export default function SubtaskManager({ work, onUpdate, onWialonTrackSelect }) 
     const [remainingArea, setRemainingArea] = useState(work.area);
     const [isDrawingArea, setIsDrawingArea] = useState(false);
     
-    // Загрузка подработ
+    // Изменяем условие загрузки подработ
     useEffect(() => {
-        if (work.status === 'in_progress') {
+        if (work.status === 'in_progress' || work.status === 'completed') {
             loadSubtasks();
         }
     }, [work._id]);
@@ -132,8 +132,8 @@ export default function SubtaskManager({ work, onUpdate, onWialonTrackSelect }) 
         }
     };
 
-    // Если работа не в процессе, не показываем менеджер подработ
-    if (work.status !== 'in_progress') {
+    // Изменяем условие рендеринга
+    if (work.status !== 'in_progress' && work.status !== 'completed') {
         return null;
     }
 
@@ -145,13 +145,16 @@ export default function SubtaskManager({ work, onUpdate, onWialonTrackSelect }) 
                     <span>Общая площадь: {work.area} га</span>
                     <span>Осталось: {remainingArea} га</span>
                 </div>
-                <button 
-                    onClick={() => setIsCreating(true)}
-                    disabled={remainingArea <= 0}
-                    className="add-subtask-btn"
-                >
-                    Добавить подработу
-                </button>
+                {/* Показываем кнопку добавления только для работ в процессе */}
+                {work.status === 'in_progress' && (
+                    <button 
+                        onClick={() => setIsCreating(true)}
+                        disabled={remainingArea <= 0}
+                        className="add-subtask-btn"
+                    >
+                        Добавить подработу
+                    </button>
+                )}
             </div>
 
             <div className="subtasks-list">
@@ -195,17 +198,19 @@ export default function SubtaskManager({ work, onUpdate, onWialonTrackSelect }) 
                                         ))}
                                     </ul>
                                 </div>
-                                
                             </div>
                         </div>
-                        <div className="subtask-actions">
-                            <button 
-                                onClick={() => handleDeleteSubtask(subtask._id)}
-                                className="delete-subtask-btn"
-                            >
-                                Удалить
-                            </button>
-                        </div>
+                        {/* Показываем кнопку удаления только для работ в процессе */}
+                        {work.status === 'in_progress' && (
+                            <div className="subtask-actions">
+                                <button 
+                                    onClick={() => handleDeleteSubtask(subtask._id)}
+                                    className="delete-subtask-btn"
+                                >
+                                    Удалить
+                                </button>
+                            </div>
+                        )}
                     </div>
                 ))}
             </div>
