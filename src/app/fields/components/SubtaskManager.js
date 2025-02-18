@@ -132,6 +132,16 @@ export default function SubtaskManager({ work, onUpdate, onWialonTrackSelect }) 
         }
     };
 
+    // Добавим функцию форматирования даты
+    const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('ru-RU', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+    };
+
     // Изменяем условие рендеринга
     if (work.status !== 'in_progress' && work.status !== 'completed') {
         return null;
@@ -173,6 +183,9 @@ export default function SubtaskManager({ work, onUpdate, onWialonTrackSelect }) 
                         <div className="subtask-info">
                             <h4>{subtask.name}</h4>
                             <div className="subtask-details">
+                                <div className="subtask-date">
+                                    <span>Дата: {formatDate(subtask.plannedDate)}</span>
+                                </div>
                                 <div className="subtask-area">
                                     <span>Площадь: {subtask.area || 'Не указана'} га</span>
                                 </div>
