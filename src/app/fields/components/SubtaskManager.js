@@ -34,19 +34,24 @@ export default function SubtaskManager({ work, onUpdate, onWialonTrackSelect }) 
             const loadedSubtasks = response.data.subtasks || [];
             setSubtasks(loadedSubtasks);
             
-            // Формируем массив треков с цветами для каждой подработы
-            const allTracks = loadedSubtasks.map((subtask, index) => ({
-                tracks: subtask.tracks || [],
-                color: SUBTASK_COLORS[index % SUBTASK_COLORS.length],
-                subtaskId: subtask._id
-            })).filter(track => track.tracks.length > 0);
+            const allTracks = loadedSubtasks
+                .map((subtask, index) => {
+                    if (!subtask.tracks?.[0]?.tracks?.tracks) return null;
+                    
+                    return {
+                        tracks: subtask.tracks[0].tracks.tracks,
+                        color: SUBTASK_COLORS[index % SUBTASK_COLORS.length],
+                        subtaskId: subtask._id
+                    };
+                })
+                .filter(Boolean);
 
-            // Передаем все треки в родительский компонент
-            if (typeof onWialonTrackSelect === 'function') {
+            console.log('Processed tracks:', allTracks);
+
+            if (typeof onWialonTrackSelect === 'function' && allTracks.length > 0) {
                 onWialonTrackSelect(allTracks);
             }
             
-            // Вычисляем оставшуюся площадь
             const completedArea = loadedSubtasks.reduce((sum, task) => 
                 sum + (task.area || 0), 0
             );
@@ -58,7 +63,20 @@ export default function SubtaskManager({ work, onUpdate, onWialonTrackSelect }) 
 
     const handleCreateSubtask = async (formData) => {
         try {
-            const response = await axios.post(`/api/fields/works/${work._id}/subtasks`, formData);
+            // Форматируем треки в правильную структуру с двумя вложенностями
+            const tracksData = {
+                tracks: [{
+                    tracks: formData.tracks,
+                    isWialonTrack: true
+                }]
+            };
+
+            // Отправляем данные на сервер
+            const response = await axios.post(`/api/fields/works/${work._id}/subtasks`, {
+                ...formData,
+                ...tracksData
+            });
+            
             if (response.data.success) {
                 await loadSubtasks();
                 setIsCreating(false);
@@ -71,7 +89,31 @@ export default function SubtaskManager({ work, onUpdate, onWialonTrackSelect }) 
 
     const handleWialonTrackSelect = (tracks) => {
         if (typeof onWialonTrackSelect === 'function') {
-            onWialonTrackSelect(tracks);
+            // Получаем текущие треки из существующих подработ
+            const currentTracks = subtasks
+                .map((subtask, index) => {
+                    if (!subtask.tracks?.[0]?.tracks?.tracks) return null;
+                    
+                    return {
+                        tracks: subtask.tracks[0].tracks.tracks,
+                        color: SUBTASK_COLORS[index % SUBTASK_COLORS.length],
+                        subtaskId: subtask._id
+                    };
+                })
+                .filter(Boolean);
+
+            // Форматируем новый трек
+            const newTrack = {
+                tracks: tracks.tracks,
+                color: SUBTASK_COLORS[currentTracks.length % SUBTASK_COLORS.length],
+                subtaskId: 'new-subtask'
+            };
+
+            // Объединяем существующие треки с новым
+            const allTracks = [...currentTracks, newTrack];
+            
+            console.log('Combined tracks:', allTracks); // Для отладки
+            onWialonTrackSelect(allTracks);
         }
     };
 
@@ -128,7 +170,7 @@ export default function SubtaskManager({ work, onUpdate, onWialonTrackSelect }) 
                             }}
                         />
                         <div className="subtask-info">
-                            <h4>Подработа от {new Date(subtask.plannedDate).toLocaleDateString()}</h4>
+                            <h4>{subtask.name}</h4>
                             <div className="subtask-details">
                                 <div className="subtask-area">
                                     <span>Площадь: {subtask.area || 'Не указана'} га</span>

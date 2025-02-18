@@ -811,68 +811,63 @@ ${deletedNote.image ? '\n🖼 Было прикреплено изображен
   };
 
   const renderWialonTrack = (tracksData) => {
-    if (!tracksData || !Array.isArray(tracksData)) {
-        console.log('No tracks or invalid tracks data');
+    console.log('Rendering tracks:', tracksData);
+    if (!tracksData) {
         return null;
     }
 
-    return tracksData.map((trackInfo, trackIndex) => {
-        const { tracks, color } = trackInfo;
-        
-        if (!tracks || !Array.isArray(tracks)) return null;
+    // Если это массив треков от подработ
+    if (Array.isArray(tracksData)) {
+        return tracksData.map((trackInfo, index) => {
+            if (!trackInfo || !Array.isArray(trackInfo.tracks)) {
+                return null;
+            }
 
-        // Проверяем, является ли tracks массивом сегментов или массивом точек
-        const isSegmentedTracks = Array.isArray(tracks[0]) && Array.isArray(tracks[0][0]);
-        
-        if (isSegmentedTracks) {
-            // Обработка сегментированных треков
-            return tracks.map((segment, segmentIndex) => {
-                const trackCoords = segment.map(point => {
-                    if (!point || typeof point.lat === 'undefined' || typeof point.lon === 'undefined') {
-                        return null;
-                    }
-                    return [point.lat, point.lon];
-                }).filter(coord => coord !== null);
+            const validPositions = trackInfo.tracks
+                .filter(point => point && typeof point.lat === 'number' && typeof point.lon === 'number')
+                .map(point => [point.lat, point.lon]);
 
-                if (trackCoords.length < 2) return null;
-
-                return (
-                    <React.Fragment key={`track-${trackIndex}-segment-${segmentIndex}`}>
-                        <Polyline
-                            positions={trackCoords}
-                            pathOptions={{
-                                color: color,
-                                weight: 3,
-                                opacity: 0.7
-                            }}
-                        />
-                    </React.Fragment>
-                );
-            });
-        } else {
-            // Обработка простого массива точек
-            const trackCoords = tracks.map(point => {
-                if (!point || typeof point.lat === 'undefined' || typeof point.lon === 'undefined') {
-                    return null;
-                }
-                return [point.lat, point.lon];
-            }).filter(coord => coord !== null);
-
-            if (trackCoords.length < 2) return null;
+            if (validPositions.length < 2) {
+                return null;
+            }
 
             return (
                 <Polyline
-                    key={`track-${trackIndex}`}
-                    positions={trackCoords}
+                    key={`track-${trackInfo.subtaskId}-${index}`}
+                    positions={validPositions}
                     pathOptions={{
-                        color: color,
+                        color: trackInfo.color || '#4CAF50',
                         weight: 3,
                         opacity: 0.7
                     }}
                 />
             );
+        });
+    }
+
+    // Если это трек от Wialon
+    if (tracksData.isWialonTrack && Array.isArray(tracksData.tracks)) {
+        const validPositions = tracksData.tracks
+            .filter(point => point && typeof point.lat === 'number' && typeof point.lon === 'number')
+            .map(point => [point.lat, point.lon]);
+
+        if (validPositions.length < 2) {
+            return null;
         }
-    });
+
+        return (
+            <Polyline
+                positions={validPositions}
+                pathOptions={{
+                    color: '#FF0000',
+                    weight: 3,
+                    opacity: 0.7
+                }}
+            />
+        );
+    }
+
+    return null;
   };
 
   // Обработчик получения треков

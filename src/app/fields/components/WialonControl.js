@@ -88,7 +88,13 @@ export default function WialonControl({ onSelectTrack, onClose, workArea }) {
                     });
                 }
 
-                onSelectTrack(tracks);
+                // Форматируем треки перед отправкой
+                const formattedTracks = {
+                    tracks: tracks,
+                    isWialonTrack: true // флаг для идентификации источника треков
+                };
+
+                onSelectTrack(formattedTracks);
             } else {
                 console.warn('No tracks data in response:', response.data);
                 onSelectTrack([]);
