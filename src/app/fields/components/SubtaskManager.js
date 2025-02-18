@@ -46,8 +46,6 @@ export default function SubtaskManager({ work, onUpdate, onWialonTrackSelect }) 
                 })
                 .filter(Boolean);
 
-            console.log('Processed tracks:', allTracks);
-
             if (typeof onWialonTrackSelect === 'function' && allTracks.length > 0) {
                 onWialonTrackSelect(allTracks);
             }
@@ -112,7 +110,7 @@ export default function SubtaskManager({ work, onUpdate, onWialonTrackSelect }) 
             // Объединяем существующие треки с новым
             const allTracks = [...currentTracks, newTrack];
             
-            console.log('Combined tracks:', allTracks); // Для отладки
+            
             onWialonTrackSelect(allTracks);
         }
     };

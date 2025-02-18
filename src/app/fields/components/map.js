@@ -811,7 +811,7 @@ ${deletedNote.image ? '\n🖼 Было прикреплено изображен
   };
 
   const renderWialonTrack = (tracksData) => {
-    console.log('Rendering tracks:', tracksData);
+    
     if (!tracksData) {
         return null;
     }
