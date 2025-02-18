@@ -15,6 +15,7 @@ import DatePicker, { registerLocale } from 'react-datepicker'
 import "react-datepicker/dist/react-datepicker.css"
 import ru from 'date-fns/locale/ru'
 import { useSession } from 'next-auth/react';
+import EditWork from './EditWork';
 
 // Регистрируем русскую локаль
 registerLocale('ru', ru)
@@ -93,6 +94,7 @@ export default function ShowField({
     const showFieldRef = useRef(null);
     const [allWorkDates, setAllWorkDates] = useState([])
     const { data: session } = useSession();
+    const [editingWork, setEditingWork] = useState(null);
 
     const calculateAreaInHectares = (coordinates) => {
         try {
@@ -747,42 +749,7 @@ ${work.description ? `• Описание: ${work.description}` : ''}`;
     const getWorkTypeName = (type) => {
         return WORK_TYPES[type] || type;
     };
-    // const handleWorkClick = async (work, e) => {
-    //     e.stopPropagation();
-    //     const newSelectedWork = selectedWork?._id === work._id ? null : work;
-    //     setSelectedWork(newSelectedWork);
-        
-    //     if (newSelectedWork) {
-    //         try {
-    //             const response = await axios.get(`/api/fields/works/${newSelectedWork._id}/subtasks`);
-                
-    //             if (response.data.success && response.data.subtasks && Array.isArray(response.data.subtasks)) {
-    //                 const allTracks = response.data.subtasks
-    //                     .filter(subtask => subtask && Array.isArray(subtask.tracks))
-    //                     .flatMap((subtask, subtaskIndex) => 
-    //                         subtask.tracks.map((track, trackIndex) => {
-    //                             if (!Array.isArray(track)) return null;
-                                
-    //                             const coordinates = track
-    //                                 .filter(point => point && typeof point.lat === 'number' && typeof point.lon === 'number')
-    //                                 .map(point => [point.lat, point.lon]);
-                                
-    //                             return coordinates.length >= 2 ? {
-    //                                 coordinates: coordinates,
-    //                                 subtaskId: `${subtask._id}_track_${trackIndex}`,
-    //                                 originalSubtaskId: subtask._id
-    //                             } : null;
-    //                         }).filter(track => track !== null)
-    //                     );
 
-    //                 if (allTracks.length > 0) {
-    //                     onSubtaskTracksSelect(allTracks);
-    //                 }
-    //             }
-    //         } catch (error) {
-    //             console.error('Error loading subtask tracks:', error);
-    //             onSubtaskTracksSelect(null);
-    //         }
     const handleWorkClick = (work) => {
         if (selectedWork?._id === work._id) {
             // Если кликнули по той же работе - отменяем выбор
@@ -1314,10 +1281,20 @@ ${work.description ? `• Описание: ${work.description}` : ''}`;
                                                 e.stopPropagation();
                                                 updateWorkStatus(work._id, 'completed');
                                             }}
+                                            className="complete-work-button"
                                         >
                                             Завершить
                                         </button>
                                     )}
+                                    <button 
+                                        className="edit-work-btn"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setEditingWork(work);
+                                        }}
+                                    >
+                                        ✎
+                                    </button>
                                     <button 
                                         className="delete-work-btn"
                                         onClick={(e) => handleDeleteWork(work._id)}
@@ -1493,7 +1470,19 @@ ${work.description ? `• Описание: ${work.description}` : ''}`;
                 )}
             </div>
 
-            
+            {editingWork && (
+                <EditWork
+                    work={editingWork}
+                    onClose={() => setEditingWork(null)}
+                    onUpdate={(updatedWork) => {
+                        setFieldWorks(prevWorks => 
+                            prevWorks.map(w => 
+                                w._id === updatedWork._id ? updatedWork : w
+                            )
+                        );
+                    }}
+                />
+            )}
         </div>
     ) : null;
 }

@@ -195,11 +195,7 @@ export default function SubtaskManager({ work, onUpdate, onWialonTrackSelect }) 
                                         ))}
                                     </ul>
                                 </div>
-                                {subtask.tracks && (
-                                    <div className="subtask-tracks">
-                                        <span>Количество точек трека: {subtask.tracks.length}</span>
-                                    </div>
-                                )}
+                                
                             </div>
                         </div>
                         <div className="subtask-actions">
