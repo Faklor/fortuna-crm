@@ -1343,13 +1343,18 @@ ${work.description ? `• Описание: ${work.description}` : ''}`;
                 </div>
             </div>
 
-            {selectedWork && selectedWork.status === 'in_progress' && (
+            {selectedWork && (selectedWork.status === 'in_progress' || selectedWork.status === 'completed') && (
                 <SubtaskManager 
                     work={selectedWork}
                     onUpdate={() => {
-                        loadFieldWorks();
+                        if (selectedWork.status === 'completed') {
+                            loadArchiveWorks();
+                        } else {
+                            loadFieldWorks();
+                        }
                     }}
                     onWialonTrackSelect={onWialonTrackSelect}
+                    onSubtaskTracksSelect={onSubtaskTracksSelect}
                 />
             )}
 
@@ -1416,6 +1421,15 @@ ${work.description ? `• Описание: ${work.description}` : ''}`;
                                     <div className="work-status-controls">
                                         <span className="work-status completed">Завершено</span>
                                         <button 
+                                            className="edit-work-btn"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setEditingWork(work);
+                                            }}
+                                        >
+                                            ✎
+                                        </button>
+                                        <button 
                                             className="delete-work-btn"
                                             onClick={(e) => handleDeleteWork(work._id)}
                                         >
@@ -1475,11 +1489,19 @@ ${work.description ? `• Описание: ${work.description}` : ''}`;
                     work={editingWork}
                     onClose={() => setEditingWork(null)}
                     onUpdate={(updatedWork) => {
-                        setFieldWorks(prevWorks => 
-                            prevWorks.map(w => 
-                                w._id === updatedWork._id ? updatedWork : w
-                            )
-                        );
+                        if (updatedWork.status === 'completed') {
+                            setArchiveWorks(prevWorks => 
+                                prevWorks.map(w => 
+                                    w._id === updatedWork._id ? updatedWork : w
+                                )
+                            );
+                        } else {
+                            setFieldWorks(prevWorks => 
+                                prevWorks.map(w => 
+                                    w._id === updatedWork._id ? updatedWork : w
+                                )
+                            );
+                        }
                     }}
                 />
             )}
