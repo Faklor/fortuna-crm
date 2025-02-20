@@ -17,14 +17,10 @@ export default function ActionMenu({
     setDialog,
     onShowWialonControl,
     showWialonControl,
-    onFendtDataLoad,
-    onRavenDataLoad,
 }) {
     const [isOpen, setIsOpen] = useState(false);
     const menuRef = useRef(null);
     const fileInputRef = useRef(null);
-    const fendtFileInputRef = useRef(null);
-    const ravenFileInputRef = useRef(null);
 
     // Закрываем меню при клике вне его
     useEffect(() => {
@@ -91,149 +87,6 @@ export default function ActionMenu({
         setIsOpen(false); 
     };
 
-    // Обработчик для загрузки Fendt данных
-    const handleFendtFileUpload = async (event) => {
-        const file = event.target.files?.[0];
-        if (!file) return;
-
-        try {
-            setDialog({
-                isOpen: true,
-                type: 'loading',
-                title: 'Загрузка',
-                message: 'Обработка файла...'
-            });
-
-            const zip = new JSZip();
-            const zipContent = await zip.loadAsync(file);
-            
-            // Ищем TASKDATA.XML в любой папке внутри ZIP
-            let xmlFile = null;
-            for (const [path, zipEntry] of Object.entries(zipContent.files)) {
-                if (path.toUpperCase().includes('TASKDATA.XML')) {
-                    xmlFile = zipEntry;
-                    break;
-                }
-            }
-
-            if (!xmlFile) {
-                throw new Error('TASKDATA.XML не найден в ZIP архиве');
-            }
-
-            // Получаем XML как текст, а не как blob
-            const xmlContent = await xmlFile.async('string');
-            
-            // Создаем новый blob с правильным типом
-            const xmlBlob = new Blob([xmlContent], { type: 'application/xml' });
-            
-            // Создаем FormData для отправки на сервер
-            const formData = new FormData();
-            formData.append('file', xmlBlob, 'TASKDATA.XML');
-
-            // Отправляем на сервер
-            const response = await fetch('/api/fendt-data/upload', {
-                method: 'POST',
-                body: formData
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Ошибка при обработке файла');
-            }
-
-            const data = await response.json();
-            
-            setDialog({
-                isOpen: true,
-                type: 'success',
-                title: 'Успешно',
-                message: 'Данные Fendt успешно загружены',
-                onConfirm: () => {
-                    setDialog(prev => ({ ...prev, isOpen: false }));
-                    if (onFendtDataLoad) {
-                        onFendtDataLoad(data);
-                    }
-                }
-            });
-
-        } catch (error) {
-            console.error('Error:', error);
-            setDialog({
-                isOpen: true,
-                type: 'error',
-                title: 'Ошибка',
-                message: error.message || 'Ошибка при загрузке файла',
-                onConfirm: () => setDialog(prev => ({ ...prev, isOpen: false }))
-            });
-        }
-
-        // Очищаем input
-        if (fendtFileInputRef.current) {
-            fendtFileInputRef.current.value = '';
-        }
-        
-        setIsOpen(false);
-    };
-
-    // Обработчик для загрузки Raven данных
-    const handleRavenFileUpload = async (event) => {
-        const file = event.target.files?.[0];
-        if (!file) return;
-
-        try {
-            setDialog({
-                isOpen: true,
-                type: 'loading',
-                title: 'Загрузка',
-                message: 'Обработка файла Raven...'
-            });
-
-            const formData = new FormData();
-            formData.append('file', file);
-
-            const response = await fetch('/api/raven-data/upload', {
-                method: 'POST',
-                body: formData
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Ошибка при обработке файла');
-            }
-
-            const data = await response.json();
-            
-            setDialog({
-                isOpen: true,
-                type: 'success',
-                title: 'Успешно',
-                message: 'Данные Raven успешно загружены',
-                onConfirm: () => {
-                    setDialog(prev => ({ ...prev, isOpen: false }));
-                    if (onRavenDataLoad) {
-                        onRavenDataLoad(data);
-                    }
-                }
-            });
-
-        } catch (error) {
-            console.error('Error:', error);
-            setDialog({
-                isOpen: true,
-                type: 'error',
-                title: 'Ошибка',
-                message: error.message || 'Ошибка при загрузке файла',
-                onConfirm: () => setDialog(prev => ({ ...prev, isOpen: false }))
-            });
-        }
-
-        if (ravenFileInputRef.current) {
-            ravenFileInputRef.current.value = '';
-        }
-        
-        setIsOpen(false);
-    };
-
     return (
         <div style={{
             position: 'absolute',
@@ -297,23 +150,6 @@ export default function ActionMenu({
                                     <span className="icon">🚗</span>
                                     Объекты Wialon
                                 </button>
-
-                                <button 
-                                    className="action-menu__item"
-                                    onClick={() => fendtFileInputRef.current.click()}
-                                >
-                                    <span className="icon">🚜</span>
-                                    Загрузить работу Fendt 
-                                </button>
-
-                                <button 
-                                    className="action-menu__item"
-                                    onClick={() => ravenFileInputRef.current?.click()}
-                                >
-                                    <span className="icon">🚜</span>
-                                    Загрузить работу Raven CR7
-                                </button>
-
                             </>
                         )}
 
@@ -353,26 +189,6 @@ export default function ActionMenu({
                 accept=".zip"
                 onChange={handleFileUpload}
                 style={{ display: 'none' }}
-            />
-
-            <input
-                ref={fendtFileInputRef}
-                type="file"
-                accept=".zip"
-                onChange={handleFendtFileUpload}
-                style={{ display: 'none' }}
-                onClick={(e) => {
-                    // Сбрасываем значение при каждом клике
-                    e.target.value = '';
-                }}
-            />
-
-            <input
-                type="file"
-                ref={ravenFileInputRef}
-                style={{ display: 'none' }}
-                accept=".jdp"
-                onChange={handleRavenFileUpload}
             />
 
         </div>

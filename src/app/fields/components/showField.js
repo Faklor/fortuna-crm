@@ -750,6 +750,15 @@ ${work.description ? `• Описание: ${work.description}` : ''}`;
         return WORK_TYPES[type] || type;
     };
 
+    // Добавляем эффект для очистки выбранной работы при смене поля
+    useEffect(() => {
+        // Очищаем выбранную работу при смене поля
+        setSelectedWork(null);
+        // Очищаем треки на карте
+        if (onWialonTrackSelect) onWialonTrackSelect(null);
+        if (onSubtaskTracksSelect) onSubtaskTracksSelect(null);
+    }, [selectedField]);
+
     const handleWorkClick = (work) => {
         if (selectedWork?._id === work._id) {
             // Если кликнули по той же работе - отменяем выбор

@@ -32,7 +32,30 @@ export default function SubtaskManager({ work, onUpdate, onWialonTrackSelect }) 
         try {
             const response = await axios.get(`/api/fields/works/${work._id}/subtasks`);
             const loadedSubtasks = response.data.subtasks || [];
-            setSubtasks(loadedSubtasks);
+            
+            // Отладочный вывод до сортировки
+            console.log('Before sorting:', loadedSubtasks.map(st => ({
+                date: st.plannedDate,
+                id: st._id
+            })));
+            
+            // Сортируем подработы по plannedDate
+            const sortedSubtasks = [...loadedSubtasks].sort((a, b) => {
+                // Преобразуем строки дат в объекты Date
+                const dateA = new Date(a.plannedDate);
+                const dateB = new Date(b.plannedDate);
+                
+                // Сортируем по убыванию (более поздние даты будут первыми)
+                return dateB - dateA;
+            });
+
+            // Отладочный вывод после сортировки
+            console.log('After sorting:', sortedSubtasks.map(st => ({
+                date: st.plannedDate,
+                id: st._id
+            })));
+
+            setSubtasks(sortedSubtasks);
             
             const allTracks = loadedSubtasks
                 .map((subtask, index) => {
@@ -167,7 +190,11 @@ export default function SubtaskManager({ work, onUpdate, onWialonTrackSelect }) 
                 )}
             </div>
 
-            <div className="subtasks-list">
+            <div className="subtasks-list" style={{
+                maxHeight: '500px',
+                overflowY: 'auto',
+                padding: '10px'
+            }}>
                 {subtasks && subtasks.map((subtask, index) => (
                     <div key={subtask._id} className="subtask-item">
                         <div 

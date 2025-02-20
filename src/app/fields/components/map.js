@@ -20,10 +20,6 @@ import CoordinatesDisplay from './CoordinatesDisplay'
 import DialogModal from './DialogModal'
 import WialonControl from './WialonControl'
 import { SUBTASK_COLORS } from './SubtaskManager'
-import { FendtLayer } from './FendtLayer'
-import { FendtInfoPanel } from './FendtInfoPanel'
-import { RavenLayer } from './RavenLayer'
-import { RavenInfoPanel } from './RavenInfoPanel'
 import { useSession } from 'next-auth/react'
 
 function DrawingControl({ 
@@ -350,7 +346,7 @@ const arraysEqual = (a, b) => {
     return a.every((val, index) => Math.abs(val - b[index]) < 1e-10);
 };
 
-function Map({ fields, currentSeason }) {
+export default function Map({ fields, currentSeason }) {
   const [selectedField, setSelectedField] = useState(null);
   const [isDrawingMode, setIsDrawingMode] = useState(false);
   const [subFields, setSubFields] = useState([]);
@@ -389,8 +385,6 @@ function Map({ fields, currentSeason }) {
   const [wialonTracks, setWialonTracks] = useState([]);
   const [showWialonControl, setShowWialonControl] = useState(false);
   const [subtaskTracks, setSubtaskTracks] = useState(null);
-  const [fendtData, setFendtData] = useState(null);
-  const [ravenData, setRavenData] = useState(null);
   const { data: session } = useSession();
 
   useEffect(() => {
@@ -738,8 +732,6 @@ ${deletedNote.image ? '\n🖼 Было прикреплено изображен
         // Очищаем все треки
         setWialonTracks(null);
         setSubtaskTracks(null);
-        setFendtData(null);
-        setRavenData(null);
     } else {
         setProcessingArea(area);
     }
@@ -875,18 +867,6 @@ ${deletedNote.image ? '\n🖼 Было прикреплено изображен
     if (tracks && tracks.length > 0) {
     }
     setSubtaskTracks(tracks);
-  }, []);
-
-  // Обработчик загрузки данных Fendt
-  const handleFendtDataLoad = useCallback((data) => {
-    console.log('Received Fendt data:', data);
-    setFendtData(data);
-  }, []);
-
-  // Добавляем обработчик загрузки данных Raven
-  const handleRavenDataLoad = useCallback((data) => {
-    console.log('Received Raven data:', data);
-    setRavenData(data);
   }, []);
 
   return (
@@ -1139,12 +1119,6 @@ ${deletedNote.image ? '\n🖼 Было прикреплено изображен
 
         {/* Отрисовка трека Wialon */}
         {wialonTracks && renderWialonTrack(wialonTracks)}
-
-        {/* Слой с данными Fendt */}
-        {fendtData && <FendtLayer data={fendtData} />}
-
-        {/* Слой с данными Raven */}
-        {ravenData && <RavenLayer data={ravenData} />}
       </MapContainer>
 
       {/* Компонент ShowField */}
@@ -1178,8 +1152,6 @@ ${deletedNote.image ? '\n🖼 Было прикреплено изображен
           setDialog={setDialog}
           onWialonTrackSelect={handleWialonTrackSelect}
           onSubtaskTracksSelect={handleSubtaskTracksSelect}
-          onFendtDataLoad={handleFendtDataLoad}
-          onRavenDataLoad={handleRavenDataLoad}
         />
       )}
 
@@ -1208,8 +1180,6 @@ ${deletedNote.image ? '\n🖼 Было прикреплено изображен
         setDialog={setDialog}
         onShowWialonControl={(status) => setShowWialonControl(status)}
         showWialonControl={showWialonControl}
-        onFendtDataLoad={handleFendtDataLoad}
-        onRavenDataLoad={handleRavenDataLoad}
       />
 
       {/* Модальное окно для просмотра изображения */}
@@ -1239,12 +1209,6 @@ ${deletedNote.image ? '\n🖼 Было прикреплено изображен
         showNotificationCheckbox={dialog.showNotificationCheckbox}
         defaultNotificationState={dialog.defaultNotificationState}
       />}
-
-      {/* Добавляем панель информации */}
-      {fendtData && <FendtInfoPanel data={fendtData} />}
-
-      {/* Добавляем панель информации Raven */}
-      {ravenData && <RavenInfoPanel data={ravenData} />}
     </div>
   );
 }
@@ -1265,6 +1229,4 @@ function MapEvents({ onClick }) {
   
   return null;
 }
-
-export default Map;
 
