@@ -103,7 +103,7 @@ export default function BlockAddPart({}){
             // Анимация успеха
             setTimeout(() => {
                 setShowSuccess(false)
-                clearForm()
+                //clearForm()
             }, 2000)
         } catch (e) {
             setStatus('Ошибка при добавлении')
