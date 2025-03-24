@@ -55,9 +55,9 @@ export default function BlockAddPart({}){
         setNowContact_Link('')
         setNowStorageId('')
         // Сбрасываем категорию на первую в списке
-        if (categoryes.length > 0) {
-            setNowCatagory(categoryes[0])
-        }
+        // if (categoryes.length > 0) {
+        //     setNowCatagory(categoryes[0])
+        // }
     }
     
     //functions
@@ -103,7 +103,7 @@ export default function BlockAddPart({}){
             // Анимация успеха
             setTimeout(() => {
                 setShowSuccess(false)
-                //clearForm()
+                clearForm()
             }, 2000)
         } catch (e) {
             setStatus('Ошибка при добавлении')
