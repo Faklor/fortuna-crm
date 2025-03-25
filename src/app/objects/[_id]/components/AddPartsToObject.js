@@ -56,6 +56,19 @@ export default function AddPartsToObject({
         part.manufacturer?.toLowerCase().includes(searchQuery.toLowerCase())
     )
 
+    // Группируем работников по организациям
+    const groupedWorkers = workers.reduce((acc, worker) => {
+        const organization = worker.organization || 'Без организации'
+        if (!acc[organization]) {
+            acc[organization] = []
+        }
+        acc[organization].push(worker)
+        return acc
+    }, {})
+
+    // Сортируем организации
+    const sortedOrganizations = Object.keys(groupedWorkers).sort()
+
     // Обработчики изменений
     const handleCheckboxChange = (partId) => {
         setSelectedParts(prev => {
@@ -174,10 +187,17 @@ ${partsInfo}`
                         className="worker-select"
                     >
                         <option value="">Выберите работника</option>
-                        {workers.map((worker) => (
-                            <option key={worker._id} value={worker.name}>
-                                {worker.name}
-                            </option>
+                        {sortedOrganizations.map(organization => (
+                            <optgroup key={organization} label={organization}>
+                                {groupedWorkers[organization]
+                                    .sort((a, b) => a.name.localeCompare(b.name, 'ru'))
+                                    .map(worker => (
+                                        <option key={worker._id} value={worker.name}>
+                                            {`${worker.name} ${worker.position ? `(${worker.position})` : ''}`}
+                                        </option>
+                                    ))
+                                }
+                            </optgroup>
                         ))}
                     </select>
 

@@ -1,7 +1,7 @@
 import '../scss/sortingOptions.scss'
 import { useState, useEffect } from 'react'
 
-export default function SortingOptions({ parts, setVisibleParts }) {
+export default function SortingOptions({ originalParts, visibleParts, setVisibleParts }) {
     // Собираем уникальные значения для каждого типа сортировки
     const [sortOptions, setSortOptions] = useState({
         storageIds: [],
@@ -11,8 +11,8 @@ export default function SortingOptions({ parts, setVisibleParts }) {
     })
 
     useEffect(() => {
-        // Собираем все уникальные значения из частей
-        const options = parts.reduce((acc, part) => {
+        // Собираем все уникальные значения из оригинального массива частей
+        const options = originalParts.reduce((acc, part) => {
             // Места хранения
             if (part.storageId && !acc.storageIds.includes(part.storageId)) {
                 acc.storageIds.push(part.storageId)
@@ -48,15 +48,15 @@ export default function SortingOptions({ parts, setVisibleParts }) {
         options.objects.sort()
 
         setSortOptions(options)
-    }, [parts])
+    }, [originalParts])
 
     const handleSort = (type, value) => {
         if (!value) {
-            setVisibleParts([...parts]) // Сброс к исходному списку
+            setVisibleParts([...originalParts]) // Сброс к исходному списку
             return
         }
 
-        const sortedParts = parts.filter(part => {
+        const sortedParts = originalParts.filter(part => {
             switch (type) {
                 case 'storageId':
                     return part.storageId === value

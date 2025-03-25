@@ -148,7 +148,11 @@ export default function WareHouse({parts, workers, objects}){
             <h2>Категории</h2>
             <SlyderCategory parts={JSON.parse(parts)} setVisibleParts={setVisibleParts}/>
             <h2>Сортировка</h2>
-            <SortingOptions parts={visibleParts} setVisibleParts={setVisibleParts} />
+            <SortingOptions 
+                originalParts={JSON.parse(parts)}
+                visibleParts={visibleParts}
+                setVisibleParts={setVisibleParts}
+            />
         </div>
         
         <div className='content' ref={contentRef}>
