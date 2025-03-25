@@ -29,6 +29,7 @@ export default function AddPartsToObject({
     const [selectedDate, setSelectedDate] = useState(formatDateForInput(new Date()))
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState(null)
+    const [sendNotification, setSendNotification] = useState(true)
     
     const des = ['шт.', 'л.', 'см.', 'м.']
 
@@ -137,12 +138,14 @@ export default function AddPartsToObject({
             })
 
             if (response.data.success) {
-                const partsInfo = response.data.updatedParts.map(part => {
-                    const selectedPart = partsToAdd.find(p => p.partId === part._id.toString())
-                    return `• ${selectedPart.count} ${selectedPart.description} - ${part.name} (Остаток: ${part.count} шт.)`
-                }).join('\n')
+                // Отправляем уведомление только если включен чекбокс
+                if (sendNotification) {
+                    const partsInfo = response.data.updatedParts.map(part => {
+                        const selectedPart = partsToAdd.find(p => p.partId === part._id.toString())
+                        return `• ${selectedPart.count} ${selectedPart.description} - ${part.name} (Остаток: ${part.count} шт.)`
+                    }).join('\n')
 
-                const message = `🔧 <b>Выдача запчастей</b>
+                    const message = `🔧 <b>Выдача запчастей</b>
 
 🏢 Объект: ${objectName}
 👨‍🔧 Работник: ${selectedWorker}
@@ -152,12 +155,13 @@ export default function AddPartsToObject({
 📦 Выданные запчасти:
 ${partsInfo}`
 
-                await axios.post('/api/telegram/sendNotification', {
-                    message,
-                    chat_id: process.env.NEXT_PUBLIC_TELEGRAM_CHAT_ID_FORTUNACRM,
-                    message_thread_id: 30,
-                    parse_mode: 'HTML'
-                })
+                    await axios.post('/api/telegram/sendNotification', {
+                        message,
+                        chat_id: process.env.NEXT_PUBLIC_TELEGRAM_CHAT_ID_FORTUNACRM,
+                        message_thread_id: 30,
+                        parse_mode: 'HTML'
+                    })
+                }
 
                 onSuccess?.()
                 onClose()
@@ -270,23 +274,33 @@ ${partsInfo}`
                     ))}
                 </div>
 
-                {error && <div className="error-message">{error}</div>}
-
                 <div className="add-parts-footer">
-                    <button 
-                        className="save-button"
-                        onClick={handleSave}
-                        disabled={isLoading || selectedParts.length === 0}
-                    >
-                        {isLoading ? 'Сохранение...' : 'Сохранить'}
-                    </button>
-                    <button 
-                        className="cancel-button"
-                        onClick={onClose}
-                        disabled={isLoading}
-                    >
-                        Отмена
-                    </button>
+                    <div className="notification-checkbox">
+                        <input
+                            type="checkbox"
+                            id="sendNotification"
+                            checked={sendNotification}
+                            onChange={(e) => setSendNotification(e.target.checked)}
+                        />
+                        <label htmlFor="sendNotification">Отправить уведомление в Telegram</label>
+                    </div>
+                    
+                    <div className="buttons-group">
+                        <button 
+                            className="save-button"
+                            onClick={handleSave}
+                            disabled={isLoading || selectedParts.length === 0}
+                        >
+                            {isLoading ? 'Выдача...' : 'Выдать'}
+                        </button>
+                        <button 
+                            className="cancel-button"
+                            onClick={onClose}
+                            disabled={isLoading}
+                        >
+                            Отмена
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

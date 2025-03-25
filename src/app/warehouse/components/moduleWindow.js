@@ -46,6 +46,7 @@ export default function ModuleWindow({
     const [sendWorker, setWorker] = useState('')
     const [sendObject, setObject] = useState('')
     const [sendDes, setSendDes] = useState(des[0])
+    const [sendNotification, setSendNotification] = useState(true)
 
     useEffect(()=>{
         if(workers[0]){
@@ -219,6 +220,16 @@ ${sum ? `Цена: ${sum}` : ''}`
                         })}
                     </select>
                 </div>
+
+                <div className="notification-checkbox">
+                    <input
+                        type="checkbox"
+                        id="sendNotification"
+                        checked={sendNotification}
+                        onChange={(e) => setSendNotification(e.target.checked)}
+                    />
+                    <label htmlFor="sendNotification">Отправить уведомление в Telegram</label>
+                </div>
                 
                 <button onClick={async ()=>{
                     try {
@@ -241,14 +252,16 @@ ${sum ? `Цена: ${sum}` : ''}`
                             return updatedParts
                         })
 
-                        // Отправляем уведомление в Telegram
-                        await sendTelegramNotification(
-                            objectName,
-                            sendWorker,
-                            sendCount,
-                            sendDes,
-                            JSON.parse(res.data).data.count
-                        )
+                        // Отправляем уведомление только если включен чекбокс
+                        if (sendNotification) {
+                            await sendTelegramNotification(
+                                objectName,
+                                sendWorker,
+                                sendCount,
+                                sendDes,
+                                JSON.parse(res.data).data.count
+                            )
+                        }
 
                         // Закрываем окно после успешной выдачи
                         setSendVisible(false)

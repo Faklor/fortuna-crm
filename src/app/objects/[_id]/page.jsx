@@ -153,6 +153,7 @@ export default async function Page({ params, searchParams }){
                                     query: { name: 'addParts' }
                                 }}
                                 className="add-parts-button"
+                                style={{color:'#4F8DE3' }}
                             >
                                 Выдать запчасти
                             </Link>

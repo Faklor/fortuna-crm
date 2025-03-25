@@ -164,6 +164,22 @@
                     background-color: #da190b;
                 }
             }
+
+            .notification-checkbox {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin: 10px 0;
+                
+                input[type="checkbox"] {
+                    cursor: pointer;
+                }
+                
+                label {
+                    cursor: pointer;
+                    user-select: none;
+                }
+            }
         }
 
         .worker-date-section {
