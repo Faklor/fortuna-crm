@@ -321,3 +321,26 @@
         opacity: 1;
     }
 }
+
+.input-group {
+    margin-bottom: 15px;
+    
+    .select-group {
+        display: flex;
+        gap: 10px;
+        
+        select {
+            flex: 1;
+            padding: 8px;
+        }
+        
+        button {
+            padding: 8px 12px;
+        }
+    }
+}
+
+.input-group input {
+    width: 100%;
+    padding: 8px;
+}

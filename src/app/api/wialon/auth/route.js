@@ -4,7 +4,7 @@ const WIALON_BASE_URL = 'https://wialon.damako.by/wialon/ajax.html';
 
 export async function GET() {
     try {
-        const token = '18ce161b4f6bf8cb3a038c53dac90c70BC0FC454A28F0A89579724775185972D6919FA78';
+        const token = process.env.WIALON_TOKEN;
         
         const response = await fetch(`${WIALON_BASE_URL}?svc=token/login&params={"token":"${token}"}`, {
             method: 'GET',

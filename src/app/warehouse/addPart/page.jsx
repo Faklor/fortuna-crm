@@ -28,6 +28,15 @@ export default function BlockAddPart({}){
     const [showSuccess, setShowSuccess] = useState(false)
     const [categoryes, setCategoryes] = useState([])
 
+    // Добавляем новые состояния
+    const [existingManufacturers, setExistingManufacturers] = useState([])
+    const [existingStorageIds, setExistingStorageIds] = useState([])
+    const [existingContactNames, setExistingContactNames] = useState([])
+    
+    const [isCustomManufacturer, setIsCustomManufacturer] = useState(false)
+    const [isCustomStorageId, setIsCustomStorageId] = useState(false)
+    const [isCustomContactName, setIsCustomContactName] = useState(false)
+
     //default
     const partObj = {
         category:nowCatagory,
@@ -66,23 +75,33 @@ export default function BlockAddPart({}){
     }
 
     useEffect(()=>{
-
         getParts()
-        .then(res=>{
-            let array_categoryes = []
-            res.data.forEach((item)=>{
-                array_categoryes.push(item.catagory)
+            .then(res => {
+                let array_categoryes = []
+                res.data.forEach((item)=>{
+                    array_categoryes.push(item.catagory)
+                })
+
+                let filteredArray = [...new Set(array_categoryes)]
+
+                setCategoryes(filteredArray)
+                setNowCatagory(filteredArray[0])
+
+                // Получаем уникальные значения из существующих запчастей
+                const manufacturers = [...new Set(res.data.map(item => item.manufacturer))]
+                    .filter(Boolean)
+                const storageIds = [...new Set(res.data.map(item => item.storageId))]
+                    .filter(Boolean)
+                const contactNames = [...new Set(res.data.map(item => item.contact?.name))]
+                    .filter(Boolean)
+
+                setExistingManufacturers(manufacturers)
+                setExistingStorageIds(storageIds)
+                setExistingContactNames(contactNames)
             })
-
-            let filteredArray = [...new Set(array_categoryes)]
-
-
-            setCategoryes(filteredArray)
-            setNowCatagory(filteredArray[0])
-        })
-        .catch(e=>{
-            setStatus('Ошибка загрузки категорий')
-        })
+            .catch(e=>{
+                setStatus('Ошибка загрузки категорий')
+            })
     },[])
 
     
@@ -137,24 +156,97 @@ export default function BlockAddPart({}){
         </select>
 
         <input type='text' value={nowName} onChange={(e)=>{setNowName(e.target.value)}} placeholder='Название*'/>
-        <input type='text' value={nowManufacturer} onChange={(e)=>{setNowManufacturer(e.target.value)}} placeholder='Производитель'/>
+        
+        {/* Заменяем input производителя */}
+        <div className="input-group">
+            {!isCustomManufacturer ? (
+                <div className="select-group">
+                    <select
+                        value={nowManufacturer}
+                        onChange={(e) => setNowManufacturer(e.target.value)}
+                    >
+                        <option value="">Выберите производителя</option>
+                        {existingManufacturers.map((manufacturer, index) => (
+                            <option key={index} value={manufacturer}>{manufacturer}</option>
+                        ))}
+                    </select>
+                    <button type="button" onClick={() => setIsCustomManufacturer(true)}>+</button>
+                </div>
+            ) : (
+                <div className="input-group">
+                    <input
+                        type="text"
+                        value={nowManufacturer}
+                        onChange={(e) => setNowManufacturer(e.target.value)}
+                        placeholder="Производитель"
+                    />
+                    <button type="button" onClick={() => setIsCustomManufacturer(false)}>←</button>
+                </div>
+            )}
+        </div>
+
         <input type='text' value={nowSerialNumber} onChange={(e)=>{setNowSerialNumber(e.target.value)}} placeholder='Серийный номер'/>
         <input type='text' value={nowSellNumber} onChange={(e)=>{setNowSellNumber(e.target.value)}} placeholder='Товарный номер'/>
-        
         <input type='number' value={nowCount} onChange={(e)=>{setNowCount(e.target.value)}} placeholder='Кол-во'/>
         <input type='number' value={nowSell} onChange={(e)=>{setNowSell(e.target.value)}} placeholder='Сумма'/>
-        <input 
-            type='text' 
-            value={nowStorageId} 
-            onChange={(e)=>{setNowStorageId(e.target.value)}} 
-            placeholder='Индификатор на складе'
-        />
+        
+        {/* Заменяем input идентификатора */}
+        <div className="input-group">
+            {!isCustomStorageId ? (
+                <div className="select-group">
+                    <select
+                        value={nowStorageId}
+                        onChange={(e) => setNowStorageId(e.target.value)}
+                    >
+                        <option value="">Выберите идентификатор</option>
+                        {existingStorageIds.map((id, index) => (
+                            <option key={index} value={id}>{id}</option>
+                        ))}
+                    </select>
+                    <button type="button" onClick={() => setIsCustomStorageId(true)}>+</button>
+                </div>
+            ) : (
+                <div className="input-group">
+                    <input
+                        type="text"
+                        value={nowStorageId}
+                        onChange={(e) => setNowStorageId(e.target.value)}
+                        placeholder="Индификатор на складе"
+                    />
+                    <button type="button" onClick={() => setIsCustomStorageId(false)}>←</button>
+                </div>
+            )}
+        </div>
 
         <h2>Контакты</h2>
-        <input type='text' value={nowContact_Name} onChange={(e)=>{setNowContact_Name(e.target.value)}} placeholder='Имя'/>
+        {/* Контактное имя */}
+        <div className="input-group">
+            {!isCustomContactName ? (
+                <div className="select-group">
+                    <select
+                        value={nowContact_Name}
+                        onChange={(e) => setNowContact_Name(e.target.value)}
+                    >
+                        <option value="">Выберите контактное лицо</option>
+                        {existingContactNames.map((name, index) => (
+                            <option key={index} value={name}>{name}</option>
+                        ))}
+                    </select>
+                    <button type="button" onClick={() => setIsCustomContactName(true)}>+</button>
+                </div>
+            ) : (
+                <div className="input-group">
+                    <input
+                        type="text"
+                        value={nowContact_Name}
+                        onChange={(e) => setNowContact_Name(e.target.value)}
+                        placeholder="Введите имя"
+                    />
+                    <button type="button" onClick={() => setIsCustomContactName(false)}>←</button>
+                </div>
+            )}
+        </div>
         <input type='text' value={nowContact_Link} onChange={(e)=>{setNowContact_Link(e.target.value)}} placeholder='Ссылка'/>
-
-        
 
         <button onClick={handleSubmit}>ДОБАВИТЬ</button>
 
